@@ -1,29 +1,92 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
+import { AppShell } from "@/components/AppShell";
+import { Breather } from "@/components/Breather";
+import { MoodCheckIn } from "@/components/MoodCheckIn";
+import { CircleDot, Layers, Grid3x3, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "The Digital Breakroom — Cozy mini-games for work breaks" },
+      { name: "description", content: "A calming hub of micro-games and relaxation widgets for short corporate breaks." },
+      { property: "og:title", content: "The Digital Breakroom" },
+      { property: "og:description", content: "Pastel mini-games, breathing exercises, and mood check-ins for cozy work breaks." },
     ],
   }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
+const GAMES = [
+  {
+    to: "/bubbles",
+    title: "Zen Bubble Wrap",
+    desc: "Pop endless soft bubbles. Pure satisfaction, no scoreboard.",
+    icon: CircleDot,
+    gradient: "var(--gradient-mint)",
+  },
+  {
+    to: "/match",
+    title: "Pastel Match",
+    desc: "A cozy memory game with cute office icons.",
+    icon: Layers,
+    gradient: "var(--gradient-peach)",
+  },
+  {
+    to: "/2048",
+    title: "2048 · Calm Edition",
+    desc: "The classic puzzle, washed in soothing gradients.",
+    icon: Grid3x3,
+    gradient: "var(--gradient-lav)",
+  },
+] as const;
+
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <AppShell>
+      <section className="text-center mb-10 mt-2">
+        <span className="inline-block text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-white/50 rounded-full px-3 py-1 mb-4">
+          welcome back
+        </span>
+        <h1 className="text-4xl sm:text-5xl font-display font-bold text-foreground">
+          A little pocket of calm
+          <span className="block bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">
+            between meetings.
+          </span>
+        </h1>
+        <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+          Pick a tiny game, take a breath, check in with yourself. No timers, no pressure.
+        </p>
+      </section>
+
+      <div className="grid gap-5 md:grid-cols-3 mb-10">
+        {GAMES.map((g) => (
+          <Link
+            key={g.to}
+            to={g.to}
+            className="group glass-card rounded-3xl p-6 flex flex-col gap-4 hover:-translate-y-1 hover:shadow-[var(--shadow-glow)] transition-all"
+          >
+            <div
+              className="h-14 w-14 rounded-2xl flex items-center justify-center text-foreground/70 shadow-[var(--shadow-soft)]"
+              style={{ backgroundImage: `var(--${g.gradient.includes("mint") ? "gradient-mint" : g.gradient.includes("peach") ? "gradient-peach" : "gradient-lav"})` }}
+            >
+              <g.icon className="h-7 w-7" />
+            </div>
+            <div>
+              <h3 className="font-display font-bold text-lg text-foreground">{g.title}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{g.desc}</p>
+            </div>
+            <span className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-foreground/70 group-hover:gap-2 transition-all">
+              Open <ArrowRight className="h-4 w-4" />
+            </span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        <Breather />
+        <MoodCheckIn />
+      </div>
+    </AppShell>
   );
 }
