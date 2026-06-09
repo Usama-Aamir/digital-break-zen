@@ -79,11 +79,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "The Digital Breakroom — A cozy mini-game hub for work breaks" },
       { name: "description", content: "A calming hub of micro-games, breathing exercises, and mood check-ins for short corporate breaks." },
-      { property: "og:title", content: "The Digital Breakroom" },
-      { property: "og:description", content: "Soft, pastel mini-games and relaxation widgets for cozy corporate breaks." },
+      { property: "og:title", content: "The Digital Breakroom — A cozy mini-game hub for work breaks" },
+      { property: "og:description", content: "A calming hub of micro-games, breathing exercises, and mood check-ins for short corporate breaks." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "The Digital Breakroom — A cozy mini-game hub for work breaks" },
+      { name: "twitter:description", content: "A calming hub of micro-games, breathing exercises, and mood check-ins for short corporate breaks." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3298bf0f-7117-4f80-beda-6bd727ea9798/id-preview-18f9726b--9b40e384-8d6b-4c15-b1df-26caa99c8243.lovable.app-1780999257402.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3298bf0f-7117-4f80-beda-6bd727ea9798/id-preview-18f9726b--9b40e384-8d6b-4c15-b1df-26caa99c8243.lovable.app-1780999257402.png" },
     ],
     links: [
       {
