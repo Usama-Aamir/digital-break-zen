@@ -9,12 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MatchRouteImport } from './routes/match'
 import { Route as BubblesRouteImport } from './routes/bubbles'
+import { Route as R2048RouteImport } from './routes/2048'
 import { Route as IndexRouteImport } from './routes/index'
 
+const MatchRoute = MatchRouteImport.update({
+  id: '/match',
+  path: '/match',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BubblesRoute = BubblesRouteImport.update({
   id: '/bubbles',
   path: '/bubbles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R2048Route = R2048RouteImport.update({
+  id: '/2048',
+  path: '/2048',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,37 +37,59 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/2048': typeof R2048Route
   '/bubbles': typeof BubblesRoute
+  '/match': typeof MatchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/2048': typeof R2048Route
   '/bubbles': typeof BubblesRoute
+  '/match': typeof MatchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/2048': typeof R2048Route
   '/bubbles': typeof BubblesRoute
+  '/match': typeof MatchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/bubbles'
+  fullPaths: '/' | '/2048' | '/bubbles' | '/match'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bubbles'
-  id: '__root__' | '/' | '/bubbles'
+  to: '/' | '/2048' | '/bubbles' | '/match'
+  id: '__root__' | '/' | '/2048' | '/bubbles' | '/match'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  R2048Route: typeof R2048Route
   BubblesRoute: typeof BubblesRoute
+  MatchRoute: typeof MatchRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/match': {
+      id: '/match'
+      path: '/match'
+      fullPath: '/match'
+      preLoaderRoute: typeof MatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bubbles': {
       id: '/bubbles'
       path: '/bubbles'
       fullPath: '/bubbles'
       preLoaderRoute: typeof BubblesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/2048': {
+      id: '/2048'
+      path: '/2048'
+      fullPath: '/2048'
+      preLoaderRoute: typeof R2048RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,7 +104,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  R2048Route: R2048Route,
   BubblesRoute: BubblesRoute,
+  MatchRoute: MatchRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
