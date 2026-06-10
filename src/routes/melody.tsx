@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, RotateCcw } from "lucide-react";
+import { HowToPlay } from "@/components/HowToPlay";
 
 export const Route = createFileRoute("/melody")({
   head: () => ({
@@ -96,7 +97,18 @@ function MelodyPage() {
     <AppShell>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-display font-bold">Zen Melody Maker</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-display font-bold">Zen Melody Maker</h1>
+            <HowToPlay
+              gameKey="melody"
+              title="Zen Melody Maker"
+              steps={[
+                { icon: "🎵", text: "Tap cells in the grid — each row plays a soothing pentatonic note." },
+                { icon: "▶️", text: "A playhead sweeps left to right, playing whatever you've lit up." },
+                { icon: "🎚️", text: "Drag the slider to slow it down or speed the loop up." },
+              ]}
+            />
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             Tap cells. The playhead drifts left→right, gently playing your tune.
           </p>
