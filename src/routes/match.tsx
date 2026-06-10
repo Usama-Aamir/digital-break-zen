@@ -7,6 +7,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { HowToPlay } from "@/components/HowToPlay";
 
 export const Route = createFileRoute("/match")({
   head: () => ({
@@ -112,7 +113,18 @@ function MatchPage() {
     <AppShell>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-display font-bold">Pastel Match</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-display font-bold">Pastel Match</h1>
+            <HowToPlay
+              gameKey="match"
+              title="Pastel Match"
+              steps={[
+                { icon: "🃏", text: "Tap a card to flip it and reveal the cute icon underneath." },
+                { icon: "🔁", text: "Find two matching icons in a row to keep them face-up." },
+                { icon: "🏆", text: "Clear the board in as few flips as possible to beat your best." },
+              ]}
+            />
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             Flips: <span className="font-semibold text-foreground">{flips}</span>
             {best !== null && <> · Best: <span className="font-semibold text-foreground">{best}</span></>}

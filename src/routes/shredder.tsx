@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Send, Scissors } from "lucide-react";
+import { HowToPlay } from "@/components/HowToPlay";
 
 export const Route = createFileRoute("/shredder")({
   head: () => ({
@@ -37,7 +38,19 @@ function ShredderPage() {
     <AppShell>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-display font-bold">The Digital Shredder</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-display font-bold">The Digital Shredder</h1>
+            <HowToPlay
+              gameKey="shredder"
+              title="The Digital Shredder"
+              steps={[
+                { icon: "✍️", text: "Type out whatever's frustrating you in the text box." },
+                { icon: "🗑️", text: "Pick Shred or Fly away, then hit 'Let it go'." },
+                { icon: "🔒", text: "Nothing is saved — your words vanish with the animation." },
+              ]}
+              cta="Got it!"
+            />
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             Need to vent? Type it out. We promise — nothing is saved, anywhere.
           </p>
