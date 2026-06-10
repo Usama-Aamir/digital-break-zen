@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Breather } from "@/components/Breather";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
-import { FrustrationSmasher } from "@/components/FrustrationSmasher";
+import { MoodCompanion } from "@/components/MoodCompanion";
 import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles } from "lucide-react";
 import { useMood, MOOD_META } from "@/lib/mood";
 
@@ -110,11 +110,9 @@ function Index() {
         </p>
       </section>
 
-      {mood === "frustrated" && (
-        <div className="mb-10">
-          <FrustrationSmasher />
-        </div>
-      )}
+      <div className="mb-10">
+        <MoodCompanion />
+      </div>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-10">
         {orderedGames.map((g) => {
