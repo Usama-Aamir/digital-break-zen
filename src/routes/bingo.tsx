@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Sparkles } from "lucide-react";
+import { HowToPlay } from "@/components/HowToPlay";
 
 export const Route = createFileRoute("/bingo")({
   head: () => ({
@@ -107,7 +108,18 @@ function BingoPage() {
     <AppShell>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-display font-bold">Office Bingo</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-display font-bold">Office Bingo</h1>
+            <HowToPlay
+              gameKey="bingo"
+              title="Office Bingo"
+              steps={[
+                { icon: "👂", text: "Listen for these classic corporate phrases on your next call." },
+                { icon: "✅", text: "Tap a square to stamp it with a pastel marker." },
+                { icon: "🎉", text: "Five in a row wins. Your card auto-saves until tomorrow." },
+              ]}
+            />
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             Stamp a square when you hear it on a call today. Board resets daily.
           </p>
