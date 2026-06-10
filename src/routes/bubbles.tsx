@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { HowToPlay } from "@/components/HowToPlay";
 
 export const Route = createFileRoute("/bubbles")({
   head: () => ({
@@ -73,7 +74,18 @@ function BubblesPage() {
     <AppShell>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-display font-bold">Zen Bubble Wrap</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-display font-bold">Zen Bubble Wrap</h1>
+            <HowToPlay
+              gameKey="bubbles"
+              title="Zen Bubble Wrap"
+              steps={[
+                { icon: "👆", text: "Tap or click a bubble to pop it with a soft sound." },
+                { icon: "🔊", text: "Toggle sound off if you'd rather pop in silence." },
+                { icon: "♻️", text: "Hit Reset Wrap any time for a fresh sheet of bubbles." },
+              ]}
+            />
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             {remaining} bubbles left · pop away
           </p>
