@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Breather } from "@/components/Breather";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
-import { CircleDot, Layers, Grid3x3, ArrowRight } from "lucide-react";
+import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,6 +39,34 @@ const GAMES = [
     icon: Grid3x3,
     gradient: "var(--gradient-lav)",
   },
+  {
+    to: "/melody",
+    title: "Zen Melody Maker",
+    desc: "Tap a pentatonic grid and let a playhead drift across your tune.",
+    icon: Music2,
+    gradient: "var(--gradient-mint)",
+  },
+  {
+    to: "/vacation",
+    title: "Desk Vacation",
+    desc: "Stare out a virtual window. Waves, rain, or a quiet forest.",
+    icon: Palmtree,
+    gradient: "var(--gradient-lav)",
+  },
+  {
+    to: "/shredder",
+    title: "Digital Shredder",
+    desc: "Type a frustration. Watch it shred or fly away. Nothing is saved.",
+    icon: Scissors,
+    gradient: "var(--gradient-peach)",
+  },
+  {
+    to: "/bingo",
+    title: "Office Bingo",
+    desc: "Stamp corporate clichés as you hear them. Resets daily.",
+    icon: Sparkles,
+    gradient: "var(--gradient-mint)",
+  },
 ] as const;
 
 function Index() {
@@ -59,7 +87,7 @@ function Index() {
         </p>
       </section>
 
-      <div className="grid gap-5 md:grid-cols-3 mb-10">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-10">
         {GAMES.map((g) => (
           <Link
             key={g.to}
