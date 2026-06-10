@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
+import { HowToPlay } from "@/components/HowToPlay";
 
 export const Route = createFileRoute("/2048")({
   head: () => ({
@@ -181,7 +182,18 @@ function Game2048() {
     <AppShell>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-display font-bold">2048 · Calm Edition</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-display font-bold">2048 · Calm Edition</h1>
+            <HowToPlay
+              gameKey="2048"
+              title="2048 · Calm Edition"
+              steps={[
+                { icon: "⌨️", text: "Use your Arrow Keys, WASD, or swipe to slide tiles." },
+                { icon: "🎨", text: "Matching tiles merge into a softer, bigger pastel." },
+                { icon: "🧘", text: "No timers. Aim for 2048 — or just drift and enjoy." },
+              ]}
+            />
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             Arrow keys, WASD, or swipe.
           </p>
