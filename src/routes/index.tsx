@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Breather } from "@/components/Breather";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
+import { FrustrationSmasher } from "@/components/FrustrationSmasher";
 import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles } from "lucide-react";
 import { useMood, MOOD_META } from "@/lib/mood";
 
