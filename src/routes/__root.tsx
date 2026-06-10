@@ -11,6 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { MoodProvider } from "../lib/mood";
+import { WelcomeGate } from "../components/WelcomeGate";
 
 function NotFoundComponent() {
   return (
@@ -127,8 +129,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <MoodProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <WelcomeGate />
+      </MoodProvider>
     </QueryClientProvider>
   );
 }
