@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Volume2, VolumeX, Waves, CloudRain, Trees } from "lucide-react";
+import { HowToPlay } from "@/components/HowToPlay";
 
 export const Route = createFileRoute("/vacation")({
   head: () => ({
@@ -132,7 +133,19 @@ function VacationPage() {
     <AppShell>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-display font-bold">Desk Vacation</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-display font-bold">Desk Vacation</h1>
+            <HowToPlay
+              gameKey="vacation"
+              title="Desk Vacation"
+              steps={[
+                { icon: "🏝️", text: "Pick a scene — Sunset Beach, Alpine Dawn, or Mossy Forest." },
+                { icon: "🔊", text: "Tap the speaker to play matching ambient sounds." },
+                { icon: "👀", text: "Lean back, look out the window, breathe for a minute." },
+              ]}
+              cta="Take me there"
+            />
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             Look out the window for a minute. {cfg.label}.
           </p>
