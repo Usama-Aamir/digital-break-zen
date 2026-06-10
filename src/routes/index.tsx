@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { Breather } from "@/components/Breather";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles } from "lucide-react";
+import { useMood, MOOD_META } from "@/lib/mood";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -70,17 +71,38 @@ const GAMES = [
 ] as const;
 
 function Index() {
+  const { mood } = useMood();
+  const meta = mood ? MOOD_META[mood] : null;
+  const featured = new Set(meta?.featured ?? []);
+  const orderedGames = meta
+    ? [
+        ...GAMES.filter((g) => featured.has(g.to)),
+        ...GAMES.filter((g) => !featured.has(g.to)),
+      ]
+    : GAMES;
+
   return (
     <AppShell>
       <section className="text-center mb-10 mt-2">
         <span className="inline-block text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-white/50 rounded-full px-3 py-1 mb-4">
-          welcome back
+          {meta ? `${meta.emoji} feeling ${meta.label.toLowerCase()}` : "welcome back"}
         </span>
         <h1 className="text-4xl sm:text-5xl font-display font-bold text-foreground">
-          A little pocket of calm
-          <span className="block bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">
-            between meetings.
-          </span>
+          {meta ? (
+            <>
+              {meta.headline}
+              <span className="block bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">
+                {meta.subhead}
+              </span>
+            </>
+          ) : (
+            <>
+              A little pocket of calm
+              <span className="block bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">
+                between meetings.
+              </span>
+            </>
+          )}
         </h1>
         <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
           Pick a tiny game, take a breath, check in with yourself. No timers, no pressure.
@@ -88,27 +110,37 @@ function Index() {
       </section>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-10">
-        {GAMES.map((g) => (
-          <Link
-            key={g.to}
-            to={g.to}
-            className="group glass-card rounded-3xl p-6 flex flex-col gap-4 hover:-translate-y-1 hover:shadow-[var(--shadow-glow)] transition-all"
-          >
-            <div
-              className="h-14 w-14 rounded-2xl flex items-center justify-center text-foreground/70 shadow-[var(--shadow-soft)]"
-              style={{ backgroundImage: `var(--${g.gradient.includes("mint") ? "gradient-mint" : g.gradient.includes("peach") ? "gradient-peach" : "gradient-lav"})` }}
+        {orderedGames.map((g) => {
+          const isFeatured = featured.has(g.to);
+          return (
+            <Link
+              key={g.to}
+              to={g.to}
+              className={`group glass-card rounded-3xl p-6 flex flex-col gap-4 hover:-translate-y-1 hover:shadow-[var(--shadow-glow)] transition-all relative ${
+                isFeatured ? "ring-2 ring-white/80 shadow-[var(--shadow-glow)]" : ""
+              }`}
             >
-              <g.icon className="h-7 w-7" />
-            </div>
-            <div>
-              <h3 className="font-display font-bold text-lg text-foreground">{g.title}</h3>
-              <p className="text-sm text-muted-foreground mt-1">{g.desc}</p>
-            </div>
-            <span className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-foreground/70 group-hover:gap-2 transition-all">
-              Open <ArrowRight className="h-4 w-4" />
-            </span>
-          </Link>
-        ))}
+              {isFeatured && (
+                <span className="absolute -top-2 -right-2 text-[10px] font-bold uppercase tracking-wider bg-white/90 rounded-full px-2.5 py-1 shadow-[var(--shadow-soft)] text-foreground/80">
+                  ✨ for you
+                </span>
+              )}
+              <div
+                className="h-14 w-14 rounded-2xl flex items-center justify-center text-foreground/70 shadow-[var(--shadow-soft)]"
+                style={{ backgroundImage: `var(--${g.gradient.includes("mint") ? "gradient-mint" : g.gradient.includes("peach") ? "gradient-peach" : "gradient-lav"})` }}
+              >
+                <g.icon className="h-7 w-7" />
+              </div>
+              <div>
+                <h3 className="font-display font-bold text-lg text-foreground">{g.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{g.desc}</p>
+              </div>
+              <span className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-foreground/70 group-hover:gap-2 transition-all">
+                Open <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+          );
+        })}
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
