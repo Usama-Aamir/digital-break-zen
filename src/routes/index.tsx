@@ -110,6 +110,12 @@ function Index() {
         </p>
       </section>
 
+      {mood === "frustrated" && (
+        <div className="mb-10">
+          <FrustrationSmasher />
+        </div>
+      )}
+
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-10">
         {orderedGames.map((g) => {
           const isFeatured = featured.has(g.to);
