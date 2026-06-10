@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, CircleDot, Layers, Grid3x3 } from "lucide-react";
+import { Home, CircleDot, Layers, Grid3x3, Music2, Palmtree, Scissors, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 
 const nav = [
@@ -7,6 +7,10 @@ const nav = [
   { to: "/bubbles", label: "Bubbles", icon: CircleDot },
   { to: "/match", label: "Match", icon: Layers },
   { to: "/2048", label: "2048", icon: Grid3x3 },
+  { to: "/melody", label: "Melody", icon: Music2 },
+  { to: "/vacation", label: "Vacation", icon: Palmtree },
+  { to: "/shredder", label: "Shredder", icon: Scissors },
+  { to: "/bingo", label: "Bingo", icon: Sparkles },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -21,7 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               The Digital Breakroom
             </span>
           </Link>
-          <ul className="flex items-center gap-1">
+          <ul className="flex items-center gap-1 flex-wrap justify-end">
             {nav.map(({ to, label, icon: Icon }) => {
               const active = pathname === to;
               return (

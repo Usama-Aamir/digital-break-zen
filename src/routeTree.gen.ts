@@ -9,11 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VacationRouteImport } from './routes/vacation'
+import { Route as ShredderRouteImport } from './routes/shredder'
+import { Route as MelodyRouteImport } from './routes/melody'
 import { Route as MatchRouteImport } from './routes/match'
 import { Route as BubblesRouteImport } from './routes/bubbles'
+import { Route as BingoRouteImport } from './routes/bingo'
 import { Route as R2048RouteImport } from './routes/2048'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VacationRoute = VacationRouteImport.update({
+  id: '/vacation',
+  path: '/vacation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShredderRoute = ShredderRouteImport.update({
+  id: '/shredder',
+  path: '/shredder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MelodyRoute = MelodyRouteImport.update({
+  id: '/melody',
+  path: '/melody',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MatchRoute = MatchRouteImport.update({
   id: '/match',
   path: '/match',
@@ -22,6 +41,11 @@ const MatchRoute = MatchRouteImport.update({
 const BubblesRoute = BubblesRouteImport.update({
   id: '/bubbles',
   path: '/bubbles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BingoRoute = BingoRouteImport.update({
+  id: '/bingo',
+  path: '/bingo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const R2048Route = R2048RouteImport.update({
@@ -38,39 +62,101 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
+  '/bingo': typeof BingoRoute
   '/bubbles': typeof BubblesRoute
   '/match': typeof MatchRoute
+  '/melody': typeof MelodyRoute
+  '/shredder': typeof ShredderRoute
+  '/vacation': typeof VacationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
+  '/bingo': typeof BingoRoute
   '/bubbles': typeof BubblesRoute
   '/match': typeof MatchRoute
+  '/melody': typeof MelodyRoute
+  '/shredder': typeof ShredderRoute
+  '/vacation': typeof VacationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
+  '/bingo': typeof BingoRoute
   '/bubbles': typeof BubblesRoute
   '/match': typeof MatchRoute
+  '/melody': typeof MelodyRoute
+  '/shredder': typeof ShredderRoute
+  '/vacation': typeof VacationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/2048' | '/bubbles' | '/match'
+  fullPaths:
+    | '/'
+    | '/2048'
+    | '/bingo'
+    | '/bubbles'
+    | '/match'
+    | '/melody'
+    | '/shredder'
+    | '/vacation'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/2048' | '/bubbles' | '/match'
-  id: '__root__' | '/' | '/2048' | '/bubbles' | '/match'
+  to:
+    | '/'
+    | '/2048'
+    | '/bingo'
+    | '/bubbles'
+    | '/match'
+    | '/melody'
+    | '/shredder'
+    | '/vacation'
+  id:
+    | '__root__'
+    | '/'
+    | '/2048'
+    | '/bingo'
+    | '/bubbles'
+    | '/match'
+    | '/melody'
+    | '/shredder'
+    | '/vacation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   R2048Route: typeof R2048Route
+  BingoRoute: typeof BingoRoute
   BubblesRoute: typeof BubblesRoute
   MatchRoute: typeof MatchRoute
+  MelodyRoute: typeof MelodyRoute
+  ShredderRoute: typeof ShredderRoute
+  VacationRoute: typeof VacationRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vacation': {
+      id: '/vacation'
+      path: '/vacation'
+      fullPath: '/vacation'
+      preLoaderRoute: typeof VacationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shredder': {
+      id: '/shredder'
+      path: '/shredder'
+      fullPath: '/shredder'
+      preLoaderRoute: typeof ShredderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/melody': {
+      id: '/melody'
+      path: '/melody'
+      fullPath: '/melody'
+      preLoaderRoute: typeof MelodyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/match': {
       id: '/match'
       path: '/match'
@@ -83,6 +169,13 @@ declare module '@tanstack/react-router' {
       path: '/bubbles'
       fullPath: '/bubbles'
       preLoaderRoute: typeof BubblesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bingo': {
+      id: '/bingo'
+      path: '/bingo'
+      fullPath: '/bingo'
+      preLoaderRoute: typeof BingoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/2048': {
@@ -105,8 +198,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   R2048Route: R2048Route,
+  BingoRoute: BingoRoute,
   BubblesRoute: BubblesRoute,
   MatchRoute: MatchRoute,
+  MelodyRoute: MelodyRoute,
+  ShredderRoute: ShredderRoute,
+  VacationRoute: VacationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
