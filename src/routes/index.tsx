@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Breather } from "@/components/Breather";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
+import { FrustrationSmasher } from "@/components/FrustrationSmasher";
 import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles } from "lucide-react";
 import { useMood, MOOD_META } from "@/lib/mood";
 
@@ -108,6 +109,12 @@ function Index() {
           Pick a tiny game, take a breath, check in with yourself. No timers, no pressure.
         </p>
       </section>
+
+      {mood === "frustrated" && (
+        <div className="mb-10">
+          <FrustrationSmasher />
+        </div>
+      )}
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-10">
         {orderedGames.map((g) => {
