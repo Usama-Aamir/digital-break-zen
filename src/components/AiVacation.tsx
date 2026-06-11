@@ -1,18 +1,20 @@
 import { useState } from "react";
-import { Loader2, Palmtree } from "lucide-react";
+import { Palmtree } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function AiVacation() {
   const [place, setPlace] = useState("");
-  const [url, setUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   function generate() {
-    const q = place.trim();
-    if (!q) return;
-    setLoading(true);
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(q)}?width=1920&height=1080&nologo=true&seed=${Date.now()}`;
-    setUrl(imageUrl);
+    const userInput = place.trim();
+    if (!userInput) return;
+    setIsGenerating(true);
+    setHasError(false);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(userInput)}?width=1080&height=720&nologo=true&seed=${Math.random()}`;
+    setImageUrl(url);
   }
 
   return (
@@ -31,7 +33,7 @@ export function AiVacation() {
         />
         <Button
           onClick={generate}
-          disabled={!place.trim() || loading}
+          disabled={!place.trim() || isGenerating}
           className="rounded-full bg-[image:var(--gradient-mint)] text-foreground hover:opacity-95 shadow-[var(--shadow-soft)] shrink-0"
         >
           <Palmtree className="h-4 w-4" />
@@ -40,23 +42,40 @@ export function AiVacation() {
         </Button>
       </div>
       <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-white/40 border border-white/60">
-        {url && (
+        {imageUrl && !hasError && (
           <img
-            key={url}
-            src={url}
-            alt={place ? `AI-generated view of ${place}` : "AI-generated vacation view"}
-            onLoad={() => setLoading(false)}
-            onError={() => setLoading(false)}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${loading ? "opacity-0" : "opacity-100"}`}
+            key={imageUrl}
+            src={imageUrl}
+            alt={place}
+            className={`w-full h-auto rounded-xl object-cover ${isGenerating ? "hidden" : "block"}`}
+            onLoad={() => setIsGenerating(false)}
+            onError={() => {
+              setHasError(true);
+              setIsGenerating(false);
+            }}
           />
         )}
-        {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/40 backdrop-blur-sm">
-            <Loader2 className="h-8 w-8 animate-spin text-foreground/60" />
-            <p className="text-sm text-muted-foreground">Visualizing your escape…</p>
+        {isGenerating && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[image:var(--gradient-mint)]/40 backdrop-blur-sm">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/45 shadow-[var(--shadow-soft)] animate-pulse">
+              <Palmtree className="h-9 w-9 text-foreground/60" />
+            </div>
+            <p className="animate-pulse text-center text-sm font-medium text-foreground/70">
+              🧘 Customizing your peaceful escape...
+            </p>
           </div>
         )}
-        {!url && !loading && (
+        {hasError && !isGenerating && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center bg-white/45 backdrop-blur-sm">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/60 shadow-[var(--shadow-soft)]">
+              <Palmtree className="h-7 w-7 text-foreground/60" />
+            </div>
+            <p className="max-w-sm text-sm font-medium text-foreground/70">
+              The universe is busy right now. Let's try another peaceful prompt!
+            </p>
+          </div>
+        )}
+        {!imageUrl && !isGenerating && !hasError && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
             Your virtual window will appear here.
           </div>
