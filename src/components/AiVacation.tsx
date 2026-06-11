@@ -11,11 +11,8 @@ export function AiVacation() {
     const q = place.trim();
     if (!q) return;
     setLoading(true);
-    const seed = Math.floor(Math.random() * 1_000_000);
-    const next = `https://image.pollinations.ai/prompt/${encodeURIComponent(
-      `${q}, serene cinematic landscape, soft pastel light, dreamy`,
-    )}?width=1920&height=1080&nologo=true&seed=${seed}`;
-    setUrl(next);
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(q)}?width=1920&height=1080&nologo=true&seed=${Date.now()}`;
+    setUrl(imageUrl);
   }
 
   return (
@@ -43,22 +40,23 @@ export function AiVacation() {
         </Button>
       </div>
       <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-white/40 border border-white/60">
-        {url ? (
-          <>
-            <img
-              src={url}
-              alt={place ? `AI-generated view of ${place}` : "AI-generated vacation view"}
-              onLoad={() => setLoading(false)}
-              onError={() => setLoading(false)}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/40 backdrop-blur-sm">
-                <Loader2 className="h-8 w-8 animate-spin text-foreground/60" />
-              </div>
-            )}
-          </>
-        ) : (
+        {url && (
+          <img
+            key={url}
+            src={url}
+            alt={place ? `AI-generated view of ${place}` : "AI-generated vacation view"}
+            onLoad={() => setLoading(false)}
+            onError={() => setLoading(false)}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${loading ? "opacity-0" : "opacity-100"}`}
+          />
+        )}
+        {loading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/40 backdrop-blur-sm">
+            <Loader2 className="h-8 w-8 animate-spin text-foreground/60" />
+            <p className="text-sm text-muted-foreground">Visualizing your escape…</p>
+          </div>
+        )}
+        {!url && !loading && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
             Your virtual window will appear here.
           </div>
