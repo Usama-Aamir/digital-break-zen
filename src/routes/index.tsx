@@ -4,6 +4,9 @@ import { AppShell } from "@/components/AppShell";
 import { Breather } from "@/components/Breather";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { MoodCompanion } from "@/components/MoodCompanion";
+import { CorporateTranslator } from "@/components/CorporateTranslator";
+import { AiVacation } from "@/components/AiVacation";
+import { HypeMan } from "@/components/HypeMan";
 import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles } from "lucide-react";
 import { useMood, MOOD_META } from "@/lib/mood";
 
@@ -113,6 +116,22 @@ function Index() {
       <div className="mb-10">
         <MoodCompanion />
       </div>
+
+      {mood === "frustrated" && (
+        <div className="mb-10">
+          <CorporateTranslator />
+        </div>
+      )}
+      {mood === "tired" && (
+        <div className="mb-10">
+          <AiVacation />
+        </div>
+      )}
+      {mood === "demotivated" && (
+        <div className="mb-10">
+          <HypeMan />
+        </div>
+      )}
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-10">
         {orderedGames.map((g) => {

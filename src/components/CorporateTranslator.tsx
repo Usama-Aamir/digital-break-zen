@@ -1,0 +1,88 @@
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Copy, Check, Wand2, Loader2 } from "lucide-react";
+import { generateText } from "@/lib/ai.functions";
+import { Button } from "@/components/ui/button";
+
+const SYSTEM =
+  "You translate angry, frustrated rants into highly polite, professional corporate jargon. Preserve the core message but make it diplomatic, vague, and meeting-safe. Reply with the translated text only — no preamble.";
+
+export function CorporateTranslator() {
+  const run = useServerFn(generateText);
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function translateToCorporate(text: string) {
+    const { text: out } = await run({ data: { system: SYSTEM, user: text } });
+    return out;
+  }
+
+  async function onSubmit() {
+    if (!input.trim() || loading) return;
+    setLoading(true);
+    setError(null);
+    setOutput("");
+    try {
+      setOutput(await translateToCorporate(input.trim()));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copy() {
+    if (!output) return;
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch { /* noop */ }
+  }
+
+  return (
+    <div className="glass-card rounded-3xl p-6 flex flex-col gap-3">
+      <div>
+        <h3 className="font-display font-bold text-lg">Rage-to-Corporate Translator</h3>
+        <p className="text-sm text-muted-foreground">Vent it raw — get back meeting-safe diplomacy.</p>
+      </div>
+      <textarea
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Type your angry thoughts here..."
+        rows={4}
+        className="w-full rounded-2xl bg-white/70 border border-white/60 p-3 text-sm resize-none outline-none focus:ring-2 focus:ring-ring"
+      />
+      <Button
+        onClick={onSubmit}
+        disabled={loading || !input.trim()}
+        className="rounded-full bg-[image:var(--gradient-lav)] text-foreground hover:opacity-95 shadow-[var(--shadow-soft)]"
+      >
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+        <span className="ml-2">{loading ? "Translating..." : "Make it Professional"}</span>
+      </Button>
+      <div className="relative rounded-2xl bg-white/80 border border-white/60 p-4 min-h-[96px] text-sm text-foreground/90 whitespace-pre-wrap">
+        {error ? (
+          <span className="text-destructive">{error}</span>
+        ) : output ? (
+          output
+        ) : (
+          <span className="text-muted-foreground">Your professionally-translated reply will appear here.</span>
+        )}
+        {output && (
+          <button
+            type="button"
+            onClick={copy}
+            aria-label="Copy to clipboard"
+            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/70 hover:bg-white flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
