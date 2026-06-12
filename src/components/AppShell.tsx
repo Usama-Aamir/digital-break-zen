@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, CircleDot, Layers, Grid3x3, Music2, Palmtree, Scissors, Sparkles, Menu } from "lucide-react";
+import { Home, CircleDot, Layers, Grid3x3, Music2, Palmtree, Scissors, Sparkles, Menu, Worm } from "lucide-react";
 import type { ReactNode } from "react";
 import {
   DropdownMenu,
@@ -18,6 +18,7 @@ const nav = [
   { to: "/vacation", label: "Vacation", icon: Palmtree },
   { to: "/shredder", label: "Shredder", icon: Scissors },
   { to: "/bingo", label: "Bingo", icon: Sparkles },
+  { to: "/snake", label: "ZenSnake", icon: Worm },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
