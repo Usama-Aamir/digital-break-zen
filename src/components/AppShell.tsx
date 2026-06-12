@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Home, CircleDot, Layers, Grid3x3, Music2, Palmtree, Scissors, Sparkles, Menu, Worm } from "lucide-react";
 import type { ReactNode } from "react";
 import {
