@@ -40,7 +40,10 @@ export function CorporateTranslator() {
       await navigator.clipboard.writeText(output);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch { /* noop */ }
+    } catch (err) {
+      console.warn("[CorporateTranslator] Clipboard write failed:", err);
+      setError("Could not copy to clipboard.");
+    }
   }
 
   return (

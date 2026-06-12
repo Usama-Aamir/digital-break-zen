@@ -29,7 +29,8 @@ export function ActiveListener() {
     try {
       const { text } = await run({ data: { system: SYSTEM, user: userMessage } });
       return text || "I'm here with you. Tell me more whenever you're ready.";
-    } catch {
+    } catch (err) {
+      console.warn("[ActiveListener] AI response failed:", err);
       return "I'm having trouble responding right now, but I'm still here. Keep going if you'd like.";
     }
   }

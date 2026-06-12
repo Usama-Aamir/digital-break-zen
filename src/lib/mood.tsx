@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { getItem, setItem, removeItem } from "@/lib/safe-storage";
 
 export type Mood = "frustrated" | "tired" | "demotivated" | "happy" | "fun";
 
@@ -74,20 +75,18 @@ export function MoodProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(KEY) as Mood | null;
-      if (stored && stored in MOOD_META) setMoodState(stored);
-    } catch {}
+    const stored = getItem(KEY) as Mood | null;
+    if (stored && stored in MOOD_META) setMoodState(stored);
     setReady(true);
   }, []);
 
   const setMood = (m: Mood) => {
     setMoodState(m);
-    try { localStorage.setItem(KEY, m); } catch {}
+    setItem(KEY, m);
   };
   const clearMood = () => {
     setMoodState(null);
-    try { localStorage.removeItem(KEY); } catch {}
+    removeItem(KEY);
   };
 
   return (

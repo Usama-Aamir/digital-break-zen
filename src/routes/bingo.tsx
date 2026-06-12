@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw, Sparkles } from "lucide-react";
 import { HowToPlay } from "@/components/HowToPlay";
 import { type Saved, checkBingo, newBoard, todayKey } from "@/lib/game-bingo";
+import { getItem, setItem } from "@/lib/safe-storage";
 
 export const Route = createFileRoute("/bingo")({
   head: () => ({
@@ -23,7 +24,7 @@ function BingoPage() {
   const [board, setBoard] = useState<Saved>(() => newBoard());
 
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = getItem(STORAGE_KEY);
     if (raw) {
       try {
         const parsed: Saved = JSON.parse(raw);
@@ -31,17 +32,17 @@ function BingoPage() {
           setBoard(parsed);
           return;
         }
-      } catch {
-        /* noop */
+      } catch (err) {
+        console.warn("[Bingo] Failed to parse saved board:", err);
       }
     }
     const fresh = newBoard();
     setBoard(fresh);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+    setItem(STORAGE_KEY, JSON.stringify(fresh));
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(board));
+    setItem(STORAGE_KEY, JSON.stringify(board));
   }, [board]);
 
   const toggle = (i: number) => {

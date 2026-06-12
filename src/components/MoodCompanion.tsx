@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { useMood, type Mood } from "@/lib/mood";
+import { getItem, setItem } from "@/lib/safe-storage";
 
 const MUTE_KEY = "breakroom_companion_muted_v1";
 const COUNT_KEY = "breakroom_frustration_vented_v1";
@@ -107,11 +108,9 @@ export function MoodCompanion() {
   const clickTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    try {
-      setMuted(localStorage.getItem(MUTE_KEY) === "1");
-      const c = Number(localStorage.getItem(COUNT_KEY) || "0");
-      if (!Number.isNaN(c)) setVentCount(c);
-    } catch {}
+    setMuted(getItem(MUTE_KEY) === "1");
+    const c = Number(getItem(COUNT_KEY) || "0");
+    if (!Number.isNaN(c)) setVentCount(c);
     return () => {
       if (clickTimer.current) window.clearTimeout(clickTimer.current);
     };
@@ -127,7 +126,7 @@ export function MoodCompanion() {
   const toggleMute = () => {
     setMuted((m) => {
       const next = !m;
-      try { localStorage.setItem(MUTE_KEY, next ? "1" : "0"); } catch {}
+      setItem(MUTE_KEY, next ? "1" : "0");
       return next;
     });
   };
@@ -140,7 +139,8 @@ export function MoodCompanion() {
       const ctx = audioCtxRef.current;
       if (ctx.state === "suspended") ctx.resume();
       return ctx;
-    } catch {
+    } catch (err) {
+      console.warn("[MoodCompanion] AudioContext init failed:", err);
       return null;
     }
   };
@@ -311,7 +311,7 @@ export function MoodCompanion() {
     if (effectiveMood === "frustrated") {
       setVentCount((c) => {
         const next = c + 1;
-        try { localStorage.setItem(COUNT_KEY, String(next)); } catch {}
+        setItem(COUNT_KEY, String(next));
         return next;
       });
     }

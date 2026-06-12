@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { HowToPlay } from "@/components/HowToPlay";
+import { getItem, setItem } from "@/lib/safe-storage";
 
 export const Route = createFileRoute("/bubbles")({
   head: () => ({
@@ -33,11 +34,11 @@ function BubblesPage() {
   const audioCtx = useRef<AudioContext | null>(null);
 
   useEffect(() => {
-    const s = localStorage.getItem("breakroom_bubbles_sound");
+    const s = getItem("breakroom_bubbles_sound");
     if (s) setSound(s === "1");
   }, []);
   useEffect(() => {
-    localStorage.setItem("breakroom_bubbles_sound", sound ? "1" : "0");
+    setItem("breakroom_bubbles_sound", sound ? "1" : "0");
   }, [sound]);
 
   const playPop = () => {
@@ -58,8 +59,8 @@ function BubblesPage() {
       o.connect(g).connect(ctx.destination);
       o.start();
       o.stop(ctx.currentTime + 0.2);
-    } catch {
-      /* noop */
+    } catch (err) {
+      console.warn("[Bubbles] Audio playback failed:", err);
     }
   };
 
