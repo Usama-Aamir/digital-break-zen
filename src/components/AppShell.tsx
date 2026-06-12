@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Home, CircleDot, Layers, Grid3x3, Music2, Palmtree, Scissors, Sparkles, Menu, Worm } from "lucide-react";
 import type { ReactNode } from "react";
 import {
@@ -23,8 +23,14 @@ const nav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
   const { mood, clearMood } = useMood();
   const meta = mood ? MOOD_META[mood] : null;
+
+  const handleChangeMood = () => {
+    clearMood();
+    navigate({ to: "/" });
+  };
 
   return (
     <div
@@ -43,7 +49,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2 shrink-0">
             {meta && (
               <button
-                onClick={clearMood}
+                onClick={handleChangeMood}
                 aria-label="Change mood"
                 title="Change mood"
                 className="flex items-center gap-1.5 rounded-full bg-white/70 hover:bg-white px-3 py-1.5 text-xs font-semibold text-foreground/80 shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-glow)] transition-all border border-white/70"
