@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { HowToPlay } from "@/components/HowToPlay";
+import { GamePageHeader } from "@/components/GamePageHeader";
 
 export const Route = createFileRoute("/snake")({
   head: () => ({
@@ -70,10 +70,16 @@ function SnakePage() {
     ctx.strokeStyle = "rgba(255,255,255,0.04)";
     ctx.lineWidth = 1;
     for (let i = 1; i < COLS; i++) {
-      ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, H); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(i * CELL, 0);
+      ctx.lineTo(i * CELL, H);
+      ctx.stroke();
     }
     for (let j = 1; j < ROWS; j++) {
-      ctx.beginPath(); ctx.moveTo(0, j * CELL); ctx.lineTo(W, j * CELL); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, j * CELL);
+      ctx.lineTo(W, j * CELL);
+      ctx.stroke();
     }
 
     // food — glowing orb
@@ -87,9 +93,13 @@ function SnakePage() {
     glow.addColorStop(0.4, `rgba(244, 174, 207, ${0.45 + pulse * 0.2})`);
     glow.addColorStop(1, "rgba(244, 174, 207, 0)");
     ctx.fillStyle = glow;
-    ctx.beginPath(); ctx.arc(fx, fy, CELL * 1.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(fx, fy, CELL * 1.4, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = "#fff6e6";
-    ctx.beginPath(); ctx.arc(fx, fy, CELL * 0.32, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(fx, fy, CELL * 0.32, 0, Math.PI * 2);
+    ctx.fill();
 
     // snake as rounded gradient line
     const snake = snakeRef.current;
@@ -108,7 +118,8 @@ function SnakePage() {
     snake.forEach((s, i) => {
       const x = s.x * CELL + CELL / 2;
       const y = s.y * CELL + CELL / 2;
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     });
     ctx.stroke();
     ctx.shadowBlur = 0;
@@ -129,10 +140,14 @@ function SnakePage() {
     const ny = head.y + dirRef.current.y;
 
     if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) {
-      setRunning(false); setOver(true); return;
+      setRunning(false);
+      setOver(true);
+      return;
     }
     if (snake.some((s) => s.x === nx && s.y === ny)) {
-      setRunning(false); setOver(true); return;
+      setRunning(false);
+      setOver(true);
+      return;
     }
 
     const newHead = { x: nx, y: ny };
@@ -185,11 +200,16 @@ function SnakePage() {
   }, []);
 
   // initial draw
-  useEffect(() => { draw(); }, [draw]);
+  useEffect(() => {
+    draw();
+  }, [draw]);
 
   const start = () => {
     snakeRef.current = [
-      { x: 6, y: 9 }, { x: 7, y: 9 }, { x: 8, y: 9 }, { x: 9, y: 9 },
+      { x: 6, y: 9 },
+      { x: 7, y: 9 },
+      { x: 8, y: 9 },
+      { x: 9, y: 9 },
     ];
     dirRef.current = { x: 1, y: 0 };
     nextDirRef.current = { x: 1, y: 0 };
@@ -203,21 +223,16 @@ function SnakePage() {
   return (
     <AppShell>
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-display font-bold">ZenSnake</h1>
-            <p className="text-sm text-muted-foreground">Soft glow. Slow breaths. No game-over panic.</p>
-          </div>
-          <HowToPlay
-            gameKey="snake"
-            title="ZenSnake"
-            steps={[
-              { icon: "⌨️", text: "Use Arrow keys or WASD to steer the glowing snake." },
-              { icon: "🍑", text: "Eat the pastel orb to grow longer and gain a point." },
-              { icon: "🌿", text: "Avoid the walls and your own tail. Start in Chill Speed." },
-            ]}
-          />
-        </div>
+        <GamePageHeader
+          title="ZenSnake"
+          subtitle="Soft glow. Slow breaths. No game-over panic."
+          gameKey="snake"
+          howToSteps={[
+            { icon: "⌨️", text: "Use Arrow keys or WASD to steer the glowing snake." },
+            { icon: "🍑", text: "Eat the pastel orb to grow longer and gain a point." },
+            { icon: "🌿", text: "Avoid the walls and your own tail. Start in Chill Speed." },
+          ]}
+        />
 
         <div className="glass-card rounded-3xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-3 px-1">

@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
 import { Slider } from "@/components/ui/slider";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 const MOODS = [
   { emoji: "😩", quote: "Tough mornings build legendary afternoons. One small win at a time." },
   { emoji: "😕", quote: "Even spreadsheets respect a hero who takes breaks. You've got this." },
-  { emoji: "😐", quote: "Steady is a superpower. Sip some water and reset your tabs (and your mind)." },
+  {
+    emoji: "😐",
+    quote: "Steady is a superpower. Sip some water and reset your tabs (and your mind).",
+  },
   { emoji: "🙂", quote: "Look at you, casually thriving in fluorescent lighting. Keep going." },
   { emoji: "😄", quote: "You're radiating productivity AND vibes. The breakroom approves." },
 ];
@@ -12,14 +15,7 @@ const MOODS = [
 const KEY = "breakroom_mood";
 
 export function MoodCheckIn() {
-  const [val, setVal] = useState(2);
-  useEffect(() => {
-    const s = localStorage.getItem(KEY);
-    if (s) setVal(parseInt(s, 10));
-  }, []);
-  useEffect(() => {
-    localStorage.setItem(KEY, String(val));
-  }, [val]);
+  const [val, setVal] = useLocalStorage(KEY, 2);
   const mood = MOODS[val];
   return (
     <div className="glass-card rounded-3xl p-6 flex flex-col gap-4">
@@ -27,9 +23,7 @@ export function MoodCheckIn() {
         Daily Mood Check-In
       </h3>
       <div className="flex items-center justify-center gap-4">
-        <span className="text-6xl animate-float-soft drop-shadow-sm select-none">
-          {mood.emoji}
-        </span>
+        <span className="text-6xl animate-float-soft drop-shadow-sm select-none">{mood.emoji}</span>
       </div>
       <Slider
         value={[val]}
@@ -43,9 +37,7 @@ export function MoodCheckIn() {
         <span>rough</span>
         <span>glowing</span>
       </div>
-      <p className="text-sm text-foreground/80 text-center italic min-h-[3rem]">
-        "{mood.quote}"
-      </p>
+      <p className="text-sm text-foreground/80 text-center italic min-h-[3rem]">"{mood.quote}"</p>
     </div>
   );
 }

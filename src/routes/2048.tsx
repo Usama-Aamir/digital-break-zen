@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
-import { HowToPlay } from "@/components/HowToPlay";
+import { GamePageHeader } from "@/components/GamePageHeader";
 import { type Board, init, move, addRandom, hasMoves, tileStyle, SIZE } from "@/lib/game-2048";
 
 export const Route = createFileRoute("/2048")({
@@ -107,36 +107,33 @@ function Game2048() {
 
   return (
     <AppShell>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-display font-bold">2048 · Calm Edition</h1>
-            <HowToPlay
-              gameKey="2048"
-              title="2048 · Calm Edition"
-              steps={[
-                { icon: "⌨️", text: "Use your Arrow Keys, WASD, or swipe to slide tiles." },
-                { icon: "🎨", text: "Matching tiles merge into a softer, bigger pastel." },
-                { icon: "🧘", text: "No timers. Aim for 2048 — or just drift and enjoy." },
-              ]}
-            />
+      <GamePageHeader
+        title="2048 · Calm Edition"
+        subtitle="Arrow keys, WASD, or swipe."
+        gameKey="2048"
+        howToSteps={[
+          { icon: "⌨️", text: "Use your Arrow Keys, WASD, or swipe to slide tiles." },
+          { icon: "🎨", text: "Matching tiles merge into a softer, bigger pastel." },
+          { icon: "🧘", text: "No timers. Aim for 2048 — or just drift and enjoy." },
+        ]}
+        actions={
+          <div className="flex items-center gap-3">
+            <div className="glass-card rounded-2xl px-4 py-2 text-center">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Score
+              </div>
+              <div className="font-display font-bold text-lg">{score}</div>
+            </div>
+            <div className="glass-card rounded-2xl px-4 py-2 text-center">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Best</div>
+              <div className="font-display font-bold text-lg">{best}</div>
+            </div>
+            <Button variant="ghost" onClick={reset} className="glass-card rounded-full gap-2">
+              <RotateCcw className="h-4 w-4" /> New
+            </Button>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">Arrow keys, WASD, or swipe.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="glass-card rounded-2xl px-4 py-2 text-center">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Score</div>
-            <div className="font-display font-bold text-lg">{score}</div>
-          </div>
-          <div className="glass-card rounded-2xl px-4 py-2 text-center">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Best</div>
-            <div className="font-display font-bold text-lg">{best}</div>
-          </div>
-          <Button variant="ghost" onClick={reset} className="glass-card rounded-full gap-2">
-            <RotateCcw className="h-4 w-4" /> New
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="glass-card rounded-3xl p-3 sm:p-5 max-w-md mx-auto relative">
         <div className="grid grid-cols-4 gap-2 sm:gap-3">
