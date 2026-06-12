@@ -7,6 +7,7 @@ import { MoodCompanion } from "@/components/MoodCompanion";
 import { CorporateTranslator } from "@/components/CorporateTranslator";
 import { AiVacation } from "@/components/AiVacation";
 import { HypeMan } from "@/components/HypeMan";
+import { ActiveListener } from "@/components/ActiveListener";
 import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles } from "lucide-react";
 import { useMood, MOOD_META } from "@/lib/mood";
 
@@ -115,6 +116,10 @@ function Index() {
 
       <div className="mb-10">
         <MoodCompanion />
+      </div>
+
+      <div className="mb-10">
+        <ActiveListener />
       </div>
 
       {mood === "frustrated" && (
