@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Sparkles } from "lucide-react";
 import { HowToPlay } from "@/components/HowToPlay";
+import { type Saved, checkBingo, newBoard, todayKey } from "@/lib/game-bingo";
 
 export const Route = createFileRoute("/bingo")({
   head: () => ({
@@ -15,60 +16,8 @@ export const Route = createFileRoute("/bingo")({
   component: BingoPage,
 });
 
-const PHRASES = [
-  "You're on mute",
-  "Let's circle back",
-  "Reply all by mistake",
-  "Can you see my screen?",
-  "Sorry, you go first",
-  "I think you're frozen",
-  "Let's take this offline",
-  "Synergy",
-  "Quick sync",
-  "Per my last email",
-  "Touch base",
-  "Move the needle",
-  "Low-hanging fruit",
-  "Bandwidth",
-  "Hard stop at the top of the hour",
-  "Ping me",
-  "Loop me in",
-  "Action item",
-  "Out of pocket",
-  "Drinking from the firehose",
-  "Boil the ocean",
-  "Deep dive",
-  "Parking lot it",
-  "Open the kimono",
-];
-
 const HUES = [10, 50, 95, 165, 200, 230, 270, 320];
 const STORAGE_KEY = "breakroom_bingo_v1";
-
-type Saved = { date: string; cells: string[]; stamps: boolean[] };
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function newBoard(): Saved {
-  const picked = shuffle(PHRASES).slice(0, 25);
-  picked[12] = "FREE · sip your coffee";
-  return {
-    date: todayKey(),
-    cells: picked,
-    stamps: Array.from({ length: 25 }, (_, i) => i === 12),
-  };
-}
 
 function BingoPage() {
   const [board, setBoard] = useState<Saved>(() => newBoard());
@@ -82,7 +31,9 @@ function BingoPage() {
           setBoard(parsed);
           return;
         }
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     }
     const fresh = newBoard();
     setBoard(fresh);
@@ -114,7 +65,10 @@ function BingoPage() {
               gameKey="bingo"
               title="Office Bingo"
               steps={[
-                { icon: "👂", text: "Listen for these classic corporate phrases on your next call." },
+                {
+                  icon: "👂",
+                  text: "Listen for these classic corporate phrases on your next call.",
+                },
                 { icon: "✅", text: "Tap a square to stamp it with a pastel marker." },
                 { icon: "🎉", text: "Five in a row wins. Your card auto-saves until tomorrow." },
               ]}
@@ -148,7 +102,8 @@ function BingoPage() {
                 className="relative aspect-square rounded-2xl text-[10px] sm:text-xs font-semibold text-foreground/80 p-2 transition-all active:scale-95 text-center flex items-center justify-center leading-tight"
                 style={{
                   background: `oklch(0.98 0.012 ${hue} / 0.85)`,
-                  boxShadow: "inset 0 1px 2px oklch(1 0 0 / 0.7), 0 4px 12px oklch(0.7 0.08 280 / 0.1)",
+                  boxShadow:
+                    "inset 0 1px 2px oklch(1 0 0 / 0.7), 0 4px 12px oklch(0.7 0.08 280 / 0.1)",
                 }}
               >
                 <span className="px-1">{phrase}</span>
@@ -182,13 +137,4 @@ function BingoPage() {
       `}</style>
     </AppShell>
   );
-}
-
-function checkBingo(s: boolean[]): boolean {
-  const lines: number[][] = [];
-  for (let r = 0; r < 5; r++) lines.push([0, 1, 2, 3, 4].map((c) => r * 5 + c));
-  for (let c = 0; c < 5; c++) lines.push([0, 1, 2, 3, 4].map((r) => r * 5 + c));
-  lines.push([0, 6, 12, 18, 24]);
-  lines.push([4, 8, 12, 16, 20]);
-  return lines.some((line) => line.every((i) => s[i]));
 }
