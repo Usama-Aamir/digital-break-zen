@@ -1,10 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+const ALLOWED_MODELS = ["google/gemini-3-flash-preview", "google/gemini-2.5-flash"] as const;
+
 const Input = z.object({
   system: z.string().min(1).max(2000),
   user: z.string().min(1).max(4000),
-  model: z.string().optional(),
+  model: z.enum(ALLOWED_MODELS).optional(),
 });
 
 /** Generic single-shot text completion via Lovable AI Gateway. */
@@ -30,10 +32,13 @@ export const generateText = createServerFn({ method: "POST" })
     });
 
     if (!res.ok) {
+      // Consume body for logging but never expose raw gateway details to clients.
       const body = await res.text().catch(() => "");
       if (res.status === 429) throw new Error("Rate limit hit — try again in a moment.");
-      if (res.status === 402) throw new Error("AI credits exhausted. Add credits in workspace billing.");
-      throw new Error(`AI gateway error ${res.status}: ${body.slice(0, 200)}`);
+      if (res.status === 402)
+        throw new Error("AI credits exhausted. Add credits in workspace billing.");
+      console.error(`[ai-gateway] ${res.status}: ${body.slice(0, 300)}`);
+      throw new Error("AI service is temporarily unavailable. Please try again later.");
     }
 
     const json = (await res.json()) as {
