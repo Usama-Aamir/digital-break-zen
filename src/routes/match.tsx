@@ -3,11 +3,19 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import {
-  Coffee, Leaf, Cloud, Laptop, Cookie, Headphones, Sun, Moon,
+  Coffee,
+  Leaf,
+  Cloud,
+  Laptop,
+  Cookie,
+  Headphones,
+  Sun,
+  Moon,
   RotateCcw,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { HowToPlay } from "@/components/HowToPlay";
+import { type MatchTileData, ICON_KEYS, makeDeck } from "@/lib/game-match";
 
 export const Route = createFileRoute("/match")({
   head: () => ({
@@ -19,40 +27,27 @@ export const Route = createFileRoute("/match")({
   component: MatchPage,
 });
 
-type Tile = { id: number; icon: LucideIcon; key: string; hue: number; flipped: boolean; matched: boolean };
+type Tile = MatchTileData & { icon: LucideIcon };
 
-const ICONS: { icon: LucideIcon; key: string; hue: number }[] = [
-  { icon: Coffee, key: "coffee", hue: 50 },
-  { icon: Leaf, key: "leaf", hue: 165 },
-  { icon: Cloud, key: "cloud", hue: 230 },
-  { icon: Laptop, key: "laptop", hue: 280 },
-  { icon: Cookie, key: "cookie", hue: 30 },
-  { icon: Headphones, key: "head", hue: 320 },
-  { icon: Sun, key: "sun", hue: 90 },
-  { icon: Moon, key: "moon", hue: 260 },
-];
+const ICON_MAP: Record<string, LucideIcon> = {
+  coffee: Coffee,
+  leaf: Leaf,
+  cloud: Cloud,
+  laptop: Laptop,
+  cookie: Cookie,
+  head: Headphones,
+  sun: Sun,
+  moon: Moon,
+};
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function makeDeck(): Tile[] {
-  const pairs = ICONS.flatMap((ic, i) => [
-    { id: i * 2, ...ic, flipped: false, matched: false },
-    { id: i * 2 + 1, ...ic, flipped: false, matched: false },
-  ]);
-  return shuffle(pairs);
+function makeDeckWithIcons(): Tile[] {
+  return makeDeck().map((t) => ({ ...t, icon: ICON_MAP[t.key] }));
 }
 
 const BEST_KEY = "breakroom_match_best";
 
 function MatchPage() {
-  const [tiles, setTiles] = useState<Tile[]>(makeDeck);
+  const [tiles, setTiles] = useState<Tile[]>(makeDeckWithIcons);
   const [picks, setPicks] = useState<number[]>([]);
   const [flips, setFlips] = useState(0);
   const [best, setBest] = useState<number | null>(null);
@@ -104,7 +99,7 @@ function MatchPage() {
   };
 
   const reset = () => {
-    setTiles(makeDeck());
+    setTiles(makeDeckWithIcons());
     setPicks([]);
     setFlips(0);
   };
@@ -121,13 +116,21 @@ function MatchPage() {
               steps={[
                 { icon: "🃏", text: "Tap a card to flip it and reveal the cute icon underneath." },
                 { icon: "🔁", text: "Find two matching icons in a row to keep them face-up." },
-                { icon: "🏆", text: "Clear the board in as few flips as possible to beat your best." },
+                {
+                  icon: "🏆",
+                  text: "Clear the board in as few flips as possible to beat your best.",
+                },
               ]}
             />
           </div>
           <p className="text-sm text-muted-foreground mt-1">
             Flips: <span className="font-semibold text-foreground">{flips}</span>
-            {best !== null && <> · Best: <span className="font-semibold text-foreground">{best}</span></>}
+            {best !== null && (
+              <>
+                {" "}
+                · Best: <span className="font-semibold text-foreground">{best}</span>
+              </>
+            )}
           </p>
         </div>
         <Button variant="ghost" onClick={reset} className="glass-card rounded-full gap-2">
