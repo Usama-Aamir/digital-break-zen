@@ -1,10 +1,12 @@
 import { useMood, MOOD_META, type Mood } from "@/lib/mood";
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 const ORDER: Mood[] = ["frustrated", "tired", "demotivated", "happy", "fun"];
 
 export function WelcomeGate() {
   const { mood, setMood, ready } = useMood();
+  const navigate = useNavigate();
   const [closing, setClosing] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -22,7 +24,10 @@ export function WelcomeGate() {
 
   const pick = (m: Mood) => {
     setClosing(true);
-    setTimeout(() => setMood(m), 350);
+    setTimeout(() => {
+      setMood(m);
+      navigate({ to: "/" });
+    }, 350);
   };
 
   return (
