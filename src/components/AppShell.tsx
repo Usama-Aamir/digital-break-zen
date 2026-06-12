@@ -23,8 +23,14 @@ const nav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
   const { mood, clearMood } = useMood();
   const meta = mood ? MOOD_META[mood] : null;
+
+  const handleChangeMood = () => {
+    clearMood();
+    navigate({ to: "/" });
+  };
 
   return (
     <div
