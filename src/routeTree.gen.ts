@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VacationRouteImport } from './routes/vacation'
+import { Route as SnakeRouteImport } from './routes/snake'
 import { Route as SmasherRouteImport } from './routes/smasher'
 import { Route as ShredderRouteImport } from './routes/shredder'
 import { Route as MelodyRouteImport } from './routes/melody'
@@ -22,6 +23,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const VacationRoute = VacationRouteImport.update({
   id: '/vacation',
   path: '/vacation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SnakeRoute = SnakeRouteImport.update({
+  id: '/snake',
+  path: '/snake',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SmasherRoute = SmasherRouteImport.update({
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/melody': typeof MelodyRoute
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
+  '/snake': typeof SnakeRoute
   '/vacation': typeof VacationRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/melody': typeof MelodyRoute
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
+  '/snake': typeof SnakeRoute
   '/vacation': typeof VacationRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/melody': typeof MelodyRoute
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
+  '/snake': typeof SnakeRoute
   '/vacation': typeof VacationRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/melody'
     | '/shredder'
     | '/smasher'
+    | '/snake'
     | '/vacation'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/melody'
     | '/shredder'
     | '/smasher'
+    | '/snake'
     | '/vacation'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/melody'
     | '/shredder'
     | '/smasher'
+    | '/snake'
     | '/vacation'
   fileRoutesById: FileRoutesById
 }
@@ -144,6 +156,7 @@ export interface RootRouteChildren {
   MelodyRoute: typeof MelodyRoute
   ShredderRoute: typeof ShredderRoute
   SmasherRoute: typeof SmasherRoute
+  SnakeRoute: typeof SnakeRoute
   VacationRoute: typeof VacationRoute
 }
 
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/vacation'
       fullPath: '/vacation'
       preLoaderRoute: typeof VacationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/snake': {
+      id: '/snake'
+      path: '/snake'
+      fullPath: '/snake'
+      preLoaderRoute: typeof SnakeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/smasher': {
@@ -224,6 +244,7 @@ const rootRouteChildren: RootRouteChildren = {
   MelodyRoute: MelodyRoute,
   ShredderRoute: ShredderRoute,
   SmasherRoute: SmasherRoute,
+  SnakeRoute: SnakeRoute,
   VacationRoute: VacationRoute,
 }
 export const routeTree = rootRouteImport

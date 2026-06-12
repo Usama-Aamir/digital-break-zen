@@ -8,7 +8,7 @@ import { CorporateTranslator } from "@/components/CorporateTranslator";
 import { AiVacation } from "@/components/AiVacation";
 import { HypeMan } from "@/components/HypeMan";
 import { ActiveListener } from "@/components/ActiveListener";
-import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles } from "lucide-react";
+import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles, Worm } from "lucide-react";
 import { useMood, MOOD_META } from "@/lib/mood";
 
 export const Route = createFileRoute("/")({
@@ -72,6 +72,13 @@ const GAMES = [
     desc: "Stamp corporate clichés as you hear them. Resets daily.",
     icon: Sparkles,
     gradient: "var(--gradient-mint)",
+  },
+  {
+    to: "/snake",
+    title: "ZenSnake",
+    desc: "A glowing, slow-paced take on classic Snake.",
+    icon: Worm,
+    gradient: "var(--gradient-lav)",
   },
 ] as const;
 
