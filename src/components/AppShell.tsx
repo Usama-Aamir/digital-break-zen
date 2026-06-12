@@ -49,7 +49,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2 shrink-0">
             {meta && (
               <button
-                onClick={clearMood}
+                onClick={handleChangeMood}
                 aria-label="Change mood"
                 title="Change mood"
                 className="flex items-center gap-1.5 rounded-full bg-white/70 hover:bg-white px-3 py-1.5 text-xs font-semibold text-foreground/80 shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-glow)] transition-all border border-white/70"
