@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { HowToPlay } from "@/components/HowToPlay";
 import { type Board, init, move, addRandom, hasMoves, tileStyle, SIZE } from "@/lib/game-2048";
+import { getItem, setItem } from "@/lib/safe-storage";
 
 export const Route = createFileRoute("/2048")({
   head: () => ({
@@ -28,14 +29,14 @@ function Game2048() {
   const [over, setOver] = useState(false);
 
   useEffect(() => {
-    const b = localStorage.getItem(BEST_KEY);
+    const b = getItem(BEST_KEY);
     if (b) setBest(parseInt(b, 10));
   }, []);
 
   useEffect(() => {
     if (score > best) {
       setBest(score);
-      localStorage.setItem(BEST_KEY, String(score));
+      setItem(BEST_KEY, String(score));
     }
   }, [score, best]);
 

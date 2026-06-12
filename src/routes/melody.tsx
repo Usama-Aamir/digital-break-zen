@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, RotateCcw } from "lucide-react";
 import { HowToPlay } from "@/components/HowToPlay";
+import { getItem, setItem } from "@/lib/safe-storage";
 
 export const Route = createFileRoute("/melody")({
   head: () => ({
@@ -36,16 +37,18 @@ function MelodyPage() {
   gridRef.current = grid;
 
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE);
+    const raw = getItem(STORAGE);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length === ROWS) setGrid(parsed);
-      } catch { /* noop */ }
+      } catch (err) {
+        console.warn("[Melody] Failed to parse saved grid:", err);
+      }
     }
   }, []);
   useEffect(() => {
-    localStorage.setItem(STORAGE, JSON.stringify(grid));
+    setItem(STORAGE, JSON.stringify(grid));
   }, [grid]);
 
   useEffect(() => {

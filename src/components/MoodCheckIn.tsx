@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Slider } from "@/components/ui/slider";
+import { getItem, setItem } from "@/lib/safe-storage";
 
 const MOODS = [
   { emoji: "😩", quote: "Tough mornings build legendary afternoons. One small win at a time." },
@@ -14,11 +15,11 @@ const KEY = "breakroom_mood";
 export function MoodCheckIn() {
   const [val, setVal] = useState(2);
   useEffect(() => {
-    const s = localStorage.getItem(KEY);
+    const s = getItem(KEY);
     if (s) setVal(parseInt(s, 10));
   }, []);
   useEffect(() => {
-    localStorage.setItem(KEY, String(val));
+    setItem(KEY, String(val));
   }, [val]);
   const mood = MOODS[val];
   return (

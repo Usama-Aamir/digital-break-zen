@@ -16,6 +16,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { HowToPlay } from "@/components/HowToPlay";
 import { type MatchTileData, ICON_KEYS, makeDeck } from "@/lib/game-match";
+import { getItem, setItem } from "@/lib/safe-storage";
 
 export const Route = createFileRoute("/match")({
   head: () => ({
@@ -53,7 +54,7 @@ function MatchPage() {
   const [best, setBest] = useState<number | null>(null);
 
   useEffect(() => {
-    const b = localStorage.getItem(BEST_KEY);
+    const b = getItem(BEST_KEY);
     if (b) setBest(parseInt(b, 10));
   }, []);
 
@@ -63,7 +64,7 @@ function MatchPage() {
     if (allMatched && tiles.length > 0) {
       if (best === null || flips < best) {
         setBest(flips);
-        localStorage.setItem(BEST_KEY, String(flips));
+        setItem(BEST_KEY, String(flips));
       }
     }
   }, [allMatched, flips, best, tiles.length]);

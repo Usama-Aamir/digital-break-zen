@@ -91,7 +91,7 @@ function VacationPage() {
       src.connect(filter).connect(gain).connect(ctx.destination);
       src.start();
       nodesRef.current = {
-        stop: () => { try { src.stop(); lfo.stop(); } catch { /* noop */ } },
+        stop: () => { try { src.stop(); lfo.stop(); } catch (err) { console.warn("[Vacation] Audio stop failed:", err); } },
       };
     } else if (sound === "rain") {
       filter.type = "highpass";
@@ -99,7 +99,7 @@ function VacationPage() {
       gain.gain.value = 0.12;
       src.connect(filter).connect(gain).connect(ctx.destination);
       src.start();
-      nodesRef.current = { stop: () => { try { src.stop(); } catch { /* noop */ } } };
+      nodesRef.current = { stop: () => { try { src.stop(); } catch (err) { console.warn("[Vacation] Audio stop failed:", err); } } };
     } else {
       filter.type = "bandpass";
       filter.frequency.value = 800;
@@ -107,7 +107,7 @@ function VacationPage() {
       gain.gain.value = 0.08;
       src.connect(filter).connect(gain).connect(ctx.destination);
       src.start();
-      nodesRef.current = { stop: () => { try { src.stop(); } catch { /* noop */ } } };
+      nodesRef.current = { stop: () => { try { src.stop(); } catch (err) { console.warn("[Vacation] Audio stop failed:", err); } } };
     }
   };
 

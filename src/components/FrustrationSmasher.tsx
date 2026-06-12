@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import { getItem, setItem } from "@/lib/safe-storage";
 
 const SOUND_KEY = "breakroom_smasher_muted_v1";
 const POPS = ["BOING!", "OOF!", "SQUISH!", "BONK!", "PLOP!", "WOBBLE!", "SPROING!"];
@@ -16,9 +17,7 @@ export function FrustrationSmasher({ full = false }: { full?: boolean }) {
   const squishTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    try {
-      setMuted(localStorage.getItem(SOUND_KEY) === "1");
-    } catch {}
+    setMuted(getItem(SOUND_KEY) === "1");
     return () => {
       if (squishTimer.current) window.clearTimeout(squishTimer.current);
     };
@@ -27,7 +26,7 @@ export function FrustrationSmasher({ full = false }: { full?: boolean }) {
   const toggleMute = () => {
     setMuted((m) => {
       const next = !m;
-      try { localStorage.setItem(SOUND_KEY, next ? "1" : "0"); } catch {}
+      setItem(SOUND_KEY, next ? "1" : "0");
       return next;
     });
   };
@@ -53,7 +52,9 @@ export function FrustrationSmasher({ full = false }: { full?: boolean }) {
       osc.connect(gain).connect(ctx.destination);
       osc.start(t0);
       osc.stop(t0 + 0.42);
-    } catch {}
+    } catch (err) {
+      console.warn("[FrustrationSmasher] Audio playback failed:", err);
+    }
   };
 
   const handleSmash = (e: React.MouseEvent<HTMLButtonElement>) => {

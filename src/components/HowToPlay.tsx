@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { HelpCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getItem, setItem } from "@/lib/safe-storage";
 
 export type HowToStep = { icon: string; text: string };
 
@@ -19,14 +20,12 @@ export function HowToPlay({ gameKey, title, steps, cta = "Let's Play" }: Props) 
 
   useEffect(() => {
     setMounted(true);
-    try {
-      if (!localStorage.getItem(storageKey)) setOpen(true);
-    } catch { /* noop */ }
+    if (!getItem(storageKey)) setOpen(true);
   }, [storageKey]);
 
   const close = () => {
     setOpen(false);
-    try { localStorage.setItem(storageKey, "1"); } catch { /* noop */ }
+    setItem(storageKey, "1");
   };
 
   return (
