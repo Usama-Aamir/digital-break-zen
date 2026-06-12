@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { RotateCcw, Volume2, VolumeX } from "lucide-react";
-import { HowToPlay } from "@/components/HowToPlay";
+import { GamePageHeader } from "@/components/GamePageHeader";
+import { getAudioContext } from "@/lib/audio";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 export const Route = createFileRoute("/bubbles")({
   head: () => ({
@@ -29,25 +31,12 @@ function makeBubbles(): Bubble[] {
 
 function BubblesPage() {
   const [bubbles, setBubbles] = useState<Bubble[]>(makeBubbles);
-  const [sound, setSound] = useState(true);
-  const audioCtx = useRef<AudioContext | null>(null);
-
-  useEffect(() => {
-    const s = localStorage.getItem("breakroom_bubbles_sound");
-    if (s) setSound(s === "1");
-  }, []);
-  useEffect(() => {
-    localStorage.setItem("breakroom_bubbles_sound", sound ? "1" : "0");
-  }, [sound]);
+  const [sound, setSound] = useLocalStorage("breakroom_bubbles_sound", true);
 
   const playPop = () => {
     if (!sound) return;
     try {
-      if (!audioCtx.current) {
-        audioCtx.current = new (window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      }
-      const ctx = audioCtx.current;
+      const ctx = getAudioContext();
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = "sine";
@@ -72,40 +61,33 @@ function BubblesPage() {
 
   return (
     <AppShell>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-display font-bold">Zen Bubble Wrap</h1>
-            <HowToPlay
-              gameKey="bubbles"
-              title="Zen Bubble Wrap"
-              steps={[
-                { icon: "👆", text: "Tap or click a bubble to pop it with a soft sound." },
-                { icon: "🔊", text: "Toggle sound off if you'd rather pop in silence." },
-                { icon: "♻️", text: "Hit Reset Wrap any time for a fresh sheet of bubbles." },
-              ]}
-            />
+      <GamePageHeader
+        title="Zen Bubble Wrap"
+        subtitle={`${remaining} bubbles left · pop away`}
+        gameKey="bubbles"
+        howToSteps={[
+          { icon: "👆", text: "Tap or click a bubble to pop it with a soft sound." },
+          { icon: "🔊", text: "Toggle sound off if you'd rather pop in silence." },
+          { icon: "♻️", text: "Hit Reset Wrap any time for a fresh sheet of bubbles." },
+        ]}
+        actions={
+          <div className="flex items-center gap-3 glass-card rounded-full px-4 py-2">
+            <span className="flex items-center gap-2 text-sm text-foreground/80">
+              {sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              Sound
+            </span>
+            <Switch checked={sound} onCheckedChange={setSound} />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setBubbles(makeBubbles())}
+              className="gap-2"
+            >
+              <RotateCcw className="h-4 w-4" /> Reset Wrap
+            </Button>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            {remaining} bubbles left · pop away
-          </p>
-        </div>
-        <div className="flex items-center gap-3 glass-card rounded-full px-4 py-2">
-          <span className="flex items-center gap-2 text-sm text-foreground/80">
-            {sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-            Sound
-          </span>
-          <Switch checked={sound} onCheckedChange={setSound} />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setBubbles(makeBubbles())}
-            className="gap-2"
-          >
-            <RotateCcw className="h-4 w-4" /> Reset Wrap
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="glass-card rounded-3xl p-4 sm:p-6">
         <div

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { useMood, type Mood } from "@/lib/mood";
+import { getAudioContext } from "@/lib/audio";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 const MUTE_KEY = "breakroom_companion_muted_v1";
 const COUNT_KEY = "breakroom_frustration_vented_v1";
@@ -81,7 +83,15 @@ const CONFIG: Record<Mood, MoodConfig> = {
   },
 };
 
-type Particle = { id: number; x: number; y: number; color: string; dx: number; dy: number; text?: string };
+type Particle = {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+  dx: number;
+  dy: number;
+  text?: string;
+};
 
 const CONFETTI_COLORS = [
   "oklch(0.85 0.15 25)",
@@ -98,20 +108,14 @@ export function MoodCompanion() {
   const effectiveMood: Mood = mood ?? "happy";
   const cfg = CONFIG[effectiveMood];
 
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useLocalStorage(MUTE_KEY, false);
   const [clicking, setClicking] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
-  const [ventCount, setVentCount] = useState(0);
-  const audioCtxRef = useRef<AudioContext | null>(null);
+  const [ventCount, setVentCount] = useLocalStorage(COUNT_KEY, 0);
   const particleIdRef = useRef(0);
   const clickTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    try {
-      setMuted(localStorage.getItem(MUTE_KEY) === "1");
-      const c = Number(localStorage.getItem(COUNT_KEY) || "0");
-      if (!Number.isNaN(c)) setVentCount(c);
-    } catch {}
     return () => {
       if (clickTimer.current) window.clearTimeout(clickTimer.current);
     };
@@ -124,30 +128,16 @@ export function MoodCompanion() {
     if (clickTimer.current) window.clearTimeout(clickTimer.current);
   }, [effectiveMood]);
 
-  const toggleMute = () => {
-    setMuted((m) => {
-      const next = !m;
-      try { localStorage.setItem(MUTE_KEY, next ? "1" : "0"); } catch {}
-      return next;
-    });
-  };
-
-  const getCtx = () => {
-    if (muted) return null;
-    try {
-      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
-      const ctx = audioCtxRef.current;
-      if (ctx.state === "suspended") ctx.resume();
-      return ctx;
-    } catch {
-      return null;
-    }
-  };
+  const toggleMute = () => setMuted((m) => !m);
 
   const playSound = (m: Mood) => {
-    const ctx = getCtx();
-    if (!ctx) return;
+    if (muted) return;
+    let ctx: AudioContext;
+    try {
+      ctx = getAudioContext();
+    } catch {
+      return;
+    }
     const t0 = ctx.currentTime;
 
     if (m === "frustrated") {
@@ -309,11 +299,7 @@ export function MoodCompanion() {
     playSound(effectiveMood);
 
     if (effectiveMood === "frustrated") {
-      setVentCount((c) => {
-        const next = c + 1;
-        try { localStorage.setItem(COUNT_KEY, String(next)); } catch {}
-        return next;
-      });
+      setVentCount((c) => c + 1);
     }
   };
 
@@ -398,7 +384,9 @@ export function MoodCompanion() {
       </button>
 
       <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
-        <span className="text-xs text-muted-foreground">{cfg.cta} — tap as many times as you like.</span>
+        <span className="text-xs text-muted-foreground">
+          {cfg.cta} — tap as many times as you like.
+        </span>
         {effectiveMood === "frustrated" && (
           <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-xs font-semibold text-foreground shadow-[var(--shadow-soft)] border border-white/70">
             Frustration Vented
@@ -491,8 +479,20 @@ function CompanionSvg({ cfg }: { cfg: MoodConfig }) {
       {/* eyes */}
       {cfg.mouth === "sleepy" ? (
         <>
-          <path d="M60 90 q8 -6 16 0" stroke="oklch(0.2 0.04 240)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-          <path d="M104 90 q8 -6 16 0" stroke="oklch(0.2 0.04 240)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <path
+            d="M60 90 q8 -6 16 0"
+            stroke="oklch(0.2 0.04 240)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <path
+            d="M104 90 q8 -6 16 0"
+            stroke="oklch(0.2 0.04 240)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            fill="none"
+          />
         </>
       ) : (
         <>
@@ -507,35 +507,68 @@ function CompanionSvg({ cfg }: { cfg: MoodConfig }) {
       <ellipse cx="130" cy="112" rx="12" ry="7" fill="oklch(0.85 0.13 25 / 0.45)" />
       {/* mouth */}
       {cfg.mouth === "worried" && (
-        <path d="M76 122 Q90 114 104 122" stroke="oklch(0.3 0.05 240)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path
+          d="M76 122 Q90 114 104 122"
+          stroke="oklch(0.3 0.05 240)"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          fill="none"
+        />
       )}
       {cfg.mouth === "sleepy" && (
         <ellipse cx="90" cy="124" rx="6" ry="4" fill="oklch(0.3 0.05 240)" />
       )}
       {cfg.mouth === "flat" && (
-        <path d="M78 124 L102 124" stroke="oklch(0.3 0.05 240)" strokeWidth="2.5" strokeLinecap="round" />
+        <path
+          d="M78 124 L102 124"
+          stroke="oklch(0.3 0.05 240)"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
       )}
       {cfg.mouth === "smile" && (
-        <path d="M74 118 Q90 134 106 118" stroke="oklch(0.3 0.05 240)" strokeWidth="3" strokeLinecap="round" fill="none" />
+        <path
+          d="M74 118 Q90 134 106 118"
+          stroke="oklch(0.3 0.05 240)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+        />
       )}
       {cfg.mouth === "open" && (
         <>
           <path d="M74 116 Q90 138 106 116 Z" fill="oklch(0.3 0.05 240)" />
-          <path d="M82 128 Q90 134 98 128" stroke="oklch(0.85 0.13 25)" strokeWidth="2" fill="none" strokeLinecap="round" />
+          <path
+            d="M82 128 Q90 134 98 128"
+            stroke="oklch(0.85 0.13 25)"
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+          />
         </>
       )}
       {/* accessories */}
       {cfg.accessory === "headphones" && (
         <g>
-          <path d="M30 78 Q90 8 150 78" stroke={cfg.bodyStroke} strokeWidth="5" fill="none" strokeLinecap="round" />
+          <path
+            d="M30 78 Q90 8 150 78"
+            stroke={cfg.bodyStroke}
+            strokeWidth="5"
+            fill="none"
+            strokeLinecap="round"
+          />
           <rect x="22" y="74" width="18" height="26" rx="6" fill="oklch(0.4 0.1 320)" />
           <rect x="140" y="74" width="18" height="26" rx="6" fill="oklch(0.4 0.1 320)" />
         </g>
       )}
       {cfg.accessory === "zzz" && (
         <g fill="oklch(0.5 0.06 290)" fontFamily="serif" fontWeight="bold">
-          <text x="138" y="48" fontSize="18">z</text>
-          <text x="150" y="36" fontSize="14">z</text>
+          <text x="138" y="48" fontSize="18">
+            z
+          </text>
+          <text x="150" y="36" fontSize="14">
+            z
+          </text>
         </g>
       )}
       {cfg.accessory === "sparkle" && (

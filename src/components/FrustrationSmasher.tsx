@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import { getAudioContext } from "@/lib/audio";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 const SOUND_KEY = "breakroom_smasher_muted_v1";
 const POPS = ["BOING!", "OOF!", "SQUISH!", "BONK!", "PLOP!", "WOBBLE!", "SPROING!"];
@@ -8,37 +10,24 @@ type Pop = { id: number; x: number; y: number; text: string; rot: number };
 
 export function FrustrationSmasher({ full = false }: { full?: boolean }) {
   const [count, setCount] = useState(0);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useLocalStorage(SOUND_KEY, false);
   const [squishing, setSquishing] = useState(false);
   const [pops, setPops] = useState<Pop[]>([]);
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const popIdRef = useRef(0);
   const squishTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    try {
-      setMuted(localStorage.getItem(SOUND_KEY) === "1");
-    } catch {}
     return () => {
       if (squishTimer.current) window.clearTimeout(squishTimer.current);
     };
   }, []);
 
-  const toggleMute = () => {
-    setMuted((m) => {
-      const next = !m;
-      try { localStorage.setItem(SOUND_KEY, next ? "1" : "0"); } catch {}
-      return next;
-    });
-  };
+  const toggleMute = () => setMuted((m) => !m);
 
   const playBoing = () => {
     if (muted) return;
     try {
-      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
-      const ctx = audioCtxRef.current;
-      if (ctx.state === "suspended") ctx.resume();
+      const ctx = getAudioContext();
       const t0 = ctx.currentTime;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -91,9 +80,7 @@ export function FrustrationSmasher({ full = false }: { full?: boolean }) {
     >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
-          <h3 className="font-display font-bold text-lg text-foreground">
-            Frustration Smasher
-          </h3>
+          <h3 className="font-display font-bold text-lg text-foreground">Frustration Smasher</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Need a quick reset? Give the frustration blob a squish.
           </p>
@@ -124,9 +111,7 @@ export function FrustrationSmasher({ full = false }: { full?: boolean }) {
         <div
           className="relative"
           style={{
-            transform: squishing
-              ? "scale(1.15, 0.78) translateY(8px)"
-              : "scale(1, 1)",
+            transform: squishing ? "scale(1.15, 0.78) translateY(8px)" : "scale(1, 1)",
             transition: "transform 280ms cubic-bezier(.34,1.56,.64,1)",
             animation: squishing ? undefined : "blob-sway 4s ease-in-out infinite",
             transformOrigin: "50% 100%",
@@ -204,13 +189,39 @@ function BlobSvg() {
       <circle cx="70" cy="85" r="2" fill="white" />
       <circle cx="114" cy="85" r="2" fill="white" />
       {/* worried mouth */}
-      <path d="M76 120 Q90 112 104 120" stroke="oklch(0.3 0.05 240)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path
+        d="M76 120 Q90 112 104 120"
+        stroke="oklch(0.3 0.05 240)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        fill="none"
+      />
       {/* tiny coffee cup */}
       <g transform="translate(118 128)">
-        <rect x="0" y="0" width="18" height="14" rx="2" fill="white" stroke="oklch(0.55 0.07 220)" strokeWidth="1.4" />
-        <path d="M18 3 q5 0 5 4 t-5 4" fill="none" stroke="oklch(0.55 0.07 220)" strokeWidth="1.4" />
+        <rect
+          x="0"
+          y="0"
+          width="18"
+          height="14"
+          rx="2"
+          fill="white"
+          stroke="oklch(0.55 0.07 220)"
+          strokeWidth="1.4"
+        />
+        <path
+          d="M18 3 q5 0 5 4 t-5 4"
+          fill="none"
+          stroke="oklch(0.55 0.07 220)"
+          strokeWidth="1.4"
+        />
         <rect x="3" y="2.5" width="12" height="3" rx="1" fill="oklch(0.45 0.08 50)" />
-        <path d="M5 -3 q1 -3 2 0 M9 -4 q1 -3 2 0 M13 -3 q1 -3 2 0" stroke="oklch(0.7 0.04 240)" strokeWidth="1" fill="none" strokeLinecap="round" />
+        <path
+          d="M5 -3 q1 -3 2 0 M9 -4 q1 -3 2 0 M13 -3 q1 -3 2 0"
+          stroke="oklch(0.7 0.04 240)"
+          strokeWidth="1"
+          fill="none"
+          strokeLinecap="round"
+        />
       </g>
     </svg>
   );

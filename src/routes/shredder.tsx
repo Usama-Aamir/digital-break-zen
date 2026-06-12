@@ -3,7 +3,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Send, Scissors } from "lucide-react";
-import { HowToPlay } from "@/components/HowToPlay";
+import { GamePageHeader } from "@/components/GamePageHeader";
 
 export const Route = createFileRoute("/shredder")({
   head: () => ({
@@ -28,56 +28,52 @@ function ShredderPage() {
     setReleased(text);
     setText("");
     setAnimating(true);
-    window.setTimeout(() => {
-      setReleased(null);
-      setAnimating(false);
-    }, mode === "shred" ? 1600 : 2400);
+    window.setTimeout(
+      () => {
+        setReleased(null);
+        setAnimating(false);
+      },
+      mode === "shred" ? 1600 : 2400,
+    );
   };
 
   return (
     <AppShell>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-display font-bold">The Digital Shredder</h1>
-            <HowToPlay
-              gameKey="shredder"
-              title="The Digital Shredder"
-              steps={[
-                { icon: "✍️", text: "Type out whatever's frustrating you in the text box." },
-                { icon: "🗑️", text: "Pick Shred or Fly away, then hit 'Let it go'." },
-                { icon: "🔒", text: "Nothing is saved — your words vanish with the animation." },
-              ]}
-              cta="Got it!"
-            />
+      <GamePageHeader
+        title="The Digital Shredder"
+        subtitle="Need to vent? Type it out. We promise — nothing is saved, anywhere."
+        gameKey="shredder"
+        howToSteps={[
+          { icon: "✍️", text: "Type out whatever's frustrating you in the text box." },
+          { icon: "🗑️", text: "Pick Shred or Fly away, then hit 'Let it go'." },
+          { icon: "🔒", text: "Nothing is saved — your words vanish with the animation." },
+        ]}
+        howToCta="Got it!"
+        actions={
+          <div className="flex items-center gap-1 glass-card rounded-full p-1">
+            <button
+              onClick={() => setMode("shred")}
+              className={`text-sm rounded-full px-3 py-1.5 font-medium transition-all flex items-center gap-1.5 ${
+                mode === "shred"
+                  ? "bg-[image:var(--gradient-peach)] text-foreground shadow-[var(--shadow-soft)]"
+                  : "text-muted-foreground"
+              }`}
+            >
+              <Scissors className="h-3.5 w-3.5" /> Shred
+            </button>
+            <button
+              onClick={() => setMode("fly")}
+              className={`text-sm rounded-full px-3 py-1.5 font-medium transition-all flex items-center gap-1.5 ${
+                mode === "fly"
+                  ? "bg-[image:var(--gradient-lav)] text-foreground shadow-[var(--shadow-soft)]"
+                  : "text-muted-foreground"
+              }`}
+            >
+              <Send className="h-3.5 w-3.5" /> Fly away
+            </button>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Need to vent? Type it out. We promise — nothing is saved, anywhere.
-          </p>
-        </div>
-        <div className="flex items-center gap-1 glass-card rounded-full p-1">
-          <button
-            onClick={() => setMode("shred")}
-            className={`text-sm rounded-full px-3 py-1.5 font-medium transition-all flex items-center gap-1.5 ${
-              mode === "shred"
-                ? "bg-[image:var(--gradient-peach)] text-foreground shadow-[var(--shadow-soft)]"
-                : "text-muted-foreground"
-            }`}
-          >
-            <Scissors className="h-3.5 w-3.5" /> Shred
-          </button>
-          <button
-            onClick={() => setMode("fly")}
-            className={`text-sm rounded-full px-3 py-1.5 font-medium transition-all flex items-center gap-1.5 ${
-              mode === "fly"
-                ? "bg-[image:var(--gradient-lav)] text-foreground shadow-[var(--shadow-soft)]"
-                : "text-muted-foreground"
-            }`}
-          >
-            <Send className="h-3.5 w-3.5" /> Fly away
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="relative glass-card rounded-3xl p-6 overflow-hidden min-h-[420px]">
         {!animating && (
@@ -90,7 +86,11 @@ function ShredderPage() {
               className="w-full resize-none bg-white/60 rounded-2xl p-4 text-foreground placeholder:text-muted-foreground/70 outline-none focus:ring-2 focus:ring-[var(--lavender)] font-sans"
             />
             <div className="mt-4 flex justify-end">
-              <Button onClick={letItGo} disabled={!text.trim()} className="gap-2 bg-[image:var(--gradient-hero)] text-foreground hover:opacity-90">
+              <Button
+                onClick={letItGo}
+                disabled={!text.trim()}
+                className="gap-2 bg-[image:var(--gradient-hero)] text-foreground hover:opacity-90"
+              >
                 {mode === "shred" ? <Scissors className="h-4 w-4" /> : <Send className="h-4 w-4" />}
                 Let it go
               </Button>
@@ -114,7 +114,10 @@ function ShredderPage() {
                   }}
                 >
                   <div className="whitespace-pre-wrap break-all leading-tight">
-                    {released.split("").filter((_, idx) => idx % 14 === i).join("")}
+                    {released
+                      .split("")
+                      .filter((_, idx) => idx % 14 === i)
+                      .join("")}
                   </div>
                 </div>
               ))}
@@ -173,7 +176,13 @@ function ShredderPage() {
 function PaperPlane() {
   return (
     <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
-      <path d="M4 36 L68 8 L48 64 L36 44 L4 36 Z" fill="url(#g)" stroke="oklch(0.6 0.06 270)" strokeWidth="1.2" strokeLinejoin="round" />
+      <path
+        d="M4 36 L68 8 L48 64 L36 44 L4 36 Z"
+        fill="url(#g)"
+        stroke="oklch(0.6 0.06 270)"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
       <path d="M36 44 L68 8" stroke="oklch(0.6 0.06 270 / 0.6)" strokeWidth="1" />
       <defs>
         <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">

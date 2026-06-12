@@ -14,8 +14,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { HowToPlay } from "@/components/HowToPlay";
-import { type MatchTileData, ICON_KEYS, makeDeck } from "@/lib/game-match";
+import { GamePageHeader } from "@/components/GamePageHeader";
+import { type MatchTileData, makeDeck } from "@/lib/game-match";
 
 export const Route = createFileRoute("/match")({
   head: () => ({
@@ -106,37 +106,30 @@ function MatchPage() {
 
   return (
     <AppShell>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-display font-bold">Pastel Match</h1>
-            <HowToPlay
-              gameKey="match"
-              title="Pastel Match"
-              steps={[
-                { icon: "🃏", text: "Tap a card to flip it and reveal the cute icon underneath." },
-                { icon: "🔁", text: "Find two matching icons in a row to keep them face-up." },
-                {
-                  icon: "🏆",
-                  text: "Clear the board in as few flips as possible to beat your best.",
-                },
-              ]}
-            />
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Flips: <span className="font-semibold text-foreground">{flips}</span>
-            {best !== null && (
-              <>
-                {" "}
-                · Best: <span className="font-semibold text-foreground">{best}</span>
-              </>
-            )}
-          </p>
-        </div>
-        <Button variant="ghost" onClick={reset} className="glass-card rounded-full gap-2">
-          <RotateCcw className="h-4 w-4" /> New game
-        </Button>
-      </div>
+      <GamePageHeader
+        title="Pastel Match"
+        subtitle=""
+        gameKey="match"
+        howToSteps={[
+          { icon: "🃏", text: "Tap a card to flip it and reveal the cute icon underneath." },
+          { icon: "🔁", text: "Find two matching icons in a row to keep them face-up." },
+          { icon: "🏆", text: "Clear the board in as few flips as possible to beat your best." },
+        ]}
+        actions={
+          <Button variant="ghost" onClick={reset} className="glass-card rounded-full gap-2">
+            <RotateCcw className="h-4 w-4" /> New game
+          </Button>
+        }
+      />
+      <p className="text-sm text-muted-foreground -mt-4 mb-4">
+        Flips: <span className="font-semibold text-foreground">{flips}</span>
+        {best !== null && (
+          <>
+            {" "}
+            · Best: <span className="font-semibold text-foreground">{best}</span>
+          </>
+        )}
+      </p>
 
       {allMatched && (
         <div className="glass-card rounded-3xl p-4 mb-4 text-center text-sm">

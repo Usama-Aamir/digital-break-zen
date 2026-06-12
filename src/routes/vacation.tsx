@@ -3,13 +3,17 @@ import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Volume2, VolumeX, Waves, CloudRain, Trees } from "lucide-react";
-import { HowToPlay } from "@/components/HowToPlay";
+import { GamePageHeader } from "@/components/GamePageHeader";
+import { getAudioContext } from "@/lib/audio";
 
 export const Route = createFileRoute("/vacation")({
   head: () => ({
     meta: [
       { title: "Desk Vacation — The Digital Breakroom" },
-      { name: "description", content: "A virtual window with calming scenery and gentle ambient sound." },
+      {
+        name: "description",
+        content: "A virtual window with calming scenery and gentle ambient sound.",
+      },
     ],
   }),
   component: VacationPage,
@@ -18,7 +22,10 @@ export const Route = createFileRoute("/vacation")({
 type Scene = "beach" | "mountain" | "forest";
 type Sound = "waves" | "rain" | "forest";
 
-const SCENES: Record<Scene, { label: string; sky: string; mid: string; ground: string; sound: Sound }> = {
+const SCENES: Record<
+  Scene,
+  { label: string; sky: string; mid: string; ground: string; sound: Sound }
+> = {
   beach: {
     label: "Sunset Beach",
     sky: "linear-gradient(180deg, oklch(0.88 0.07 50) 0%, oklch(0.85 0.09 25) 60%, oklch(0.78 0.1 340) 100%)",
@@ -45,7 +52,6 @@ const SCENES: Record<Scene, { label: string; sky: string; mid: string; ground: s
 function VacationPage() {
   const [scene, setScene] = useState<Scene>("beach");
   const [playing, setPlaying] = useState(false);
-  const ctxRef = useRef<AudioContext | null>(null);
   const nodesRef = useRef<{ stop: () => void } | null>(null);
 
   useEffect(() => {
@@ -60,11 +66,7 @@ function VacationPage() {
 
   const startSound = (sound: Sound) => {
     stopSound();
-    if (!ctxRef.current) {
-      ctxRef.current = new (window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    }
-    const ctx = ctxRef.current;
+    const ctx = getAudioContext();
 
     // White noise buffer
     const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
@@ -91,7 +93,14 @@ function VacationPage() {
       src.connect(filter).connect(gain).connect(ctx.destination);
       src.start();
       nodesRef.current = {
-        stop: () => { try { src.stop(); lfo.stop(); } catch { /* noop */ } },
+        stop: () => {
+          try {
+            src.stop();
+            lfo.stop();
+          } catch {
+            /* noop */
+          }
+        },
       };
     } else if (sound === "rain") {
       filter.type = "highpass";
@@ -99,7 +108,15 @@ function VacationPage() {
       gain.gain.value = 0.12;
       src.connect(filter).connect(gain).connect(ctx.destination);
       src.start();
-      nodesRef.current = { stop: () => { try { src.stop(); } catch { /* noop */ } } };
+      nodesRef.current = {
+        stop: () => {
+          try {
+            src.stop();
+          } catch {
+            /* noop */
+          }
+        },
+      };
     } else {
       filter.type = "bandpass";
       filter.frequency.value = 800;
@@ -107,7 +124,15 @@ function VacationPage() {
       gain.gain.value = 0.08;
       src.connect(filter).connect(gain).connect(ctx.destination);
       src.start();
-      nodesRef.current = { stop: () => { try { src.stop(); } catch { /* noop */ } } };
+      nodesRef.current = {
+        stop: () => {
+          try {
+            src.stop();
+          } catch {
+            /* noop */
+          }
+        },
+      };
     }
   };
 
@@ -131,45 +156,38 @@ function VacationPage() {
 
   return (
     <AppShell>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-display font-bold">Desk Vacation</h1>
-            <HowToPlay
-              gameKey="vacation"
-              title="Desk Vacation"
-              steps={[
-                { icon: "🏝️", text: "Pick a scene — Sunset Beach, Alpine Dawn, or Mossy Forest." },
-                { icon: "🔊", text: "Tap the speaker to play matching ambient sounds." },
-                { icon: "👀", text: "Lean back, look out the window, breathe for a minute." },
-              ]}
-              cta="Take me there"
-            />
+      <GamePageHeader
+        title="Desk Vacation"
+        subtitle={`Look out the window for a minute. ${cfg.label}.`}
+        gameKey="vacation"
+        howToSteps={[
+          { icon: "🏝️", text: "Pick a scene — Sunset Beach, Alpine Dawn, or Mossy Forest." },
+          { icon: "🔊", text: "Tap the speaker to play matching ambient sounds." },
+          { icon: "👀", text: "Lean back, look out the window, breathe for a minute." },
+        ]}
+        howToCta="Take me there"
+        actions={
+          <div className="flex items-center gap-2 glass-card rounded-full px-3 py-2">
+            {(Object.keys(SCENES) as Scene[]).map((s) => (
+              <button
+                key={s}
+                onClick={() => switchScene(s)}
+                className={`text-xs sm:text-sm rounded-full px-3 py-1.5 font-medium transition-all ${
+                  scene === s
+                    ? "bg-[image:var(--gradient-mint)] text-foreground shadow-[var(--shadow-soft)]"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/40"
+                }`}
+              >
+                {SCENES[s].label}
+              </button>
+            ))}
+            <Button variant="ghost" size="sm" onClick={toggleAudio} className="gap-2">
+              {playing ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              <ICON className="h-4 w-4" />
+            </Button>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Look out the window for a minute. {cfg.label}.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 glass-card rounded-full px-3 py-2">
-          {(Object.keys(SCENES) as Scene[]).map((s) => (
-            <button
-              key={s}
-              onClick={() => switchScene(s)}
-              className={`text-xs sm:text-sm rounded-full px-3 py-1.5 font-medium transition-all ${
-                scene === s
-                  ? "bg-[image:var(--gradient-mint)] text-foreground shadow-[var(--shadow-soft)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-white/40"
-              }`}
-            >
-              {SCENES[s].label}
-            </button>
-          ))}
-          <Button variant="ghost" size="sm" onClick={toggleAudio} className="gap-2">
-            {playing ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-            <ICON className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       <div
         className="relative rounded-3xl overflow-hidden h-[70vh] glass-card"
@@ -183,17 +201,36 @@ function VacationPage() {
               scene === "beach"
                 ? "radial-gradient(circle, oklch(0.96 0.12 75), oklch(0.85 0.15 50))"
                 : scene === "mountain"
-                ? "radial-gradient(circle, oklch(0.97 0.02 280), oklch(0.88 0.04 280))"
-                : "radial-gradient(circle, oklch(0.95 0.08 140), oklch(0.85 0.1 130))",
+                  ? "radial-gradient(circle, oklch(0.97 0.02 280), oklch(0.88 0.04 280))"
+                  : "radial-gradient(circle, oklch(0.95 0.08 140), oklch(0.85 0.1 130))",
             boxShadow: "0 0 80px oklch(1 0.1 80 / 0.5)",
           }}
         />
         {/* Mid haze */}
         <div className="absolute inset-0" style={{ background: cfg.mid }} />
         {/* Drifting clouds */}
-        <Cloud className="absolute top-[12%]" style={{ left: "-20%", animation: "drift 60s linear infinite" }} />
-        <Cloud className="absolute top-[20%]" style={{ left: "-30%", animation: "drift 90s linear infinite", animationDelay: "-30s", transform: "scale(0.7)" }} />
-        <Cloud className="absolute top-[8%]" style={{ left: "-25%", animation: "drift 75s linear infinite", animationDelay: "-50s", transform: "scale(1.2)" }} />
+        <Cloud
+          className="absolute top-[12%]"
+          style={{ left: "-20%", animation: "drift 60s linear infinite" }}
+        />
+        <Cloud
+          className="absolute top-[20%]"
+          style={{
+            left: "-30%",
+            animation: "drift 90s linear infinite",
+            animationDelay: "-30s",
+            transform: "scale(0.7)",
+          }}
+        />
+        <Cloud
+          className="absolute top-[8%]"
+          style={{
+            left: "-25%",
+            animation: "drift 75s linear infinite",
+            animationDelay: "-50s",
+            transform: "scale(1.2)",
+          }}
+        />
         {/* Ground */}
         <div className="absolute bottom-0 left-0 right-0 h-1/3" style={{ background: cfg.ground }}>
           {scene === "beach" && (
@@ -208,7 +245,10 @@ function VacationPage() {
           )}
         </div>
         {/* Window frame */}
-        <div className="absolute inset-0 pointer-events-none rounded-3xl border-[12px] border-white/40" style={{ boxShadow: "inset 0 0 80px oklch(0 0 0 / 0.12)" }} />
+        <div
+          className="absolute inset-0 pointer-events-none rounded-3xl border-[12px] border-white/40"
+          style={{ boxShadow: "inset 0 0 80px oklch(0 0 0 / 0.12)" }}
+        />
         <div className="absolute inset-y-0 left-1/2 w-2 -translate-x-1/2 bg-white/40 pointer-events-none" />
         <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 bg-white/40 pointer-events-none" />
       </div>

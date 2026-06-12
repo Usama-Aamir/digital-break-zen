@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Sparkles } from "lucide-react";
-import { HowToPlay } from "@/components/HowToPlay";
+import { GamePageHeader } from "@/components/GamePageHeader";
 import { type Saved, checkBingo, newBoard, todayKey } from "@/lib/game-bingo";
 
 export const Route = createFileRoute("/bingo")({
@@ -57,38 +57,28 @@ function BingoPage() {
 
   return (
     <AppShell>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-display font-bold">Office Bingo</h1>
-            <HowToPlay
-              gameKey="bingo"
-              title="Office Bingo"
-              steps={[
-                {
-                  icon: "👂",
-                  text: "Listen for these classic corporate phrases on your next call.",
-                },
-                { icon: "✅", text: "Tap a square to stamp it with a pastel marker." },
-                { icon: "🎉", text: "Five in a row wins. Your card auto-saves until tomorrow." },
-              ]}
-            />
+      <GamePageHeader
+        title="Office Bingo"
+        subtitle="Stamp a square when you hear it on a call today. Board resets daily."
+        gameKey="bingo"
+        howToSteps={[
+          { icon: "👂", text: "Listen for these classic corporate phrases on your next call." },
+          { icon: "✅", text: "Tap a square to stamp it with a pastel marker." },
+          { icon: "🎉", text: "Five in a row wins. Your card auto-saves until tomorrow." },
+        ]}
+        actions={
+          <div className="flex items-center gap-2 glass-card rounded-full px-3 py-2">
+            {bingo && (
+              <span className="text-sm font-semibold text-foreground flex items-center gap-1 pr-2">
+                <Sparkles className="h-4 w-4" /> BINGO!
+              </span>
+            )}
+            <Button variant="ghost" size="sm" onClick={resetBoard} className="gap-2">
+              <RotateCcw className="h-4 w-4" /> New card
+            </Button>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Stamp a square when you hear it on a call today. Board resets daily.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 glass-card rounded-full px-3 py-2">
-          {bingo && (
-            <span className="text-sm font-semibold text-foreground flex items-center gap-1 pr-2">
-              <Sparkles className="h-4 w-4" /> BINGO!
-            </span>
-          )}
-          <Button variant="ghost" size="sm" onClick={resetBoard} className="gap-2">
-            <RotateCcw className="h-4 w-4" /> New card
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="glass-card rounded-3xl p-3 sm:p-5">
         <div className="grid grid-cols-5 gap-2 sm:gap-3">
