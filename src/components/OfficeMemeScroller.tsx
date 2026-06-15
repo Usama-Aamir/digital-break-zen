@@ -1,20 +1,7 @@
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useLanguage } from "@/lib/language";
-
-interface Meme {
-  title: string;
-  url: string;
-  postLink: string;
-  subreddit: string;
-  author: string;
-  nsfw: boolean;
-  spoiler: boolean;
-}
-
-interface MemeApiResponse {
-  memes: Meme[];
-}
+import { getOfficeMemes, type Meme } from "@/lib/memes.functions";
 
 export function OfficeMemeScroller() {
   const { t } = useLanguage();
@@ -28,19 +15,10 @@ export function OfficeMemeScroller() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("https://meme-api.com/gimme/workmemes/50");
-        if (!response.ok) {
-          throw new Error("Failed to fetch memes");
-        }
-        const data: MemeApiResponse = await response.json();
-        
-        // Filter out unsafe items defensively
-        const safeMemes = data.memes.filter(
-          (meme) => !meme.nsfw && !meme.spoiler && meme.url
-        );
-        
-        setMemes(safeMemes);
+        const result = await getOfficeMemes();
+        setMemes(result.memes);
       } catch (err) {
+        console.error("[OfficeMemeScroller] Failed to load memes:", err);
         setError(err instanceof Error ? err.message : "Failed to load memes");
       } finally {
         setLoading(false);
@@ -50,16 +28,34 @@ export function OfficeMemeScroller() {
     fetchMemes();
   }, []);
 
-  const toggleLike = (url: string) => {
+  const toggleLike = (id: string) => {
     setLikedMemes((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(url)) {
-        newSet.delete(url);
+      if (newSet.has(id)) {
+        newSet.delete(id);
       } else {
-        newSet.add(url);
+        newSet.add(id);
       }
       return newSet;
     });
+  };
+
+  const handleRetry = () => {
+    setLikedMemes(new Set());
+    const fetchMemes = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await getOfficeMemes();
+        setMemes(result.memes);
+      } catch (err) {
+        console.error("[OfficeMemeScroller] Failed to load memes on retry:", err);
+        setError(err instanceof Error ? err.message : "Failed to load memes");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMemes();
   };
 
   if (loading) {
@@ -97,7 +93,7 @@ export function OfficeMemeScroller() {
           <div className="text-center">
             <p className="text-foreground/80 mb-4">{t("memeLoadError")}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={handleRetry}
               className="px-4 py-2 bg-white/70 rounded-xl hover:bg-white transition-all shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-glow)] text-sm font-semibold text-foreground/80"
             >
               {t("tryAgain")}
@@ -135,16 +131,24 @@ export function OfficeMemeScroller() {
       <div className="h-[75vh] md:h-[600px] overflow-y-auto snap-y snap-mandatory overscroll-contain rounded-2xl">
         {memes.map((meme, index) => (
           <div
-            key={`${meme.url}-${index}`}
+            key={meme.id}
             className="snap-start h-full mb-4 last:mb-0"
           >
             <div className="relative h-full rounded-2xl overflow-hidden bg-white/20">
-              <img
-                src={meme.url}
-                alt={meme.title || "Office meme"}
-                className="w-full h-full object-contain"
-                loading="lazy"
-              />
+              {meme.imageUrl ? (
+                <img
+                  src={meme.imageUrl}
+                  alt={meme.title || "Office meme"}
+                  className="w-full h-full object-contain"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center p-8 bg-gradient-to-br from-white/30 to-white/10">
+                  <p className="text-foreground text-center text-lg font-medium">
+                    {meme.title}
+                  </p>
+                </div>
+              )}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
@@ -160,13 +164,13 @@ export function OfficeMemeScroller() {
                     )}
                   </div>
                   <button
-                    onClick={() => toggleLike(meme.url)}
+                    onClick={() => toggleLike(meme.id)}
                     className="ml-3 flex-shrink-0 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all"
-                    aria-label={likedMemes.has(meme.url) ? t("liked") : t("like")}
+                    aria-label={likedMemes.has(meme.id) ? t("liked") : t("like")}
                   >
                     <Heart
                       className={`h-5 w-5 ${
-                        likedMemes.has(meme.url)
+                        likedMemes.has(meme.id)
                           ? "fill-red-500 text-red-500"
                           : "text-white"
                       }`}
