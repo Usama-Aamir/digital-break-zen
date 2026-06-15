@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Slider } from "@/components/ui/slider";
+import { useLanguage } from "@/lib/language";
 
 const MOODS = [
   { emoji: "😩", quote: "Tough mornings build legendary afternoons. One small win at a time." },
@@ -12,6 +13,7 @@ const MOODS = [
 const KEY = "breakroom_mood";
 
 export function MoodCheckIn() {
+  const { t } = useLanguage();
   const [val, setVal] = useState(2);
   useEffect(() => {
     const s = localStorage.getItem(KEY);
@@ -24,7 +26,7 @@ export function MoodCheckIn() {
   return (
     <div className="glass-card rounded-3xl p-6 flex flex-col gap-4">
       <h3 className="text-sm font-semibold text-muted-foreground tracking-wide uppercase">
-        Daily Mood Check-In
+        {t("moodHeading")}
       </h3>
       <div className="flex items-center justify-center gap-4">
         <span className="text-6xl animate-float-soft drop-shadow-sm select-none">
@@ -40,8 +42,8 @@ export function MoodCheckIn() {
         className="my-2"
       />
       <div className="flex justify-between text-xs text-muted-foreground -mt-2">
-        <span>rough</span>
-        <span>glowing</span>
+        <span>{t("moodSubtitle")}</span>
+        <span>{t("moodSubtitleHigh")}</span>
       </div>
       <p className="text-sm text-foreground/80 text-center italic min-h-[3rem]">
         "{mood.quote}"

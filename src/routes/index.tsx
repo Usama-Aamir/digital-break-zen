@@ -9,7 +9,8 @@ import { AiVacation } from "@/components/AiVacation";
 import { HypeMan } from "@/components/HypeMan";
 import { ActiveListener } from "@/components/ActiveListener";
 import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles, Worm } from "lucide-react";
-import { useMood, MOOD_META } from "@/lib/mood";
+import { useMood, useLocalizedMoodMeta } from "@/lib/mood";
+import { useLanguage } from "@/lib/language";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -84,7 +85,8 @@ const GAMES = [
 
 function Index() {
   const { mood } = useMood();
-  const meta = mood ? MOOD_META[mood] : null;
+  const meta = useLocalizedMoodMeta(mood);
+  const { t } = useLanguage();
   const featured = new Set(meta?.featured ?? []);
   const orderedGames = meta
     ? [
@@ -97,7 +99,7 @@ function Index() {
     <AppShell>
       <section className="text-center mb-10 mt-2">
         <span className="inline-block text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-white/50 rounded-full px-3 py-1 mb-4">
-          {meta ? `${meta.emoji} feeling ${meta.label.toLowerCase()}` : "welcome back"}
+          {meta ? `${meta.emoji} ${t("feeling")} ${meta.label.toLowerCase()}` : t("welcomeBack")}
         </span>
         <h1 className="text-4xl sm:text-5xl font-display font-bold text-foreground">
           {meta ? (
@@ -109,15 +111,15 @@ function Index() {
             </>
           ) : (
             <>
-              A little pocket of calm
+              {t("pocketOfCalm")}
               <span className="block bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">
-                between meetings.
+                {t("betweenMeetings")}
               </span>
             </>
           )}
         </h1>
         <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-          Pick a tiny game, take a breath, check in with yourself. No timers, no pressure.
+          {t("pickGame")}
         </p>
       </section>
 
@@ -158,7 +160,7 @@ function Index() {
             >
               {isFeatured && (
                 <span className="absolute -top-2 -right-2 text-[10px] font-bold uppercase tracking-wider bg-white/90 rounded-full px-2.5 py-1 shadow-[var(--shadow-soft)] text-foreground/80">
-                  ✨ for you
+                  {t("forYou")}
                 </span>
               )}
               <div
@@ -172,7 +174,7 @@ function Index() {
                 <p className="text-sm text-muted-foreground mt-1">{g.desc}</p>
               </div>
               <span className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-foreground/70 group-hover:gap-2 transition-all">
-                Open <ArrowRight className="h-4 w-4" />
+                {t("open")} <ArrowRight className="h-4 w-4" />
               </span>
             </Link>
           );

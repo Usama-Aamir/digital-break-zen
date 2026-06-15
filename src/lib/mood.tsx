@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useLanguage } from "./language";
 
 export type Mood = "frustrated" | "tired" | "demotivated" | "happy" | "fun";
 
@@ -17,7 +18,7 @@ export const MOOD_META: Record<Mood, {
     dot: "oklch(0.7 0.15 25)",
     bg: "linear-gradient(180deg, oklch(0.94 0.04 230) 0%, oklch(0.93 0.06 170) 100%)",
     headline: "Take a deep breath.",
-    subhead: "Let’s get rid of that tension.",
+    subhead: "Let's get rid of that tension.",
     featured: ["/shredder", "/bubbles"],
   },
   tired: {
@@ -57,6 +58,16 @@ export const MOOD_META: Record<Mood, {
     featured: ["/melody", "/bingo"],
   },
 };
+
+export function useLocalizedMoodMeta(mood: Mood | null) {
+  const { moodLabel } = useLanguage();
+  if (!mood) return null;
+  const base = MOOD_META[mood];
+  return {
+    ...base,
+    label: moodLabel(mood),
+  };
+}
 
 const KEY = "breakroom_mood_v1";
 

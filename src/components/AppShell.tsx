@@ -7,7 +7,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useMood, MOOD_META } from "@/lib/mood";
+import { useMood, useLocalizedMoodMeta } from "@/lib/mood";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/lib/language";
 
 const nav = [
   { to: "/", label: "Home", icon: Home },
@@ -25,7 +27,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { mood, clearMood } = useMood();
-  const meta = mood ? MOOD_META[mood] : null;
+  const meta = useLocalizedMoodMeta(mood);
+  const { t } = useLanguage();
 
   const handleChangeMood = () => {
     clearMood();
@@ -47,6 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
 
           <div className="flex items-center gap-2 shrink-0">
+            <LanguageSwitcher />
             {meta && (
               <button
                 onClick={handleChangeMood}
@@ -100,7 +104,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
       <main className="flex-1 px-4 sm:px-6 py-8 max-w-6xl mx-auto w-full">{children}</main>
       <footer className="py-6 text-center text-xs text-muted-foreground">
-        Take a breath. You're doing great. 🌿
+        {t("takeBreath")}
       </footer>
     </div>
   );

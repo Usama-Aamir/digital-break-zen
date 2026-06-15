@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { MoodProvider } from "../lib/mood";
 import { WelcomeGate } from "../components/WelcomeGate";
+import { LanguageProvider } from "../lib/language";
+import { LanguageGate } from "../components/LanguageGate";
 
 function NotFoundComponent() {
   return (
@@ -129,11 +131,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MoodProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <WelcomeGate />
-      </MoodProvider>
+      <LanguageProvider>
+        <MoodProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <LanguageGate />
+          <WelcomeGate />
+        </MoodProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }
