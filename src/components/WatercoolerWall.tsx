@@ -201,43 +201,41 @@ export function WatercoolerWall() {
       </p>
 
       {/* Composer */}
-      <div className="mb-8 p-4 bg-white/30 rounded-2xl border border-white/30">
-        <textarea
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            setError(null);
-          }}
-          placeholder={t("writePostPlaceholder")}
-          maxLength={180}
-          className="w-full bg-transparent border-0 resize-none focus:outline-none text-foreground placeholder:text-muted-foreground/50 text-sm min-h-[80px]"
-        />
-        
-        <div className="flex items-center justify-between mt-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              {text.length}/180
-            </span>
-          </div>
+      <div className="mb-8 p-5 bg-white/30 rounded-2xl border border-white/30">
+        <div className="flex items-start gap-3 mb-3">
+          <textarea
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              setError(null);
+            }}
+            placeholder={t("writePostPlaceholder")}
+            maxLength={180}
+            className="flex-1 bg-transparent border-0 resize-none focus:outline-none text-foreground placeholder:text-muted-foreground/50 text-sm min-h-[80px]"
+          />
           
-          <div className="flex items-center gap-2">
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="text-xs bg-white/50 border border-white/30 rounded-lg px-3 py-1.5 text-foreground focus:outline-none focus:ring-2 focus:ring-white/30"
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="text-xs bg-white/50 border border-white/30 rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-white/30 whitespace-nowrap"
+          >
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs text-muted-foreground">
+            {text.length}/180
+          </span>
         </div>
 
         {/* Media Preview */}
         {mediaPreview && (
-          <div className="mt-4 relative rounded-xl overflow-hidden bg-white/20">
+          <div className="mb-4 relative rounded-xl overflow-hidden bg-white/20">
             {mediaType === "image" ? (
               <img
                 src={mediaPreview}
@@ -267,13 +265,13 @@ export function WatercoolerWall() {
 
         {/* Error Message */}
         {error && (
-          <p className="mt-3 text-xs text-red-500/80">
+          <p className="mb-3 text-xs text-red-500/80">
             {error}
           </p>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between mt-4">
+        {/* Action Row */}
+        <div className="flex items-center justify-between pt-3 border-t border-white/20">
           <div className="flex items-center gap-2">
             <input
               ref={fileInputRef}
@@ -284,28 +282,41 @@ export function WatercoolerWall() {
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/50 hover:bg-white/70 rounded-lg border border-white/30 transition-all text-xs font-medium text-foreground/80"
+              className="flex items-center gap-1.5 px-3 py-2 bg-white/50 hover:bg-white/70 rounded-lg border border-white/30 transition-all text-xs font-medium text-foreground/80"
             >
               <ImageIcon className="h-3.5 w-3.5" />
               {t("uploadImage")}
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/50 hover:bg-white/70 rounded-lg border border-white/30 transition-all text-xs font-medium text-foreground/80"
+              className="flex items-center gap-1.5 px-3 py-2 bg-white/50 hover:bg-white/70 rounded-lg border border-white/30 transition-all text-xs font-medium text-foreground/80"
             >
               <Video className="h-3.5 w-3.5" />
               {t("uploadVideo")}
             </button>
+            {mediaFile && (
+              <button
+                onClick={removeMedia}
+                className="flex items-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-all text-xs font-medium text-red-600"
+              >
+                <X className="h-3.5 w-3.5" />
+                {t("removeMedia")}
+              </button>
+            )}
           </div>
           
           <button
             onClick={handlePost}
             disabled={isPostDisabled}
-            className="px-4 py-1.5 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-white rounded-lg font-medium text-xs transition-all hover:shadow-[var(--shadow-glow)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+            className="px-5 py-2 bg-gradient-to-r from-pink-300 to-cyan-300 text-slate-700 rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
             {t("postButton")}
           </button>
         </div>
+        
+        <p className="mt-3 text-xs text-muted-foreground text-center">
+          Share a tiny office thought, meme, or clip.
+        </p>
       </div>
 
       {/* Posts Feed */}
