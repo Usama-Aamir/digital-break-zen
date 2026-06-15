@@ -27,6 +27,12 @@ export const translations: Record<Language, Record<string, string>> = {
     betweenMeetings: "between meetings.",
     pickGame: "Pick a tiny game, take a breath, check in with yourself. No timers, no pressure.",
     canChangeMood: "You can change your mood any time from the navbar.",
+    officeMemesTitle: "Endless Office Meme Break",
+    officeMemesSubtitle: "Scroll through tiny corporate chaos, one meme at a time.",
+    loadingMemes: "Loading memes...",
+    memeLoadError: "Failed to load memes",
+    like: "Like",
+    liked: "Liked",
   },
   ms: {
     appTitle: "The Digital Breakroom",
@@ -54,6 +60,12 @@ export const translations: Record<Language, Record<string, string>> = {
     betweenMeetings: "antara mesyuarat.",
     pickGame: "Pilih permainan kecil, tarik nafas, semak diri sendiri. Tiada masa, tiada tekanan.",
     canChangeMood: "Anda boleh tukar mood bila-bila masa dari navbar.",
+    officeMemesTitle: "Rehat Meme Pejabat",
+    officeMemesSubtitle: "Skrol meme kerja yang ringan dan kelakar.",
+    loadingMemes: "Memuat meme...",
+    memeLoadError: "Gagal memuat meme",
+    like: "Suka",
+    liked: "Disukai",
   },
   manglish: {
     appTitle: "The Digital Breakroom",
@@ -81,6 +93,12 @@ export const translations: Record<Language, Record<string, string>> = {
     betweenMeetings: "between meetings.",
     pickGame: "Pick tiny game, take breath, check yourself. No timer, no pressure.",
     canChangeMood: "You can change mood anytime from navbar.",
+    officeMemesTitle: "Office Meme Break Lah",
+    officeMemesSubtitle: "Scroll sikit, gelak sikit, stress kurang sikit.",
+    loadingMemes: "Loading memes...",
+    memeLoadError: "Failed to load memes",
+    like: "Like",
+    liked: "Liked",
   },
 };
 
