@@ -8,7 +8,7 @@ import { CorporateTranslator } from "@/components/CorporateTranslator";
 import { AiVacation } from "@/components/AiVacation";
 import { HypeMan } from "@/components/HypeMan";
 import { ActiveListener } from "@/components/ActiveListener";
-import { OfficeMemeScroller } from "@/components/OfficeMemeScroller";
+import { WatercoolerWall } from "@/components/WatercoolerWall";
 import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles, Worm } from "lucide-react";
 import { useMood, useLocalizedMoodMeta } from "@/lib/mood";
 import { useLanguage } from "@/lib/language";
@@ -149,7 +149,7 @@ function Index() {
       )}
       {(mood === "fun" || mood === "happy") && (
         <div className="mb-10">
-          <OfficeMemeScroller />
+          <WatercoolerWall />
         </div>
       )}
 
