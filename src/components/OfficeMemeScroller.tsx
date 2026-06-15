@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useLanguage } from "@/lib/language";
-import { getOfficeMemes, type Meme } from "@/lib/memes.functions";
+import { getOfficeMemes, type MemeItem } from "@/lib/memes.functions";
 
 export function OfficeMemeScroller() {
   const { t } = useLanguage();
-  const [memes, setMemes] = useState<Meme[]>([]);
+  const [memes, setMemes] = useState<MemeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
@@ -16,7 +16,12 @@ export function OfficeMemeScroller() {
         setLoading(true);
         setError(null);
         const result = await getOfficeMemes();
-        setMemes(result.memes);
+        
+        if (!result.success && result.memes.length === 0) {
+          setError("Failed to load memes");
+        } else {
+          setMemes(result.memes);
+        }
       } catch (err) {
         console.error("[OfficeMemeScroller] Failed to load memes:", err);
         setError(err instanceof Error ? err.message : "Failed to load memes");
@@ -47,7 +52,12 @@ export function OfficeMemeScroller() {
         setLoading(true);
         setError(null);
         const result = await getOfficeMemes();
-        setMemes(result.memes);
+        
+        if (!result.success && result.memes.length === 0) {
+          setError("Failed to load memes");
+        } else {
+          setMemes(result.memes);
+        }
       } catch (err) {
         console.error("[OfficeMemeScroller] Failed to load memes on retry:", err);
         setError(err instanceof Error ? err.message : "Failed to load memes");
@@ -80,7 +90,7 @@ export function OfficeMemeScroller() {
     );
   }
 
-  if (error) {
+  if (error && memes.length === 0) {
     return (
       <div className="glass-card rounded-3xl p-6">
         <h2 className="text-xl font-display font-bold text-foreground mb-2">
@@ -129,7 +139,7 @@ export function OfficeMemeScroller() {
         {t("officeMemesSubtitle")}
       </p>
       <div className="h-[75vh] md:h-[600px] overflow-y-auto snap-y snap-mandatory overscroll-contain rounded-2xl">
-        {memes.map((meme, index) => (
+        {memes.map((meme) => (
           <div
             key={meme.id}
             className="snap-start h-full mb-4 last:mb-0"
@@ -145,7 +155,7 @@ export function OfficeMemeScroller() {
               ) : (
                 <div className="w-full h-full flex items-center justify-center p-8 bg-gradient-to-br from-white/30 to-white/10">
                   <p className="text-foreground text-center text-lg font-medium">
-                    {meme.title}
+                    {meme.text || meme.title}
                   </p>
                 </div>
               )}
@@ -157,11 +167,15 @@ export function OfficeMemeScroller() {
                         {meme.title}
                       </p>
                     )}
-                    {meme.subreddit && (
+                    {meme.source === "fallback" ? (
+                      <p className="text-white/70 text-xs">
+                        Office survival card
+                      </p>
+                    ) : meme.subreddit ? (
                       <p className="text-white/70 text-xs">
                         r/{meme.subreddit}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                   <button
                     onClick={() => toggleLike(meme.id)}
