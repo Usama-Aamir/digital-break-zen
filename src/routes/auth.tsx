@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -16,13 +16,21 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const { t } = useLanguage();
-  const { signIn, signUp, isConfigured } = useAuth();
+  const { signIn, signUp, isConfigured, user } = useAuth();
+  const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    if (user && isConfigured) {
+      navigate({ to: "/account" });
+    }
+  }, [user, isConfigured, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,18 +44,32 @@ function AuthPage() {
       return;
     }
 
-    const result = isSignUp
-      ? await signUp(email, password)
-      : await signIn(email, password);
-
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setSuccess(t("authSuccess"));
-      if (isSignUp) {
+    if (isSignUp) {
+      const result = await signUp(email, password);
+      if (result.error) {
+        setError(result.error);
+      } else if (result.needsEmailConfirmation) {
+        setSuccess(t("checkEmailConfirm"));
         setEmail("");
         setPassword("");
         setIsSignUp(false);
+      } else {
+        // Sign up successful and user is logged in
+        setSuccess(t("redirectingToAccount"));
+        setTimeout(() => {
+          navigate({ to: "/account" });
+        }, 1000);
+      }
+    } else {
+      const result = await signIn(email, password);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        // Sign in successful
+        setSuccess(t("redirectingToAccount"));
+        setTimeout(() => {
+          navigate({ to: "/account" });
+        }, 1000);
       }
     }
 

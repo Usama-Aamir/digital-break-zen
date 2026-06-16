@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
@@ -16,6 +16,12 @@ export const Route = createFileRoute("/account")({
 function AccountPage() {
   const { t } = useLanguage();
   const { user, loading, signOut, isConfigured } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate({ to: "/auth" });
+  };
 
   if (!isConfigured) {
     return (
@@ -122,7 +128,7 @@ function AccountPage() {
 
             {/* Sign Out Button */}
             <button
-              onClick={signOut}
+              onClick={handleSignOut}
               className="w-full px-6 py-4 bg-gradient-to-r from-red-300 to-pink-300 text-slate-700 rounded-xl font-semibold hover:opacity-95 transition-opacity"
             >
               {t("signOut")}
