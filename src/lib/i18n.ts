@@ -48,6 +48,11 @@ export const translations: Record<Language, Record<string, string>> = {
     noPostsYet: "No posts yet. Be the first!",
     snakeDesktopHint: "Use arrow keys to guide your snake.",
     snakeMobileHint: "Swipe or use the soft D-pad.",
+    blogTitle: "Breakroom Blog",
+    blogSubtitle: "Tiny reads for tired brains, office chaos, and better breaks.",
+    featuredReads: "Featured Reads",
+    allPosts: "All Posts",
+    readArticle: "Read article",
   },
   ms: {
     appTitle: "The Digital Breakroom",
