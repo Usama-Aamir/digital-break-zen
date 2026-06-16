@@ -42,7 +42,8 @@ function BlogPage() {
           {formatDate(post.date)}
         </span>
         <Link
-          to={`/blog/${post.slug}`}
+          to="/blog/$slug"
+          params={{ slug: post.slug }}
           className="text-xs font-semibold text-foreground/80 hover:text-foreground transition-colors"
         >
           {t("readArticle")} →
