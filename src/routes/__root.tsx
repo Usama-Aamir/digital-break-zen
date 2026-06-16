@@ -15,6 +15,7 @@ import { MoodProvider } from "../lib/mood";
 import { WelcomeGate } from "../components/WelcomeGate";
 import { LanguageProvider } from "../lib/language";
 import { LanguageGate } from "../components/LanguageGate";
+import { AuthProvider } from "../lib/auth";
 
 function NotFoundComponent() {
   return (
@@ -131,14 +132,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <MoodProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-          <LanguageGate />
-          <WelcomeGate />
-        </MoodProvider>
-      </LanguageProvider>
+      <AuthProvider>
+        <LanguageProvider>
+          <MoodProvider>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+            <LanguageGate />
+            <WelcomeGate />
+          </MoodProvider>
+        </LanguageProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

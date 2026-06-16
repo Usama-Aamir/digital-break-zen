@@ -20,6 +20,8 @@ import { Route as MatchRouteImport } from './routes/match'
 import { Route as BubblesRouteImport } from './routes/bubbles'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as BingoRouteImport } from './routes/bingo'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as R2048RouteImport } from './routes/2048'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
@@ -79,6 +81,16 @@ const BingoRoute = BingoRouteImport.update({
   path: '/bingo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const R2048Route = R2048RouteImport.update({
   id: '/2048',
   path: '/2048',
@@ -98,6 +110,8 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
+  '/account': typeof AccountRoute
+  '/auth': typeof AuthRoute
   '/bingo': typeof BingoRoute
   '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
@@ -114,6 +128,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
+  '/account': typeof AccountRoute
+  '/auth': typeof AuthRoute
   '/bingo': typeof BingoRoute
   '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
@@ -131,6 +147,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
+  '/account': typeof AccountRoute
+  '/auth': typeof AuthRoute
   '/bingo': typeof BingoRoute
   '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
@@ -149,6 +167,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/2048'
+    | '/account'
+    | '/auth'
     | '/bingo'
     | '/blog'
     | '/bubbles'
@@ -165,6 +185,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/2048'
+    | '/account'
+    | '/auth'
     | '/bingo'
     | '/blog'
     | '/bubbles'
@@ -181,6 +203,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/2048'
+    | '/account'
+    | '/auth'
     | '/bingo'
     | '/blog'
     | '/bubbles'
@@ -198,6 +222,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   R2048Route: typeof R2048Route
+  AccountRoute: typeof AccountRoute
+  AuthRoute: typeof AuthRoute
   BingoRoute: typeof BingoRoute
   BlogRoute: typeof BlogRouteWithChildren
   BubblesRoute: typeof BubblesRoute
@@ -290,6 +316,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BingoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/2048': {
       id: '/2048'
       path: '/2048'
@@ -327,6 +367,8 @@ const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   R2048Route: R2048Route,
+  AccountRoute: AccountRoute,
+  AuthRoute: AuthRoute,
   BingoRoute: BingoRoute,
   BlogRoute: BlogRouteWithChildren,
   BubblesRoute: BubblesRoute,

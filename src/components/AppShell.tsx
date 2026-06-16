@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, CircleDot, Layers, Grid3x3, Music2, Palmtree, Scissors, Sparkles, Menu, Worm, BookOpen } from "lucide-react";
+import { Home, CircleDot, Layers, Grid3x3, Music2, Palmtree, Scissors, Sparkles, Menu, Worm, BookOpen, User, LogIn } from "lucide-react";
 import type { ReactNode } from "react";
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
 import { useMood, useLocalizedMoodMeta } from "@/lib/mood";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/lib/language";
+import { useAuth } from "@/lib/auth";
 
 const nav = [
   { to: "/", label: "Home", icon: Home },
@@ -30,6 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { mood, clearMood } = useMood();
   const meta = useLocalizedMoodMeta(mood);
   const { t } = useLanguage();
+  const { user, isConfigured } = useAuth();
 
   const handleChangeMood = () => {
     clearMood();
@@ -98,6 +100,32 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </DropdownMenuItem>
                 );
               })}
+              {isConfigured && (
+                <>
+                  <div className="h-px bg-white/30 my-1" />
+                  {user ? (
+                    <DropdownMenuItem asChild className="rounded-2xl focus:bg-white/60">
+                      <Link
+                        to="/account"
+                        className="flex items-center gap-3 px-3 py-2 text-sm font-medium cursor-pointer text-muted-foreground hover:text-foreground"
+                      >
+                        <User className="h-4 w-4" />
+                        <span>{t("account")}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem asChild className="rounded-2xl focus:bg-white/60">
+                      <Link
+                        to="/auth"
+                        className="flex items-center gap-3 px-3 py-2 text-sm font-medium cursor-pointer text-muted-foreground hover:text-foreground"
+                      >
+                        <LogIn className="h-4 w-4" />
+                        <span>{t("signIn")}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
             </DropdownMenuContent>
             </DropdownMenu>
           </div>
