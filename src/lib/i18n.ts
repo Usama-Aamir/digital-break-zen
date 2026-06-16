@@ -57,6 +57,11 @@ export const translations: Record<Language, Record<string, string>> = {
     needBreakNow: "Need a real break now?",
     openBreakroom: "Open The Digital Breakroom",
     articleNotFound: "Article not found",
+    blogSearchPlaceholder: "Search stress, burnout, games, study breaks…",
+    noPostsFound: "No posts found",
+    tryDifferentKeyword: "Try a different keyword or clear the filters.",
+    clearSearch: "Clear search",
+    allFilter: "All",
   },
   ms: {
     appTitle: "The Digital Breakroom",
@@ -114,6 +119,11 @@ export const translations: Record<Language, Record<string, string>> = {
     needBreakNow: "Perlu rehat sebenar sekarang?",
     openBreakroom: "Buka The Digital Breakroom",
     articleNotFound: "Artikel tidak dijumpai",
+    blogSearchPlaceholder: "Cari stres, burnout, permainan, rehat belajar…",
+    noPostsFound: "Tiada artikel dijumpai",
+    tryDifferentKeyword: "Cuba kata kunci lain atau kosongkan filter.",
+    clearSearch: "Kosongkan carian",
+    allFilter: "Semua",
   },
   manglish: {
     appTitle: "The Digital Breakroom",
@@ -171,6 +181,11 @@ export const translations: Record<Language, Record<string, string>> = {
     needBreakNow: "Need real break now ah?",
     openBreakroom: "Open The Digital Breakroom",
     articleNotFound: "Article tak jumpa",
+    blogSearchPlaceholder: "Search stress, burnout, games, study break…",
+    noPostsFound: "No posts found lah",
+    tryDifferentKeyword: "Try keyword lain or clear filter.",
+    clearSearch: "Clear search",
+    allFilter: "All",
   },
 };
 
