@@ -23,6 +23,14 @@ function SubmitStoryPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // Draft fields
+  const [draftTitle, setDraftTitle] = useState("");
+  const [draftCategory, setDraftCategory] = useState("");
+  const [draftMoodTag, setDraftMoodTag] = useState("");
+  const [draftBody, setDraftBody] = useState("");
+  const [draftAnonymous, setDraftAnonymous] = useState(false);
+  const [draftSuccess, setDraftSuccess] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -45,6 +53,38 @@ function SubmitStoryPage() {
 
     localStorage.setItem("digital-breakroom-story-interest", JSON.stringify(submission));
     setSuccess(true);
+  };
+
+  const handleSaveDraft = () => {
+    if (!draftTitle || !draftCategory || !draftMoodTag || !draftBody) {
+      setError(t("storyRequiredError"));
+      return;
+    }
+
+    const draft = {
+      id: crypto.randomUUID(),
+      title: draftTitle,
+      category: draftCategory,
+      moodTag: draftMoodTag,
+      body: draftBody,
+      anonymous: draftAnonymous,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const existingDrafts = JSON.parse(localStorage.getItem("digital-breakroom-story-drafts") || "[]");
+    existingDrafts.push(draft);
+    localStorage.setItem("digital-breakroom-story-drafts", JSON.stringify(existingDrafts));
+
+    // Clear draft fields
+    setDraftTitle("");
+    setDraftCategory("");
+    setDraftMoodTag("");
+    setDraftBody("");
+    setDraftAnonymous(false);
+
+    setDraftSuccess(true);
+    setTimeout(() => setDraftSuccess(false), 3000);
   };
 
   if (success) {
@@ -201,6 +241,139 @@ function SubmitStoryPage() {
           <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             ← Back to Blog
           </Link>
+        </div>
+
+        {/* Draft Writer Section */}
+        <div className="mt-12">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-display font-bold text-foreground mb-4">
+              {t("draftTitle")}
+            </h2>
+            <p className="text-muted-foreground">
+              Write and save your story drafts locally before publishing.
+            </p>
+          </div>
+
+          {/* Privacy Notice */}
+          <div className="glass-card rounded-2xl p-4 mb-8 bg-gradient-to-br from-blue-100/30 to-purple-100/30 border-blue-200/30">
+            <p className="text-sm text-muted-foreground text-center">
+              {t("draftPrivacyNotice")}
+            </p>
+          </div>
+
+          {/* Draft Form */}
+          <div className="glass-card rounded-2xl p-6 sm:p-8">
+            <div className="space-y-6">
+              {/* Draft Success Message */}
+              {draftSuccess && (
+                <div className="bg-green-100/50 border border-green-200/50 rounded-xl p-4 text-green-700 text-sm">
+                  {t("draftSaved")}
+                </div>
+              )}
+
+              {/* Draft Title */}
+              <div>
+                <label htmlFor="draftTitle" className="block text-sm font-medium text-foreground mb-2">
+                  {t("draftStoryTitle")} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="draftTitle"
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-white/40 border border-white/30 backdrop-blur-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--gradient-mint)] transition-all"
+                  placeholder="Your draft title"
+                />
+              </div>
+
+              {/* Draft Category */}
+              <div>
+                <label htmlFor="draftCategory" className="block text-sm font-medium text-foreground mb-2">
+                  {t("draftCategory")} <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="draftCategory"
+                  value={draftCategory}
+                  onChange={(e) => setDraftCategory(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-white/40 border border-white/30 backdrop-blur-md text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--gradient-mint)] transition-all"
+                >
+                  <option value="">Select a category</option>
+                  <option value="Workplace story">Workplace story</option>
+                  <option value="Student story">Student story</option>
+                  <option value="Funny office moment">Funny office moment</option>
+                  <option value="Burnout recovery">Burnout recovery</option>
+                  <option value="Anonymous rant">Anonymous rant</option>
+                  <option value="Tiny win">Tiny win</option>
+                </select>
+              </div>
+
+              {/* Draft Mood Tag */}
+              <div>
+                <label htmlFor="draftMoodTag" className="block text-sm font-medium text-foreground mb-2">
+                  {t("draftMoodTag")} <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="draftMoodTag"
+                  value={draftMoodTag}
+                  onChange={(e) => setDraftMoodTag(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-white/40 border border-white/30 backdrop-blur-md text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--gradient-mint)] transition-all"
+                >
+                  <option value="">Select a mood tag</option>
+                  <option value="Frustrated">Frustrated</option>
+                  <option value="Tired">Tired</option>
+                  <option value="Demotivated">Demotivated</option>
+                  <option value="Happy">Happy</option>
+                  <option value="Fun">Fun</option>
+                  <option value="Reflective">Reflective</option>
+                </select>
+              </div>
+
+              {/* Draft Body */}
+              <div>
+                <label htmlFor="draftBody" className="block text-sm font-medium text-foreground mb-2">
+                  {t("draftBody")} <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="draftBody"
+                  value={draftBody}
+                  onChange={(e) => setDraftBody(e.target.value)}
+                  rows={12}
+                  className="w-full px-4 py-3 rounded-xl bg-white/40 border border-white/30 backdrop-blur-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--gradient-mint)] transition-all resize-none"
+                  placeholder="Write your full story here..."
+                />
+              </div>
+
+              {/* Anonymous Toggle */}
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="draftAnonymous"
+                  checked={draftAnonymous}
+                  onChange={(e) => setDraftAnonymous(e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded border-white/30 bg-white/40 focus:ring-2 focus:ring-[var(--gradient-mint)]"
+                />
+                <label htmlFor="draftAnonymous" className="text-sm text-muted-foreground leading-relaxed">
+                  {t("draftAnonymous")}
+                </label>
+              </div>
+
+              {/* Save Draft Button */}
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                className="w-full px-6 py-4 bg-gradient-to-r from-blue-400 to-purple-400 text-white rounded-xl font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+              >
+                {t("saveDraft")}
+              </button>
+
+              {/* View Drafts Link */}
+              <div className="text-center">
+                <Link to="/story-drafts" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  {t("viewDrafts")} →
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </AppShell>

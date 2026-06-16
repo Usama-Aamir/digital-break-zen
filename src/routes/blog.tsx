@@ -219,12 +219,20 @@ function BlogPage() {
           <p className="text-muted-foreground mb-6">
             Community blog submissions are coming soon.
           </p>
-          <Link
-            to="/submit-story"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-300 to-pink-300 text-slate-700 rounded-full font-semibold hover:opacity-95 transition-opacity"
-          >
-            Submit Your Story
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link
+              to="/submit-story"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-300 to-pink-300 text-slate-700 rounded-full font-semibold hover:opacity-95 transition-opacity"
+            >
+              Submit Your Story
+            </Link>
+            <Link
+              to="/story-drafts"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/40 border border-white/30 text-foreground rounded-full font-semibold hover:bg-white/60 transition-colors"
+            >
+              View Saved Drafts
+            </Link>
+          </div>
         </div>
       </div>
     </AppShell>
