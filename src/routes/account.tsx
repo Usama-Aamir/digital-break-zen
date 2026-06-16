@@ -136,6 +136,22 @@ function AccountPage() {
           </div>
         </div>
 
+        {/* Cloud Drafts Card */}
+        <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-teal-100/30 to-cyan-100/30 border-teal-200/30 mb-6">
+          <h3 className="text-lg font-display font-bold text-foreground mb-2">
+            {t("cloudDraftsTitle")}
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            Your saved story drafts can now sync to your account.
+          </p>
+          <Link
+            to="/story-drafts"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-400 to-cyan-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+          >
+            View Drafts →
+          </Link>
+        </div>
+
         {/* Coming Soon Notice */}
         <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-blue-100/30 to-purple-100/30 border-blue-200/30">
           <h3 className="text-lg font-display font-bold text-foreground mb-2">

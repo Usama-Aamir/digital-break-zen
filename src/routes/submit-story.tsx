@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
+import { useAuth } from "@/lib/auth";
+import { saveLocalDraft, saveCloudDraft } from "@/lib/storyDrafts";
 import { useState } from "react";
 
 export const Route = createFileRoute("/submit-story")({
@@ -15,6 +17,7 @@ export const Route = createFileRoute("/submit-story")({
 
 function SubmitStoryPage() {
   const { t } = useLanguage();
+  const { user, isConfigured } = useAuth();
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [storyType, setStoryType] = useState("");
@@ -30,6 +33,7 @@ function SubmitStoryPage() {
   const [draftBody, setDraftBody] = useState("");
   const [draftAnonymous, setDraftAnonymous] = useState(false);
   const [draftSuccess, setDraftSuccess] = useState(false);
+  const [draftError, setDraftError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,26 +59,51 @@ function SubmitStoryPage() {
     setSuccess(true);
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     if (!draftTitle || !draftCategory || !draftMoodTag || !draftBody) {
       setError(t("storyRequiredError"));
       return;
     }
 
-    const draft = {
-      id: crypto.randomUUID(),
-      title: draftTitle,
-      category: draftCategory,
-      moodTag: draftMoodTag,
-      body: draftBody,
-      anonymous: draftAnonymous,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    setDraftError("");
 
-    const existingDrafts = JSON.parse(localStorage.getItem("digital-breakroom-story-drafts") || "[]");
-    existingDrafts.push(draft);
-    localStorage.setItem("digital-breakroom-story-drafts", JSON.stringify(existingDrafts));
+    // If logged in and Supabase configured, save to cloud
+    if (user && isConfigured) {
+      const { error } = await saveCloudDraft(user.id, {
+        title: draftTitle,
+        category: draftCategory,
+        mood_tag: draftMoodTag,
+        body: draftBody,
+        anonymous: draftAnonymous,
+      });
+
+      if (error) {
+        setDraftError(t("draftsSaveError"));
+        return;
+      }
+
+      setDraftSuccess(true);
+      setTimeout(() => setDraftSuccess(false), 3000);
+    } else {
+      // Save to localStorage
+      const draft = {
+        id: crypto.randomUUID(),
+        title: draftTitle,
+        category: draftCategory,
+        moodTag: draftMoodTag,
+        body: draftBody,
+        anonymous: draftAnonymous,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const existingDrafts = JSON.parse(localStorage.getItem("digital-breakroom-story-drafts") || "[]");
+      existingDrafts.push(draft);
+      localStorage.setItem("digital-breakroom-story-drafts", JSON.stringify(existingDrafts));
+
+      setDraftSuccess(true);
+      setTimeout(() => setDraftSuccess(false), 3000);
+    }
 
     // Clear draft fields
     setDraftTitle("");
@@ -82,9 +111,6 @@ function SubmitStoryPage() {
     setDraftMoodTag("");
     setDraftBody("");
     setDraftAnonymous(false);
-
-    setDraftSuccess(true);
-    setTimeout(() => setDraftSuccess(false), 3000);
   };
 
   if (success) {
@@ -257,9 +283,26 @@ function SubmitStoryPage() {
           {/* Privacy Notice */}
           <div className="glass-card rounded-2xl p-4 mb-8 bg-gradient-to-br from-blue-100/30 to-purple-100/30 border-blue-200/30">
             <p className="text-sm text-muted-foreground text-center">
-              {t("draftPrivacyNotice")}
+              {user && isConfigured ? t("draftsSavedToAccountNotice") : t("draftsSavedLocallyNotice")}
             </p>
           </div>
+
+          {/* Sign-in prompt for logged-out users */}
+          {!user && isConfigured && (
+            <div className="glass-card rounded-2xl p-4 mb-8 bg-gradient-to-br from-green-100/30 to-teal-100/30 border-green-200/30">
+              <p className="text-sm text-muted-foreground text-center mb-3">
+                {t("signInToSyncDrafts")}
+              </p>
+              <div className="text-center">
+                <Link
+                  to="/auth"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+                >
+                  {t("signIn")}
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* Draft Form */}
           <div className="glass-card rounded-2xl p-6 sm:p-8">
@@ -267,7 +310,14 @@ function SubmitStoryPage() {
               {/* Draft Success Message */}
               {draftSuccess && (
                 <div className="bg-green-100/50 border border-green-200/50 rounded-xl p-4 text-green-700 text-sm">
-                  {t("draftSaved")}
+                  {user && isConfigured ? t("draftSavedCloud") : t("draftSavedLocal")}
+                </div>
+              )}
+
+              {/* Draft Error Message */}
+              {draftError && (
+                <div className="bg-red-100/50 border border-red-200/50 rounded-xl p-4 text-red-700 text-sm">
+                  {draftError}
                 </div>
               )}
 

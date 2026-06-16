@@ -1,6 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
+import { useAuth } from "@/lib/auth";
+import {
+  getLocalDrafts,
+  getCloudDrafts,
+  deleteLocalDraft,
+  deleteCloudDraft,
+  syncLocalDraftsToCloud,
+  copyTextToClipboard,
+  type StoryDraft,
+} from "@/lib/storyDrafts";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/story-drafts")({
@@ -13,40 +23,82 @@ export const Route = createFileRoute("/story-drafts")({
   component: StoryDraftsPage,
 });
 
-interface StoryDraft {
-  id: string;
-  title: string;
-  category: string;
-  moodTag: string;
-  body: string;
-  anonymous: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
 function StoryDraftsPage() {
   const { t } = useLanguage();
+  const { user, isConfigured } = useAuth();
   const [drafts, setDrafts] = useState<StoryDraft[]>([]);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [syncSuccess, setSyncSuccess] = useState(false);
+  const [isCloud, setIsCloud] = useState(false);
 
   useEffect(() => {
-    const savedDrafts = localStorage.getItem("digital-breakroom-story-drafts");
-    if (savedDrafts) {
-      setDrafts(JSON.parse(savedDrafts));
-    }
-  }, []);
+    loadDrafts();
+  }, [user, isConfigured]);
 
-  const handleDeleteDraft = (id: string) => {
-    const updatedDrafts = drafts.filter((draft) => draft.id !== id);
-    setDrafts(updatedDrafts);
-    localStorage.setItem("digital-breakroom-story-drafts", JSON.stringify(updatedDrafts));
+  const loadDrafts = async () => {
+    setLoading(true);
+    setError(null);
+
+    if (user && isConfigured) {
+      // Load from cloud
+      const { drafts: cloudDrafts, error: loadError } = await getCloudDrafts(user.id);
+      if (loadError) {
+        setError(loadError);
+        // Fallback to local drafts on error
+        const localDrafts = getLocalDrafts();
+        setDrafts(localDrafts);
+        setIsCloud(false);
+      } else {
+        setDrafts(cloudDrafts);
+        setIsCloud(true);
+      }
+    } else {
+      // Load from local storage
+      const localDrafts = getLocalDrafts();
+      setDrafts(localDrafts);
+      setIsCloud(false);
+    }
+
+    setLoading(false);
   };
 
-  const handleCopyDraft = (draft: StoryDraft) => {
+  const handleDeleteDraft = async (id: string) => {
+    if (isCloud && user) {
+      const { error } = await deleteCloudDraft(id, user.id);
+      if (error) {
+        setError(error);
+        return;
+      }
+    } else {
+      deleteLocalDraft(id);
+    }
+
+    setDrafts(drafts.filter((draft) => draft.id !== id));
+  };
+
+  const handleCopyDraft = async (draft: StoryDraft) => {
     const textToCopy = `${draft.title}\n\n${draft.body}`;
-    navigator.clipboard.writeText(textToCopy);
-    setCopySuccess(draft.id);
-    setTimeout(() => setCopySuccess(null), 2000);
+    const success = await copyTextToClipboard(textToCopy);
+    if (success) {
+      setCopySuccess(draft.id);
+      setTimeout(() => setCopySuccess(null), 2000);
+    }
+  };
+
+  const handleSyncDrafts = async () => {
+    if (!user) return;
+
+    const { error } = await syncLocalDraftsToCloud(user.id);
+    if (error) {
+      setError(error);
+    } else {
+      setSyncSuccess(true);
+      setTimeout(() => setSyncSuccess(false), 3000);
+      // Reload drafts
+      loadDrafts();
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -78,12 +130,72 @@ function StoryDraftsPage() {
         {/* Privacy Notice */}
         <div className="glass-card rounded-2xl p-4 mb-8 bg-gradient-to-br from-blue-100/30 to-purple-100/30 border-blue-200/30">
           <p className="text-sm text-muted-foreground text-center">
-            {t("draftPrivacyNotice")}
+            {user && isConfigured ? t("draftsSavedToAccountNotice") : t("draftsSavedLocallyNotice")}
           </p>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="glass-card rounded-2xl p-8 text-center">
+            <div className="animate-spin w-8 h-8 mx-auto mb-4 border-4 border-[var(--gradient-mint)] border-t-transparent rounded-full"></div>
+            <p className="text-muted-foreground">Loading drafts...</p>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="glass-card rounded-2xl p-4 mb-8 bg-gradient-to-br from-red-100/30 to-orange-100/30 border-red-200/30">
+            <p className="text-sm text-red-700 text-center">
+              {error}
+            </p>
+          </div>
+        )}
+
+        {/* Sync Success Message */}
+        {syncSuccess && (
+          <div className="glass-card rounded-2xl p-4 mb-8 bg-gradient-to-br from-green-100/30 to-teal-100/30 border-green-200/30">
+            <p className="text-sm text-green-700 text-center">
+              {t("localDraftsSynced")}
+            </p>
+          </div>
+        )}
+
+        {/* Sync Button - Only show when logged in and local drafts exist */}
+        {!loading && user && isConfigured && getLocalDrafts().length > 0 && (
+          <div className="glass-card rounded-2xl p-4 mb-8 bg-gradient-to-br from-teal-100/30 to-cyan-100/30 border-teal-200/30">
+            <p className="text-sm text-muted-foreground text-center mb-3">
+              You have local drafts that can be synced to your account.
+            </p>
+            <div className="text-center">
+              <button
+                onClick={handleSyncDrafts}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-400 to-cyan-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+              >
+                {t("syncLocalDrafts")}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Sign-in CTA - Only show when logged out */}
+        {!loading && !user && isConfigured && (
+          <div className="glass-card rounded-2xl p-4 mb-8 bg-gradient-to-br from-green-100/30 to-teal-100/30 border-green-200/30">
+            <p className="text-sm text-muted-foreground text-center mb-3">
+              {t("signInToSyncDrafts")}
+            </p>
+            <div className="text-center">
+              <Link
+                to="/auth"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+              >
+                {t("signIn")}
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Empty State */}
-        {drafts.length === 0 && (
+        {!loading && drafts.length === 0 && (
           <div className="glass-card rounded-2xl p-8 text-center">
             <div className="mb-6">
               <div className="w-16 h-16 mx-auto bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] rounded-full flex items-center justify-center opacity-50">
@@ -108,21 +220,26 @@ function StoryDraftsPage() {
         )}
 
         {/* Drafts Grid */}
-        {drafts.length > 0 && (
+        {!loading && drafts.length > 0 && (
           <div className="grid gap-6 sm:grid-cols-2">
             {drafts.map((draft) => (
               <div key={draft.id} className="glass-card rounded-2xl p-6 hover:scale-[1.02] transition-transform duration-300">
                 {/* Header */}
                 <div className="mb-4">
-                  <h3 className="text-xl font-display font-bold text-foreground mb-2">
-                    {draft.title}
-                  </h3>
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-xl font-display font-bold text-foreground">
+                      {draft.title}
+                    </h3>
+                    <span className="inline-block text-xs font-semibold px-2 py-1 bg-blue-100/50 border border-blue-200/50 text-blue-700 rounded-full">
+                      {isCloud ? t("cloudDraft") : t("localDraft")}
+                    </span>
+                  </div>
                   <div className="flex flex-wrap gap-2 mb-3">
                     <span className="inline-block text-xs font-semibold px-3 py-1 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full">
                       {draft.category}
                     </span>
                     <span className="inline-block text-xs font-semibold px-3 py-1 bg-white/40 border border-white/30 text-muted-foreground rounded-full">
-                      {draft.moodTag}
+                      {draft.mood_tag}
                     </span>
                     {draft.anonymous && (
                       <span className="inline-block text-xs font-semibold px-3 py-1 bg-purple-100/50 border border-purple-200/50 text-purple-700 rounded-full">
@@ -131,7 +248,7 @@ function StoryDraftsPage() {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Updated: {formatDate(draft.updatedAt)}
+                    Updated: {formatDate(draft.updated_at)}
                   </p>
                 </div>
 
@@ -161,7 +278,7 @@ function StoryDraftsPage() {
         )}
 
         {/* Back Link */}
-        {drafts.length > 0 && (
+        {!loading && drafts.length > 0 && (
           <div className="text-center mt-8">
             <Link to="/submit-story" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               {t("backToSubmitStory")}
