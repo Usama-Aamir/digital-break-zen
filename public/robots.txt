@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://digital-break-zen.pages.dev/sitemap.xml
+Sitemap: https://digital-break-zen.aamirusama8.workers.dev/sitemap.xml

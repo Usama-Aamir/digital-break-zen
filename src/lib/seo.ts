@@ -1,4 +1,4 @@
-export const SITE_URL = "https://digital-break-zen.pages.dev";
+export const SITE_URL = "https://digital-break-zen.aamirusama8.workers.dev";
 
 export interface BlogPostForSEO {
   title: string;
