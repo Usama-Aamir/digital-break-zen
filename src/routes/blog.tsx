@@ -2,14 +2,31 @@ import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-rout
 import { AppShell } from "@/components/AppShell";
 import { getAllPosts, getFeaturedPosts } from "@/lib/blog";
 import { useLanguage } from "@/lib/language";
+import { SITE_URL, getBlogJsonLd } from "@/lib/seo";
 import { useState } from "react";
 import { Search, X } from "lucide-react";
 
 export const Route = createFileRoute("/blog")({
   head: () => ({
     meta: [
-      { title: "Breakroom Blog — The Digital Breakroom" },
-      { name: "description", content: "Tiny reads for tired brains, office chaos, and better breaks." },
+      { title: "Breakroom Blog | The Digital Breakroom" },
+      { name: "description", content: "Workplace stress relief, office humor, student break ideas, burnout-friendly micro-breaks, and calming tools for tired brains." },
+      { property: "og:title", content: "Breakroom Blog | The Digital Breakroom" },
+      { property: "og:description", content: "Workplace stress relief, office humor, student break ideas, burnout-friendly micro-breaks, and calming tools for tired brains." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: `${SITE_URL}/blog` },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Breakroom Blog | The Digital Breakroom" },
+      { name: "twitter:description", content: "Workplace stress relief, office humor, student break ideas, burnout-friendly micro-breaks, and calming tools for tired brains." },
+    ],
+    links: [
+      { rel: "canonical", href: `${SITE_URL}/blog` },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        innerHTML: JSON.stringify(getBlogJsonLd()),
+      },
     ],
   }),
   component: BlogPage,

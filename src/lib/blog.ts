@@ -6,6 +6,8 @@ export interface BlogPost {
   featured: boolean;
   description: string;
   content: string[];
+  tags: string[];
+  readingTime: string;
 }
 
 // Static blog metadata - will be replaced with dynamic markdown parsing in future phase
@@ -17,6 +19,8 @@ const POSTS: BlogPost[] = [
     category: "Productivity",
     featured: true,
     description: "Short, effective break ideas for busy office workers.",
+    tags: ["office stress", "break ideas", "productivity", "workplace wellness"],
+    readingTime: "5 min read",
     content: [
       "Office stress is real, but so are quick office break ideas that can help you reset in just 5 minutes. Whether you're drowning in emails or stuck in back-to-back meetings, taking a moment to breathe can make all the difference.",
       "The 5-4-3-2-1 grounding technique is perfect for office stress relief. Look around and name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste. It's simple, effective, and you can do it right at your desk.",
@@ -35,6 +39,8 @@ const POSTS: BlogPost[] = [
     category: "Mental Health",
     featured: true,
     description: "Recognizing when it's time to step back and recharge.",
+    tags: ["mental health", "burnout", "stress relief", "self-care"],
+    readingTime: "6 min read",
     content: [
       "Burnout doesn't happen overnight. It creeps up slowly, often disguised as 'just being busy' or 'needing to push through.' Recognizing the early signs you need a mental break can prevent full-blown burnout before it takes hold.",
       "One of the first signs is irritability. If small things that never bothered you before suddenly make you angry or frustrated, that's a red flag. Your emotional reserves are running low, and you need to recharge.",
@@ -54,6 +60,8 @@ const POSTS: BlogPost[] = [
     category: "Fun",
     featured: false,
     description: "Lighthearted games to relieve workplace stress.",
+    tags: ["office games", "stress relief", "humor", "workplace fun"],
+    readingTime: "5 min read",
     content: [
       "Who says stress relief has to be serious? Funny office stress relief games can turn a tense workday into something actually enjoyable. Sometimes the best way to handle office chaos is to laugh at it.",
       "Corporate buzzword bingo is a classic. Create a card with phrases like 'circle back,' 'synergy,' 'low-hanging fruit,' and 'touch base.' Every time you hear one in a meeting, mark it off. First to get five in a row wins. It makes even the most boring meetings bearable.",
@@ -73,6 +81,8 @@ const POSTS: BlogPost[] = [
     category: "Study Tips",
     featured: true,
     description: "Effective break strategies for students during study sessions.",
+    tags: ["study tips", "student life", "break strategies", "productivity"],
+    readingTime: "6 min read",
     content: [
       "Studying for hours without breaks isn't dedication—it's ineffective. Your brain needs regular resets to maintain focus and retain information. The right student study break ideas can actually improve your grades while keeping you sane.",
       "The Pomodoro Technique is a game-changer for many students. Study for 25 minutes, then take a 5-minute break. After four cycles, take a longer 15-30 minute break. This structured approach prevents burnout while maintaining productivity.",
@@ -92,6 +102,8 @@ const POSTS: BlogPost[] = [
     category: "Workplace",
     featured: true,
     description: "Understanding and addressing burnout in Malaysian corporate culture.",
+    tags: ["burnout", "malaysia", "corporate culture", "workplace wellness"],
+    readingTime: "7 min read",
     content: [
       "Corporate burnout in Malaysia is reaching epidemic levels. The combination of long working hours, high performance expectations, and cultural pressures to always appear capable is creating a perfect storm for mental health crisis in Malaysian workplaces.",
       "The 'face' culture in Malaysia plays a significant role. There's immense pressure to maintain appearances of success and competence, even when struggling internally. Admitting to burnout or stress is often seen as weakness, which prevents people from seeking help early.",

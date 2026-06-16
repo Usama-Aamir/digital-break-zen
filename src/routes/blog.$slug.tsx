@@ -2,15 +2,50 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { getPostBySlug } from "@/lib/blog";
 import { useLanguage } from "@/lib/language";
+import { SITE_URL, getArticleJsonLd } from "@/lib/seo";
 import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/blog/$slug")({
-  head: () => ({
-    meta: [
-      { title: "Article — The Digital Breakroom" },
-      { name: "description", content: "Read helpful articles about office stress relief, study breaks, and workplace wellness." },
-    ],
-  }),
+  loader: async ({ params }) => {
+    const post = getPostBySlug(params.slug);
+    return { post };
+  },
+  head: ({ loaderData }) => {
+    const post = loaderData?.post;
+    if (!post) {
+      return {
+        meta: [
+          { title: "Article not found | The Digital Breakroom" },
+          { name: "description", content: "This article could not be found. Browse The Digital Breakroom blog for stress relief and workplace wellness reads." },
+        ],
+      };
+    }
+    return {
+      meta: [
+        { title: `${post.title} | The Digital Breakroom` },
+        { name: "description", content: post.description },
+        { property: "og:title", content: `${post.title} | The Digital Breakroom` },
+        { property: "og:description", content: post.description },
+        { property: "og:type", content: "article" },
+        { property: "og:url", content: `${SITE_URL}/blog/${post.slug}` },
+        { property: "article:published_time", content: post.date },
+        { property: "article:section", content: post.category },
+        ...(post.tags || []).map((tag: string) => ({ property: "article:tag", content: tag })),
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: `${post.title} | The Digital Breakroom` },
+        { name: "twitter:description", content: post.description },
+      ],
+      links: [
+        { rel: "canonical", href: `${SITE_URL}/blog/${post.slug}` },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          innerHTML: JSON.stringify(getArticleJsonLd(post)),
+        },
+      ],
+    };
+  },
   component: BlogArticlePage,
 });
 
