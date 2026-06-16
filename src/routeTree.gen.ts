@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VacationRouteImport } from './routes/vacation'
+import { Route as SubmitStoryRouteImport } from './routes/submit-story'
 import { Route as SnakeRouteImport } from './routes/snake'
 import { Route as SmasherRouteImport } from './routes/smasher'
 import { Route as ShredderRouteImport } from './routes/shredder'
@@ -25,6 +26,11 @@ import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 const VacationRoute = VacationRouteImport.update({
   id: '/vacation',
   path: '/vacation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubmitStoryRoute = SubmitStoryRouteImport.update({
+  id: '/submit-story',
+  path: '/submit-story',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SnakeRoute = SnakeRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
+  '/submit-story': typeof SubmitStoryRoute
   '/vacation': typeof VacationRoute
   '/blog/$slug': typeof BlogSlugRoute
 }
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
+  '/submit-story': typeof SubmitStoryRoute
   '/vacation': typeof VacationRoute
   '/blog/$slug': typeof BlogSlugRoute
 }
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
+  '/submit-story': typeof SubmitStoryRoute
   '/vacation': typeof VacationRoute
   '/blog/$slug': typeof BlogSlugRoute
 }
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/shredder'
     | '/smasher'
     | '/snake'
+    | '/submit-story'
     | '/vacation'
     | '/blog/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/shredder'
     | '/smasher'
     | '/snake'
+    | '/submit-story'
     | '/vacation'
     | '/blog/$slug'
   id:
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/shredder'
     | '/smasher'
     | '/snake'
+    | '/submit-story'
     | '/vacation'
     | '/blog/$slug'
   fileRoutesById: FileRoutesById
@@ -182,6 +194,7 @@ export interface RootRouteChildren {
   ShredderRoute: typeof ShredderRoute
   SmasherRoute: typeof SmasherRoute
   SnakeRoute: typeof SnakeRoute
+  SubmitStoryRoute: typeof SubmitStoryRoute
   VacationRoute: typeof VacationRoute
 }
 
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       path: '/vacation'
       fullPath: '/vacation'
       preLoaderRoute: typeof VacationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/submit-story': {
+      id: '/submit-story'
+      path: '/submit-story'
+      fullPath: '/submit-story'
+      preLoaderRoute: typeof SubmitStoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/snake': {
@@ -295,6 +315,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShredderRoute: ShredderRoute,
   SmasherRoute: SmasherRoute,
   SnakeRoute: SnakeRoute,
+  SubmitStoryRoute: SubmitStoryRoute,
   VacationRoute: VacationRoute,
 }
 export const routeTree = rootRouteImport

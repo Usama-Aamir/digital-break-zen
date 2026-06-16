@@ -219,12 +219,12 @@ function BlogPage() {
           <p className="text-muted-foreground mb-6">
             Community blog submissions are coming soon.
           </p>
-          <button
-            disabled
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-300 to-pink-300 text-slate-700 rounded-full font-semibold opacity-50 cursor-not-allowed"
+          <Link
+            to="/submit-story"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-300 to-pink-300 text-slate-700 rounded-full font-semibold hover:opacity-95 transition-opacity"
           >
-            Coming soon
-          </button>
+            Submit Your Story
+          </Link>
         </div>
       </div>
     </AppShell>
