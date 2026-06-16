@@ -46,6 +46,8 @@ export const translations: Record<Language, Record<string, string>> = {
     unsupportedMedia: "Unsupported file type",
     mediaPreviewExpired: "Media preview expired — storage coming soon.",
     noPostsYet: "No posts yet. Be the first!",
+    snakeDesktopHint: "Use arrow keys to guide your snake.",
+    snakeMobileHint: "Swipe or use the soft D-pad.",
   },
   ms: {
     appTitle: "The Digital Breakroom",
@@ -92,6 +94,8 @@ export const translations: Record<Language, Record<string, string>> = {
     unsupportedMedia: "Jenis fail tidak disokong",
     mediaPreviewExpired: "Pratonton media tamat tempoh — penyimpanan akan datang.",
     noPostsYet: "Tiada siaran lagi. Jadilah yang pertama!",
+    snakeDesktopHint: "Guna kekunci anak panah untuk kawal ular.",
+    snakeMobileHint: "Leret atau guna D-pad lembut.",
   },
   manglish: {
     appTitle: "The Digital Breakroom",
@@ -138,6 +142,8 @@ export const translations: Record<Language, Record<string, string>> = {
     unsupportedMedia: "File type tak support",
     mediaPreviewExpired: "Media preview expired — storage coming soon.",
     noPostsYet: "No posts yet. Be the first!",
+    snakeDesktopHint: "Use arrow keys to control the snake lah.",
+    snakeMobileHint: "Swipe or tekan D-pad, steady je.",
   },
 };
 

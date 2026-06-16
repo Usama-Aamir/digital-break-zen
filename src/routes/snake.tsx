@@ -4,6 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { HowToPlay } from "@/components/HowToPlay";
+import { useLanguage } from "@/lib/language";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/snake")({
   head: () => ({
@@ -43,6 +45,7 @@ function randFood(snake: Pt[]): Pt {
 }
 
 function SnakePage() {
+  const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [running, setRunning] = useState(false);
@@ -57,6 +60,10 @@ function SnakePage() {
   const lastTickRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const pulseRef = useRef(0);
+  
+  // Touch handling for swipe controls
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const SWIPE_THRESHOLD = 30;
 
   const speed = chill ? 180 : 90; // ms per tick
 
@@ -184,6 +191,72 @@ function SnakePage() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // touch swipe controls
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    
+    const deltaX = touchEndX - touchStartRef.current.x;
+    const deltaY = touchEndY - touchStartRef.current.y;
+    
+    const absDeltaX = Math.abs(deltaX);
+    const absDeltaY = Math.abs(deltaY);
+    
+    // Check if swipe is above threshold
+    if (Math.max(absDeltaX, absDeltaY) < SWIPE_THRESHOLD) {
+      touchStartRef.current = null;
+      return;
+    }
+    
+    let newDir: Dir | null = null;
+    
+    // Determine swipe direction
+    if (absDeltaX > absDeltaY) {
+      // Horizontal swipe
+      if (deltaX > 0) {
+        newDir = { x: 1, y: 0 }; // right
+      } else {
+        newDir = { x: -1, y: 0 }; // left
+      }
+    } else {
+      // Vertical swipe
+      if (deltaY > 0) {
+        newDir = { x: 0, y: 1 }; // down
+      } else {
+        newDir = { x: 0, y: -1 }; // up
+      }
+    }
+    
+    // Prevent reverse direction
+    if (newDir) {
+      const cur = dirRef.current;
+      if (newDir.x === -cur.x && newDir.y === -cur.y) {
+        newDir = null;
+      } else {
+        nextDirRef.current = newDir;
+      }
+    }
+    
+    touchStartRef.current = null;
+  };
+
+  // D-pad direction handler
+  const handleDirection = (direction: Dir) => {
+    const cur = dirRef.current;
+    // prevent reversing into self
+    if (direction.x === -cur.x && direction.y === -cur.y) return;
+    nextDirRef.current = direction;
+  };
+
   // initial draw
   useEffect(() => { draw(); }, [draw]);
 
@@ -236,12 +309,14 @@ function SnakePage() {
             tabIndex={0}
             className="relative rounded-2xl overflow-hidden outline-none mx-auto"
             style={{ width: W, maxWidth: "100%" }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
             <canvas
               ref={canvasRef}
               width={W}
               height={H}
-              className="block w-full h-auto rounded-2xl"
+              className="block w-full h-auto rounded-2xl touch-none"
               style={{ background: "#1d355e" }}
             />
 
@@ -272,8 +347,45 @@ function SnakePage() {
             )}
           </div>
 
-          <p className="text-xs text-center text-muted-foreground mt-3">
-            Steer with Arrow keys or WASD.
+          {/* Mobile D-pad - only visible on mobile */}
+          <div className="md:hidden mt-6 flex flex-col items-center gap-2">
+            <button
+              onClick={() => handleDirection({ x: 0, y: -1 })}
+              className="p-4 bg-white/40 hover:bg-white/50 rounded-2xl border border-white/30 shadow-sm transition-all active:scale-95"
+              aria-label="Up"
+            >
+              <ChevronUp className="h-6 w-6 text-foreground" />
+            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleDirection({ x: -1, y: 0 })}
+                className="p-4 bg-white/40 hover:bg-white/50 rounded-2xl border border-white/30 shadow-sm transition-all active:scale-95"
+                aria-label="Left"
+              >
+                <ChevronLeft className="h-6 w-6 text-foreground" />
+              </button>
+              <button
+                onClick={() => handleDirection({ x: 0, y: 1 })}
+                className="p-4 bg-white/40 hover:bg-white/50 rounded-2xl border border-white/30 shadow-sm transition-all active:scale-95"
+                aria-label="Down"
+              >
+                <ChevronDown className="h-6 w-6 text-foreground" />
+              </button>
+              <button
+                onClick={() => handleDirection({ x: 1, y: 0 })}
+                className="p-4 bg-white/40 hover:bg-white/50 rounded-2xl border border-white/30 shadow-sm transition-all active:scale-95"
+                aria-label="Right"
+              >
+                <ChevronRight className="h-6 w-6 text-foreground" />
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-center text-muted-foreground mt-3 hidden md:block">
+            {t("snakeDesktopHint")}
+          </p>
+          <p className="text-xs text-center text-muted-foreground mt-3 md:hidden">
+            {t("snakeMobileHint")}
           </p>
         </div>
       </div>
