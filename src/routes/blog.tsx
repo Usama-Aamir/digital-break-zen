@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { getAllPosts, getFeaturedPosts } from "@/lib/blog";
 import { useLanguage } from "@/lib/language";
@@ -15,9 +15,16 @@ export const Route = createFileRoute("/blog")({
 
 function BlogPage() {
   const { t } = useLanguage();
+  const location = useLocation();
+  const isBlogIndex = location.pathname === "/blog";
   const allPosts = getAllPosts();
   const featuredPosts = getFeaturedPosts();
   const nonFeaturedPosts = allPosts.filter((post) => !post.featured);
+
+  // If not on /blog index, render outlet for child routes
+  if (!isBlogIndex) {
+    return <Outlet />;
+  }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
