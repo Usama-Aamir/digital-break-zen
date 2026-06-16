@@ -20,6 +20,7 @@ import { Route as BlogRouteImport } from './routes/blog'
 import { Route as BingoRouteImport } from './routes/bingo'
 import { Route as R2048RouteImport } from './routes/2048'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 
 const VacationRoute = VacationRouteImport.update({
   id: '/vacation',
@@ -76,12 +77,17 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
   '/bingo': typeof BingoRoute
-  '/blog': typeof BlogRoute
+  '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
@@ -89,12 +95,13 @@ export interface FileRoutesByFullPath {
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
   '/vacation': typeof VacationRoute
+  '/blog/$slug': typeof BlogSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
   '/bingo': typeof BingoRoute
-  '/blog': typeof BlogRoute
+  '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
@@ -102,13 +109,14 @@ export interface FileRoutesByTo {
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
   '/vacation': typeof VacationRoute
+  '/blog/$slug': typeof BlogSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
   '/bingo': typeof BingoRoute
-  '/blog': typeof BlogRoute
+  '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
   '/vacation': typeof VacationRoute
+  '/blog/$slug': typeof BlogSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/smasher'
     | '/snake'
     | '/vacation'
+    | '/blog/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/smasher'
     | '/snake'
     | '/vacation'
+    | '/blog/$slug'
   id:
     | '__root__'
     | '/'
@@ -157,13 +168,14 @@ export interface FileRouteTypes {
     | '/smasher'
     | '/snake'
     | '/vacation'
+    | '/blog/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   R2048Route: typeof R2048Route
   BingoRoute: typeof BingoRoute
-  BlogRoute: typeof BlogRoute
+  BlogRoute: typeof BlogRouteWithChildren
   BubblesRoute: typeof BubblesRoute
   MatchRoute: typeof MatchRoute
   MelodyRoute: typeof MelodyRoute
@@ -252,14 +264,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
   }
 }
+
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   R2048Route: R2048Route,
   BingoRoute: BingoRoute,
-  BlogRoute: BlogRoute,
+  BlogRoute: BlogRouteWithChildren,
   BubblesRoute: BubblesRoute,
   MatchRoute: MatchRoute,
   MelodyRoute: MelodyRoute,

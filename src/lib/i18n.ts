@@ -53,6 +53,10 @@ export const translations: Record<Language, Record<string, string>> = {
     featuredReads: "Featured Reads",
     allPosts: "All Posts",
     readArticle: "Read article",
+    backToBlog: "Back to Blog",
+    needBreakNow: "Need a real break now?",
+    openBreakroom: "Open The Digital Breakroom",
+    articleNotFound: "Article not found",
   },
   ms: {
     appTitle: "The Digital Breakroom",
@@ -106,6 +110,10 @@ export const translations: Record<Language, Record<string, string>> = {
     featuredReads: "Bacaan Pilihan",
     allPosts: "Semua Artikel",
     readArticle: "Baca artikel",
+    backToBlog: "Kembali ke Blog",
+    needBreakNow: "Perlu rehat sebenar sekarang?",
+    openBreakroom: "Buka The Digital Breakroom",
+    articleNotFound: "Artikel tidak dijumpai",
   },
   manglish: {
     appTitle: "The Digital Breakroom",
@@ -159,6 +167,10 @@ export const translations: Record<Language, Record<string, string>> = {
     featuredReads: "Featured Reads",
     allPosts: "All Posts",
     readArticle: "Read lah",
+    backToBlog: "Back to Blog lah",
+    needBreakNow: "Need real break now ah?",
+    openBreakroom: "Open The Digital Breakroom",
+    articleNotFound: "Article tak jumpa",
   },
 };
 
