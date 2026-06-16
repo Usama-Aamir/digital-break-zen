@@ -96,6 +96,11 @@ export const translations: Record<Language, Record<string, string>> = {
     noPostsYet: "Tiada siaran lagi. Jadilah yang pertama!",
     snakeDesktopHint: "Guna kekunci anak panah untuk kawal ular.",
     snakeMobileHint: "Leret atau guna D-pad lembut.",
+    blogTitle: "Blog Breakroom",
+    blogSubtitle: "Bacaan ringkas untuk otak penat, kerja chaos, dan rehat yang lebih baik.",
+    featuredReads: "Bacaan Pilihan",
+    allPosts: "Semua Artikel",
+    readArticle: "Baca artikel",
   },
   manglish: {
     appTitle: "The Digital Breakroom",
@@ -144,6 +149,11 @@ export const translations: Record<Language, Record<string, string>> = {
     noPostsYet: "No posts yet. Be the first!",
     snakeDesktopHint: "Use arrow keys to control the snake lah.",
     snakeMobileHint: "Swipe or tekan D-pad, steady je.",
+    blogTitle: "Breakroom Blog Lah",
+    blogSubtitle: "Short reads for tired brain, office chaos, and better break.",
+    featuredReads: "Featured Reads",
+    allPosts: "All Posts",
+    readArticle: "Read lah",
   },
 };
 
