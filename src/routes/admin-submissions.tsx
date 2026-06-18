@@ -61,7 +61,7 @@ function AdminSubmissionsPage() {
     } else {
       // Show success message based on status
       if (newStatus === "approved") {
-        setSuccessMessage(t("storyApproved"));
+        setSuccessMessage(t("storyCanAppearPublicly"));
       } else if (newStatus === "rejected") {
         setSuccessMessage(t("storyRejected"));
       } else {

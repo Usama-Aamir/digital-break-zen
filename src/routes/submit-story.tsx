@@ -185,6 +185,16 @@ function SubmitStoryPage() {
           </p>
         </div>
 
+        {/* Browse Community Stories CTA */}
+        <div className="glass-card rounded-2xl p-4 mb-8 bg-gradient-to-br from-blue-100/30 to-cyan-100/30 border-blue-200/30">
+          <p className="text-sm text-muted-foreground text-center">
+            {t("browseCommunityStories")}{" "}
+            <Link to="/community-stories" className="text-blue-600 hover:text-blue-700 font-medium">
+              {t("browseStories")}
+            </Link>
+          </p>
+        </div>
+
         {/* Sign-in CTA for logged-out users */}
         {!user && isConfigured && (
           <div className="glass-card rounded-2xl p-6 mb-8 bg-gradient-to-br from-green-100/30 to-teal-100/30 border-green-200/30">

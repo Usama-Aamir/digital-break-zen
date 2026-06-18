@@ -18,6 +18,7 @@ import { Route as ShredderRouteImport } from './routes/shredder'
 import { Route as MySubmissionsRouteImport } from './routes/my-submissions'
 import { Route as MelodyRouteImport } from './routes/melody'
 import { Route as MatchRouteImport } from './routes/match'
+import { Route as CommunityStoriesRouteImport } from './routes/community-stories'
 import { Route as BubblesRouteImport } from './routes/bubbles'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as BingoRouteImport } from './routes/bingo'
@@ -71,6 +72,11 @@ const MelodyRoute = MelodyRouteImport.update({
 const MatchRoute = MatchRouteImport.update({
   id: '/match',
   path: '/match',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityStoriesRoute = CommunityStoriesRouteImport.update({
+  id: '/community-stories',
+  path: '/community-stories',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BubblesRoute = BubblesRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/bingo': typeof BingoRoute
   '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
+  '/community-stories': typeof CommunityStoriesRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
   '/my-submissions': typeof MySubmissionsRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByTo {
   '/bingo': typeof BingoRoute
   '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
+  '/community-stories': typeof CommunityStoriesRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
   '/my-submissions': typeof MySubmissionsRoute
@@ -169,6 +177,7 @@ export interface FileRoutesById {
   '/bingo': typeof BingoRoute
   '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
+  '/community-stories': typeof CommunityStoriesRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
   '/my-submissions': typeof MySubmissionsRoute
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/bingo'
     | '/blog'
     | '/bubbles'
+    | '/community-stories'
     | '/match'
     | '/melody'
     | '/my-submissions'
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/bingo'
     | '/blog'
     | '/bubbles'
+    | '/community-stories'
     | '/match'
     | '/melody'
     | '/my-submissions'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/bingo'
     | '/blog'
     | '/bubbles'
+    | '/community-stories'
     | '/match'
     | '/melody'
     | '/my-submissions'
@@ -252,6 +264,7 @@ export interface RootRouteChildren {
   BingoRoute: typeof BingoRoute
   BlogRoute: typeof BlogRouteWithChildren
   BubblesRoute: typeof BubblesRoute
+  CommunityStoriesRoute: typeof CommunityStoriesRoute
   MatchRoute: typeof MatchRoute
   MelodyRoute: typeof MelodyRoute
   MySubmissionsRoute: typeof MySubmissionsRoute
@@ -326,6 +339,13 @@ declare module '@tanstack/react-router' {
       path: '/match'
       fullPath: '/match'
       preLoaderRoute: typeof MatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community-stories': {
+      id: '/community-stories'
+      path: '/community-stories'
+      fullPath: '/community-stories'
+      preLoaderRoute: typeof CommunityStoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bubbles': {
@@ -413,6 +433,7 @@ const rootRouteChildren: RootRouteChildren = {
   BingoRoute: BingoRoute,
   BlogRoute: BlogRouteWithChildren,
   BubblesRoute: BubblesRoute,
+  CommunityStoriesRoute: CommunityStoriesRoute,
   MatchRoute: MatchRoute,
   MelodyRoute: MelodyRoute,
   MySubmissionsRoute: MySubmissionsRoute,
