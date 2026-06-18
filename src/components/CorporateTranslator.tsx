@@ -1,37 +1,23 @@
 import { useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { Copy, Check, Wand2, Loader2 } from "lucide-react";
-import { generateText } from "@/lib/ai.functions";
+import { translateRageToCorporate } from "@/lib/rage-translator";
 import { Button } from "@/components/ui/button";
 
-const SYSTEM =
-  "You translate angry, frustrated rants into highly polite, professional corporate jargon. Preserve the core message but make it diplomatic, vague, and meeting-safe. Reply with the translated text only — no preamble.";
-
 export function CorporateTranslator() {
-  const run = useServerFn(generateText);
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  async function translateToCorporate(text: string) {
-    const { text: out } = await run({ data: { system: SYSTEM, user: text } });
-    return out;
-  }
-
-  async function onSubmit() {
+  function onSubmit() {
     if (!input.trim() || loading) return;
     setLoading(true);
-    setError(null);
     setOutput("");
-    try {
-      setOutput(await translateToCorporate(input.trim()));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong.");
-    } finally {
+    // Simulate a brief delay for better UX
+    setTimeout(() => {
+      setOutput(translateRageToCorporate(input.trim()));
       setLoading(false);
-    }
+    }, 300);
   }
 
   async function copy() {
@@ -65,9 +51,7 @@ export function CorporateTranslator() {
         <span className="ml-2">{loading ? "Translating..." : "Make it Professional"}</span>
       </Button>
       <div className="relative rounded-2xl bg-white/80 border border-white/60 p-4 min-h-[96px] text-sm text-foreground/90 whitespace-pre-wrap">
-        {error ? (
-          <span className="text-destructive">{error}</span>
-        ) : output ? (
+        {output ? (
           output
         ) : (
           <span className="text-muted-foreground">Your professionally-translated reply will appear here.</span>
