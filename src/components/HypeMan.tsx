@@ -1,27 +1,21 @@
 import { useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Sparkles } from "lucide-react";
-import { generateText } from "@/lib/ai.functions";
+import { generateHypeSpeech } from "@/lib/hype-generator";
 import { Button } from "@/components/ui/button";
-
-const SYSTEM =
-  "You are a wildly enthusiastic hype-man. Given a job title, write a funny, over-the-top, 2-sentence motivational speech for someone with that job. Be specific to the role, include playful imagery, and end on a triumphant note. Reply with only the speech.";
 
 type Confetti = { id: number; left: number; delay: number; bg: string; rot: number };
 
 const COLORS = ["#FBCFE8", "#BAE6FD", "#FDE68A", "#C7D2FE", "#BBF7D0", "#FECACA"];
 
 export function HypeMan() {
-  const run = useServerFn(generateText);
   const [title, setTitle] = useState("");
   const [hype, setHype] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confetti, setConfetti] = useState<Confetti[]>([]);
 
-  async function generateHype(jobTitle: string) {
-    const { text } = await run({ data: { system: SYSTEM, user: `Job title: ${jobTitle}` } });
-    return text;
+  function generateHype(jobTitle: string) {
+    return generateHypeSpeech(jobTitle);
   }
 
   function burstConfetti() {
@@ -41,8 +35,10 @@ export function HypeMan() {
     setLoading(true);
     setError(null);
     setHype("");
+    // Simulate loading for better UX
+    await new Promise(resolve => setTimeout(resolve, 500));
     try {
-      const out = await generateHype(title.trim());
+      const out = generateHype(title.trim());
       setHype(out);
       burstConfetti();
     } catch (e) {
