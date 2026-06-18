@@ -22,6 +22,7 @@ import { Route as BubblesRouteImport } from './routes/bubbles'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as BingoRouteImport } from './routes/bingo'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminSubmissionsRouteImport } from './routes/admin-submissions'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as R2048RouteImport } from './routes/2048'
 import { Route as IndexRouteImport } from './routes/index'
@@ -92,6 +93,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSubmissionsRoute = AdminSubmissionsRouteImport.update({
+  id: '/admin-submissions',
+  path: '/admin-submissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
   '/account': typeof AccountRoute
+  '/admin-submissions': typeof AdminSubmissionsRoute
   '/auth': typeof AuthRoute
   '/bingo': typeof BingoRoute
   '/blog': typeof BlogRouteWithChildren
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
   '/account': typeof AccountRoute
+  '/admin-submissions': typeof AdminSubmissionsRoute
   '/auth': typeof AuthRoute
   '/bingo': typeof BingoRoute
   '/blog': typeof BlogRouteWithChildren
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
   '/account': typeof AccountRoute
+  '/admin-submissions': typeof AdminSubmissionsRoute
   '/auth': typeof AuthRoute
   '/bingo': typeof BingoRoute
   '/blog': typeof BlogRouteWithChildren
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/'
     | '/2048'
     | '/account'
+    | '/admin-submissions'
     | '/auth'
     | '/bingo'
     | '/blog'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/'
     | '/2048'
     | '/account'
+    | '/admin-submissions'
     | '/auth'
     | '/bingo'
     | '/blog'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/'
     | '/2048'
     | '/account'
+    | '/admin-submissions'
     | '/auth'
     | '/bingo'
     | '/blog'
@@ -235,6 +247,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   R2048Route: typeof R2048Route
   AccountRoute: typeof AccountRoute
+  AdminSubmissionsRoute: typeof AdminSubmissionsRoute
   AuthRoute: typeof AuthRoute
   BingoRoute: typeof BingoRoute
   BlogRoute: typeof BlogRouteWithChildren
@@ -343,6 +356,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-submissions': {
+      id: '/admin-submissions'
+      path: '/admin-submissions'
+      fullPath: '/admin-submissions'
+      preLoaderRoute: typeof AdminSubmissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account': {
       id: '/account'
       path: '/account'
@@ -388,6 +408,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   R2048Route: R2048Route,
   AccountRoute: AccountRoute,
+  AdminSubmissionsRoute: AdminSubmissionsRoute,
   AuthRoute: AuthRoute,
   BingoRoute: BingoRoute,
   BlogRoute: BlogRouteWithChildren,
