@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { saveLocalDraft, saveCloudDraft } from "@/lib/storyDrafts";
+import { submitCommunityStory } from "@/lib/storySubmissions";
 import { useState } from "react";
 
 export const Route = createFileRoute("/submit-story")({
@@ -35,7 +36,7 @@ function SubmitStoryPage() {
   const [draftSuccess, setDraftSuccess] = useState(false);
   const [draftError, setDraftError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -45,18 +46,39 @@ function SubmitStoryPage() {
       return;
     }
 
-    // Save to localStorage
-    const submission = {
-      nickname,
-      email,
-      storyType,
-      storyIdea,
-      consent,
-      submittedAt: new Date().toISOString(),
-    };
+    // If logged in and Supabase configured, submit to story_submissions
+    if (user && isConfigured) {
+      const { error: submitError } = await submitCommunityStory(user.id, {
+        nickname,
+        email,
+        story_type: storyType,
+        title: storyType, // Use story type as title for now
+        category: storyType,
+        mood_tag: "Reflective", // Default mood tag
+        body: storyIdea,
+        anonymous: true, // Default to anonymous
+      });
 
-    localStorage.setItem("digital-breakroom-story-interest", JSON.stringify(submission));
-    setSuccess(true);
+      if (submitError) {
+        setError(t("submissionsSaveError"));
+        return;
+      }
+
+      setSuccess(true);
+    } else {
+      // Save to localStorage fallback
+      const submission = {
+        nickname,
+        email,
+        storyType,
+        storyIdea,
+        consent,
+        submittedAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem("digital-breakroom-story-interest", JSON.stringify(submission));
+      setSuccess(true);
+    }
   };
 
   const handleSaveDraft = async () => {
@@ -126,10 +148,10 @@ function SubmitStoryPage() {
               </div>
             </div>
             <h1 className="text-3xl font-display font-bold text-foreground mb-4">
-              {t("storySaved")}
+              {user && isConfigured ? t("storySubmittedForReview") : t("storySaved")}
             </h1>
             <p className="text-muted-foreground mb-8">
-              {t("storyComingSoonNotice")}
+              {user && isConfigured ? t("storySubmittedForReview") : t("storySavedSignInToSubmit")}
             </p>
             <Link
               to="/"
@@ -162,6 +184,35 @@ function SubmitStoryPage() {
             {t("storyComingSoonNotice")}
           </p>
         </div>
+
+        {/* Sign-in CTA for logged-out users */}
+        {!user && isConfigured && (
+          <div className="glass-card rounded-2xl p-6 mb-8 bg-gradient-to-br from-green-100/30 to-teal-100/30 border-green-200/30">
+            <h3 className="text-lg font-display font-bold text-foreground mb-2 text-center">
+              {t("wantSubmitForReview")}
+            </h3>
+            <p className="text-sm text-muted-foreground text-center mb-4">
+              {t("signInToSubmitStory")}
+            </p>
+            <div className="text-center">
+              <Link
+                to="/auth"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+              >
+                {t("signIn")}
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Signed-in notice for logged-in users */}
+        {user && isConfigured && (
+          <div className="glass-card rounded-2xl p-4 mb-8 bg-gradient-to-br from-blue-100/30 to-purple-100/30 border-blue-200/30">
+            <p className="text-sm text-muted-foreground text-center">
+              {t("signedInSubmissionNotice")}
+            </p>
+          </div>
+        )}
 
         {/* Form */}
         <div className="glass-card rounded-2xl p-6 sm:p-8">
