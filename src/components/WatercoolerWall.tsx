@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { Heart, Trash2, Image as ImageIcon, Video, X } from "lucide-react";
 import { useLanguage } from "@/lib/language";
+import { useAuth } from "@/lib/auth";
+import { getPublishedWatercoolerPosts, createWatercoolerPost, deleteOwnWatercoolerPost, getWatercoolerDisplayName } from "@/lib/watercoolerPosts";
 
 type MediaType = "image" | "video" | null;
 
@@ -78,6 +80,7 @@ const STORAGE_KEY = "watercooler_posts";
 
 export function WatercoolerWall() {
   const { t } = useLanguage();
+  const { user, isConfigured } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [text, setText] = useState("");
   const [category, setCategory] = useState("Random Vibes");
@@ -85,10 +88,45 @@ export function WatercoolerWall() {
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<MediaType>(null);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [usingLocalStorage, setUsingLocalStorage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load posts from localStorage on mount
+  // Load posts from Supabase or localStorage on mount
   useEffect(() => {
+    async function loadPosts() {
+      if (isConfigured) {
+        setIsLoading(true);
+        const { posts: cloudPosts, error } = await getPublishedWatercoolerPosts();
+        if (error || cloudPosts.length === 0) {
+          // Fallback to localStorage if Supabase fails or has no posts
+          setUsingLocalStorage(true);
+          loadLocalStoragePosts();
+        } else {
+          // Convert cloud posts to local Post format
+          const convertedPosts: Post[] = cloudPosts.map((post) => ({
+            id: post.id,
+            text: post.body,
+            mediaType: null, // Media not implemented in cloud yet
+            category: post.mood_tag || "Random Vibes",
+            timestamp: new Date(post.created_at).getTime(),
+            isStarter: false,
+            liked: false,
+          }));
+          setPosts(converted);
+        }
+        setIsLoading(false);
+      } else {
+        setUsingLocalStorage(true);
+        loadLocalStoragePosts();
+      }
+    }
+
+    loadPosts();
+  }, [isConfigured]);
+
+  function loadLocalStoragePosts() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -101,18 +139,18 @@ export function WatercoolerWall() {
       console.error("[WatercoolerWall] Failed to load posts:", e);
       setPosts(STARTER_POSTS);
     }
-  }, []);
+  }
 
-  // Save posts to localStorage whenever they change
+  // Save posts to localStorage whenever they change (only if using localStorage)
   useEffect(() => {
-    if (posts.length > 0) {
+    if (usingLocalStorage && posts.length > 0) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
       } catch (e) {
         console.error("[WatercoolerWall] Failed to save posts:", e);
       }
     }
-  }, [posts]);
+  }, [posts, usingLocalStorage]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -150,25 +188,63 @@ export function WatercoolerWall() {
     }
   };
 
-  const handlePost = () => {
+  const handlePost = async () => {
     if (!text.trim() && !mediaFile) return;
 
-    const newPost: Post = {
-      id: `post-${Date.now()}`,
-      text: text.trim(),
-      mediaType,
-      mediaUrl: mediaPreview || undefined,
-      mediaName: mediaFile?.name,
-      category,
-      timestamp: Date.now(),
-      isStarter: false,
-      liked: false,
-    };
+    // If logged in and using Supabase, post to cloud
+    if (user && isConfigured && !usingLocalStorage) {
+      setError(null);
+      const { post: cloudPost, error } = await createWatercoolerPost(user.id, {
+        body: text.trim(),
+        nickname: user.email?.split("@")[0] || undefined,
+        mood_tag: category,
+      });
 
-    setPosts([newPost, ...posts]);
-    setText("");
-    setCategory("Random Vibes");
-    removeMedia();
+      if (error) {
+        setError(t("watercoolerPostError"));
+        return;
+      }
+
+      setSuccessMessage(t("watercoolerPostPublished"));
+      setTimeout(() => setSuccessMessage(null), 3000);
+
+      // Refresh posts from cloud
+      const { posts: refreshedPosts } = await getPublishedWatercoolerPosts();
+      if (refreshedPosts) {
+        const convertedPosts: Post[] = refreshedPosts.map((post) => ({
+          id: post.id,
+          text: post.body,
+          mediaType: null,
+          category: post.mood_tag || "Random Vibes",
+          timestamp: new Date(post.created_at).getTime(),
+          isStarter: false,
+          liked: false,
+        }));
+        setPosts(convertedPosts);
+      }
+
+      setText("");
+      setCategory("Random Vibes");
+      removeMedia();
+    } else {
+      // Fallback to localStorage
+      const newPost: Post = {
+        id: `post-${Date.now()}`,
+        text: text.trim(),
+        mediaType,
+        mediaUrl: mediaPreview || undefined,
+        mediaName: mediaFile?.name,
+        category,
+        timestamp: Date.now(),
+        isStarter: false,
+        liked: false,
+      };
+
+      setPosts([newPost, ...posts]);
+      setText("");
+      setCategory("Random Vibes");
+      removeMedia();
+    }
   };
 
   const handleLike = (id: string) => {
@@ -194,129 +270,171 @@ export function WatercoolerWall() {
   return (
     <div className="glass-card rounded-3xl p-6">
       <h2 className="text-xl font-display font-bold text-foreground mb-2">
-        {t("watercoolerTitle")}
+        {t("watercoolerWall")}
       </h2>
-      <p className="text-sm text-muted-foreground mb-6">
+      <p className="text-sm text-muted-foreground mb-2">
         {t("watercoolerSubtitle")}
       </p>
 
+      {/* Public notice */}
+      {isConfigured && !usingLocalStorage && (
+        <p className="text-xs text-muted-foreground mb-6">
+          {t("watercoolerPublicNotice")}
+        </p>
+      )}
+
+      {/* Loading state */}
+      {isLoading && (
+        <div className="text-center py-4">
+          <div className="animate-spin w-6 h-6 mx-auto mb-2 border-4 border-[var(--gradient-mint)] border-t-transparent rounded-full"></div>
+          <p className="text-xs text-muted-foreground">Loading...</p>
+        </div>
+      )}
+
+      {/* Success message */}
+      {successMessage && (
+        <div className="mb-4 p-3 bg-green-100/50 border border-green-200/50 rounded-xl text-sm text-green-700">
+          {successMessage}
+        </div>
+      )}
+
       {/* Composer */}
       <div className="mb-8 p-5 bg-white/30 rounded-2xl border border-white/30">
-        <div className="flex items-start gap-3 mb-3">
-          <textarea
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              setError(null);
-            }}
-            placeholder={t("writePostPlaceholder")}
-            maxLength={180}
-            className="flex-1 bg-transparent border-0 resize-none focus:outline-none text-foreground placeholder:text-muted-foreground/50 text-sm min-h-[80px]"
-          />
-          
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="text-xs bg-white/50 border border-white/30 rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-white/30 whitespace-nowrap"
-          >
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
-        
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs text-muted-foreground">
-            {text.length}/180
-          </span>
-        </div>
-
-        {/* Media Preview */}
-        {mediaPreview && (
-          <div className="mb-4 relative rounded-xl overflow-hidden bg-white/20">
-            {mediaType === "image" ? (
-              <img
-                src={mediaPreview}
-                alt="Preview"
-                className="w-full max-h-[200px] object-contain"
-              />
-            ) : (
-              <video
-                src={mediaPreview}
-                controls
-                className="w-full max-h-[200px]"
-              />
-            )}
-            <button
-              onClick={removeMedia}
-              className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all"
+        {/* Sign-in CTA for logged-out users */}
+        {!user && isConfigured && !usingLocalStorage && (
+          <div className="text-center py-4">
+            <p className="text-sm text-muted-foreground mb-3">
+              {t("signInToPostWatercooler")}
+            </p>
+            <a
+              href="/auth"
+              className="inline-block px-4 py-2 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
             >
-              <X className="h-4 w-4" />
-            </button>
-            {mediaFile && (
-              <p className="absolute bottom-2 left-2 text-xs text-white/80 bg-black/50 px-2 py-1 rounded">
-                {mediaFile.name}
+              {t("signIn")}
+            </a>
+          </div>
+        )}
+
+        {/* Post composer for logged-in users or localStorage mode */}
+        {(user || usingLocalStorage) && (
+          <>
+            <div className="flex items-start gap-3 mb-3">
+              <textarea
+                value={text}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  setError(null);
+                }}
+                placeholder={t("watercoolerPostPlaceholder")}
+                maxLength={180}
+                className="flex-1 bg-transparent border-0 resize-none focus:outline-none text-foreground placeholder:text-muted-foreground/50 text-sm min-h-[80px]"
+              />
+              
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="text-xs bg-white/50 border border-white/30 rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-white/30 whitespace-nowrap"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs text-muted-foreground">
+                {text.length}/180
+              </span>
+            </div>
+
+            {/* Media Preview */}
+            {mediaPreview && (
+              <div className="mb-4 relative rounded-xl overflow-hidden bg-white/20">
+                {mediaType === "image" ? (
+                  <img
+                    src={mediaPreview}
+                    alt="Preview"
+                    className="w-full max-h-[200px] object-contain"
+                  />
+                ) : (
+                  <video
+                    src={mediaPreview}
+                    controls
+                    className="w-full max-h-[200px]"
+                  />
+                )}
+                <button
+                  onClick={removeMedia}
+                  className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                {mediaFile && (
+                  <p className="absolute bottom-2 left-2 text-xs text-white/80 bg-black/50 px-2 py-1 rounded">
+                    {mediaFile.name}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Error Message */}
+            {error && (
+              <p className="mb-3 text-xs text-red-500/80">
+                {error}
               </p>
             )}
-          </div>
-        )}
 
-        {/* Error Message */}
-        {error && (
-          <p className="mb-3 text-xs text-red-500/80">
-            {error}
-          </p>
-        )}
+            {/* Action Row */}
+            <div className="flex items-center justify-between pt-3 border-t border-white/20">
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-white/50 hover:bg-white/70 rounded-lg border border-white/30 transition-all text-xs font-medium text-foreground/80"
+                >
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  {t("uploadImage")}
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-white/50 hover:bg-white/70 rounded-lg border border-white/30 transition-all text-xs font-medium text-foreground/80"
+                >
+                  <Video className="h-3.5 w-3.5" />
+                  {t("uploadVideo")}
+                </button>
+                {mediaFile && (
+                  <button
+                    onClick={removeMedia}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-all text-xs font-medium text-red-600"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    {t("removeMedia")}
+                  </button>
+                )}
+              </div>
 
-        {/* Action Row */}
-        <div className="flex items-center justify-between pt-3 border-t border-white/20">
-          <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/50 hover:bg-white/70 rounded-lg border border-white/30 transition-all text-xs font-medium text-foreground/80"
-            >
-              <ImageIcon className="h-3.5 w-3.5" />
-              {t("uploadImage")}
-            </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/50 hover:bg-white/70 rounded-lg border border-white/30 transition-all text-xs font-medium text-foreground/80"
-            >
-              <Video className="h-3.5 w-3.5" />
-              {t("uploadVideo")}
-            </button>
-            {mediaFile && (
               <button
-                onClick={removeMedia}
-                className="flex items-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-all text-xs font-medium text-red-600"
+                onClick={handlePost}
+                disabled={isPostDisabled}
+                className="px-5 py-2 bg-gradient-to-r from-pink-300 to-cyan-300 text-slate-700 rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
-                <X className="h-3.5 w-3.5" />
-                {t("removeMedia")}
+                {t("postToWatercooler")}
               </button>
-            )}
-          </div>
-          
-          <button
-            onClick={handlePost}
-            disabled={isPostDisabled}
-            className="px-5 py-2 bg-gradient-to-r from-pink-300 to-cyan-300 text-slate-700 rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-          >
-            {t("postButton")}
-          </button>
-        </div>
-        
-        <p className="mt-3 text-xs text-muted-foreground text-center">
-          Share a tiny office thought, meme, or clip.
-        </p>
+            </div>
+
+            <p className="mt-3 text-xs text-muted-foreground text-center">
+              {t("mediaComingSoon")}
+            </p>
+          </>
+        )}
       </div>
 
       {/* Posts Feed */}
@@ -324,7 +442,10 @@ export function WatercoolerWall() {
         {posts.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground text-sm">
-              {t("noPostsYet")}
+              {t("noWatercoolerPostsYet")}
+            </p>
+            <p className="text-muted-foreground text-xs mt-2">
+              {t("noWatercoolerPostsText")}
             </p>
           </div>
         ) : (

@@ -160,3 +160,52 @@ CREATE TRIGGER update_story_submissions_updated_at BEFORE UPDATE ON public.story
 
 CREATE TRIGGER update_story_drafts_updated_at BEFORE UPDATE ON public.story_drafts
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Watercooler posts table
+-- Stores short casual community posts for the Watercooler Wall
+CREATE TABLE IF NOT EXISTS public.watercooler_posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  nickname TEXT,
+  body TEXT NOT NULL,
+  mood_tag TEXT,
+  media_url TEXT,
+  media_type TEXT,
+  likes_count INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'published',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.watercooler_posts ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for watercooler_posts
+-- Public can select published posts
+CREATE POLICY "Public can view published posts"
+  ON public.watercooler_posts FOR SELECT
+  USING (status = 'published');
+
+-- Authenticated users can insert posts with their own user_id
+CREATE POLICY "Users can insert own posts"
+  ON public.watercooler_posts FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own posts
+CREATE POLICY "Users can update own posts"
+  ON public.watercooler_posts FOR UPDATE
+  USING (auth.uid() = user_id);
+
+-- Users can delete their own posts
+CREATE POLICY "Users can delete own posts"
+  ON public.watercooler_posts FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_watercooler_posts_user_id ON public.watercooler_posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_watercooler_posts_status ON public.watercooler_posts(status);
+CREATE INDEX IF NOT EXISTS idx_watercooler_posts_created_at ON public.watercooler_posts(created_at DESC);
+
+-- Trigger to auto-update updated_at
+CREATE TRIGGER update_watercooler_posts_updated_at BEFORE UPDATE ON public.watercooler_posts
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
