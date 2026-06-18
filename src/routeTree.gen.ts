@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WatercoolerRouteImport } from './routes/watercooler'
 import { Route as VacationRouteImport } from './routes/vacation'
 import { Route as SubmitStoryRouteImport } from './routes/submit-story'
 import { Route as StoryDraftsRouteImport } from './routes/story-drafts'
@@ -29,6 +30,11 @@ import { Route as R2048RouteImport } from './routes/2048'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 
+const WatercoolerRoute = WatercoolerRouteImport.update({
+  id: '/watercooler',
+  path: '/watercooler',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VacationRoute = VacationRouteImport.update({
   id: '/vacation',
   path: '/vacation',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/story-drafts': typeof StoryDraftsRoute
   '/submit-story': typeof SubmitStoryRoute
   '/vacation': typeof VacationRoute
+  '/watercooler': typeof WatercoolerRoute
   '/blog/$slug': typeof BlogSlugRoute
 }
 export interface FileRoutesByTo {
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/story-drafts': typeof StoryDraftsRoute
   '/submit-story': typeof SubmitStoryRoute
   '/vacation': typeof VacationRoute
+  '/watercooler': typeof WatercoolerRoute
   '/blog/$slug': typeof BlogSlugRoute
 }
 export interface FileRoutesById {
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/story-drafts': typeof StoryDraftsRoute
   '/submit-story': typeof SubmitStoryRoute
   '/vacation': typeof VacationRoute
+  '/watercooler': typeof WatercoolerRoute
   '/blog/$slug': typeof BlogSlugRoute
 }
 export interface FileRouteTypes {
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/story-drafts'
     | '/submit-story'
     | '/vacation'
+    | '/watercooler'
     | '/blog/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/story-drafts'
     | '/submit-story'
     | '/vacation'
+    | '/watercooler'
     | '/blog/$slug'
   id:
     | '__root__'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/story-drafts'
     | '/submit-story'
     | '/vacation'
+    | '/watercooler'
     | '/blog/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -274,10 +286,18 @@ export interface RootRouteChildren {
   StoryDraftsRoute: typeof StoryDraftsRoute
   SubmitStoryRoute: typeof SubmitStoryRoute
   VacationRoute: typeof VacationRoute
+  WatercoolerRoute: typeof WatercoolerRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/watercooler': {
+      id: '/watercooler'
+      path: '/watercooler'
+      fullPath: '/watercooler'
+      preLoaderRoute: typeof WatercoolerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vacation': {
       id: '/vacation'
       path: '/vacation'
@@ -443,6 +463,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoryDraftsRoute: StoryDraftsRoute,
   SubmitStoryRoute: SubmitStoryRoute,
   VacationRoute: VacationRoute,
+  WatercoolerRoute: WatercoolerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

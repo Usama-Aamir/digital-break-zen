@@ -9,6 +9,7 @@ import { AiVacation } from "@/components/AiVacation";
 import { HypeMan } from "@/components/HypeMan";
 import { ActiveListener } from "@/components/ActiveListener";
 import { WatercoolerWall } from "@/components/WatercoolerWall";
+import { WatercoolerPreviewCard } from "@/components/WatercoolerPreviewCard";
 import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles, Worm } from "lucide-react";
 import { useMood, useLocalizedMoodMeta } from "@/lib/mood";
 import { useLanguage } from "@/lib/language";
@@ -152,6 +153,11 @@ function Index() {
           <WatercoolerWall />
         </div>
       )}
+
+      {/* Watercooler Preview Card - accessible from every mood mode */}
+      <div className="mb-10">
+        <WatercoolerPreviewCard />
+      </div>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-10">
         {orderedGames.map((g) => {

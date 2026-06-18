@@ -192,6 +192,9 @@ export const translations: Record<Language, Record<string, string>> = {
     noWatercoolerPostsText: "Be the first to share a quick moment.",
     mediaComingSoon: "Media sharing will be added in a future update.",
     sharedJustNow: "Shared just now",
+    openWatercooler: "Open Watercooler",
+    watercoolerPreviewSubtitle: "See quick work and study moments from the community.",
+    shareTinyWin: "Share a tiny win, thought, or workplace moment.",
   },
   ms: {
     appTitle: "The Digital Breakroom",
@@ -384,6 +387,9 @@ export const translations: Record<Language, Record<string, string>> = {
     noWatercoolerPostsText: "Jadilah yang pertama berkongsi momen ringkas.",
     mediaComingSoon: "Perkongsian media akan ditambah dalam update akan datang.",
     sharedJustNow: "Baru sahaja dikongsi",
+    openWatercooler: "Buka Watercooler",
+    watercoolerPreviewSubtitle: "Lihat momen kerja dan belajar ringkas daripada komuniti.",
+    shareTinyWin: "Kongsi tiny win, fikiran, atau momen kerja.",
   },
   manglish: {
     appTitle: "The Digital Breakroom",
@@ -576,6 +582,9 @@ export const translations: Record<Language, Record<string, string>> = {
     noWatercoolerPostsText: "Be the first to share a quick moment.",
     mediaComingSoon: "Media sharing will be added in future update.",
     sharedJustNow: "Shared just now",
+    openWatercooler: "Open Watercooler",
+    watercoolerPreviewSubtitle: "See quick work and study moments from community lah.",
+    shareTinyWin: "Share tiny win, thought, or workplace moment.",
   },
 };
 
