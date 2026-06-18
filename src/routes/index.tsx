@@ -10,6 +10,10 @@ import { HypeMan } from "@/components/HypeMan";
 import { ActiveListener } from "@/components/ActiveListener";
 import { WatercoolerWall } from "@/components/WatercoolerWall";
 import { WatercoolerPreviewCard } from "@/components/WatercoolerPreviewCard";
+import { DashboardHero } from "@/components/DashboardHero";
+import { MoodSwitcher } from "@/components/MoodSwitcher";
+import { FeatureRail } from "@/components/FeatureRail";
+import { PersonalActivityCards } from "@/components/PersonalActivityCards";
 import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles, Worm } from "lucide-react";
 import { useMood, useLocalizedMoodMeta } from "@/lib/mood";
 import { useLanguage } from "@/lib/language";
@@ -99,100 +103,97 @@ function Index() {
 
   return (
     <AppShell>
-      <section className="text-center mb-10 mt-2">
-        <span className="inline-block text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-white/50 rounded-full px-3 py-1 mb-4">
-          {meta ? `${meta.emoji} ${t("feeling")} ${meta.label.toLowerCase()}` : t("welcomeBack")}
-        </span>
-        <h1 className="text-4xl sm:text-5xl font-display font-bold text-foreground">
-          {meta ? (
-            <>
-              {meta.headline}
-              <span className="block bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">
-                {meta.subhead}
-              </span>
-            </>
-          ) : (
-            <>
-              {t("pocketOfCalm")}
-              <span className="block bg-[image:var(--gradient-hero)] bg-clip-text text-transparent">
-                {t("betweenMeetings")}
-              </span>
-            </>
-          )}
-        </h1>
-        <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-          {t("pickGame")}
-        </p>
-      </section>
+      {/* A. Top welcome section */}
+      <DashboardHero />
 
-      <div className="mb-10">
-        <MoodCompanion />
-      </div>
+      {/* B. Mood quick switcher */}
+      <MoodSwitcher />
 
-      <div className="mb-10">
-        <ActiveListener />
-      </div>
+      {/* C. Stories-style feature rail */}
+      <FeatureRail />
 
-      {mood === "frustrated" && (
-        <div className="mb-10">
-          <CorporateTranslator />
-        </div>
-      )}
-      {mood === "tired" && (
-        <div className="mb-10">
-          <AiVacation />
-        </div>
-      )}
-      {mood === "demotivated" && (
-        <div className="mb-10">
-          <HypeMan />
-        </div>
-      )}
-      {(mood === "fun" || mood === "happy") && (
-        <div className="mb-10">
-          <WatercoolerWall />
-        </div>
-      )}
-
-      {/* Watercooler Preview Card - accessible from every mood mode */}
-      <div className="mb-10">
+      {/* D. Primary community section - Watercooler preview */}
+      <div className="mb-8">
         <WatercoolerPreviewCard />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-10">
-        {orderedGames.map((g) => {
-          const isFeatured = featured.has(g.to);
-          return (
-            <Link
-              key={g.to}
-              to={g.to}
-              className={`group glass-card rounded-3xl p-6 flex flex-col gap-4 hover:-translate-y-1 hover:shadow-[var(--shadow-glow)] transition-all relative ${
-                isFeatured ? "ring-2 ring-white/80 shadow-[var(--shadow-glow)]" : ""
-              }`}
-            >
-              {isFeatured && (
-                <span className="absolute -top-2 -right-2 text-[10px] font-bold uppercase tracking-wider bg-white/90 rounded-full px-2.5 py-1 shadow-[var(--shadow-soft)] text-foreground/80">
-                  {t("forYou")}
-                </span>
-              )}
-              <div
-                className="h-14 w-14 rounded-2xl flex items-center justify-center text-foreground/70 shadow-[var(--shadow-soft)]"
-                style={{ backgroundImage: `var(--${g.gradient.includes("mint") ? "gradient-mint" : g.gradient.includes("peach") ? "gradient-peach" : "gradient-lav"})` }}
-              >
-                <g.icon className="h-7 w-7" />
-              </div>
-              <div>
-                <h3 className="font-display font-bold text-lg text-foreground">{g.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{g.desc}</p>
-              </div>
-              <span className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-foreground/70 group-hover:gap-2 transition-all">
-                {t("open")} <ArrowRight className="h-4 w-4" />
-              </span>
-            </Link>
-          );
-        })}
+      {/* E. Mood-specific content area */}
+      <div className="mb-8">
+        <h2 className="text-sm font-semibold text-muted-foreground tracking-wide uppercase mb-4">
+          {t("recommendedForMood")}
+        </h2>
+
+        <div className="mb-6">
+          <MoodCompanion />
+        </div>
+
+        <div className="mb-6">
+          <ActiveListener />
+        </div>
+
+        {mood === "frustrated" && (
+          <div className="mb-6">
+            <CorporateTranslator />
+          </div>
+        )}
+        {mood === "tired" && (
+          <div className="mb-6">
+            <AiVacation />
+          </div>
+        )}
+        {mood === "demotivated" && (
+          <div className="mb-6">
+            <HypeMan />
+          </div>
+        )}
       </div>
 
+      {/* F. Personal activity section */}
+      <div className="mb-8">
+        <PersonalActivityCards />
+      </div>
+
+      {/* Games grid */}
+      <div className="mb-8">
+        <h2 className="text-sm font-semibold text-muted-foreground tracking-wide uppercase mb-4">
+          {t("exploreBreakroom")}
+        </h2>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {orderedGames.map((g) => {
+            const isFeatured = featured.has(g.to);
+            return (
+              <Link
+                key={g.to}
+                to={g.to}
+                className={`group glass-card rounded-3xl p-6 flex flex-col gap-4 hover:-translate-y-1 hover:shadow-[var(--shadow-glow)] transition-all relative ${
+                  isFeatured ? "ring-2 ring-white/80 shadow-[var(--shadow-glow)]" : ""
+                }`}
+              >
+                {isFeatured && (
+                  <span className="absolute -top-2 -right-2 text-[10px] font-bold uppercase tracking-wider bg-white/90 rounded-full px-2.5 py-1 shadow-[var(--shadow-soft)] text-foreground/80">
+                    {t("forYou")}
+                  </span>
+                )}
+                <div
+                  className="h-14 w-14 rounded-2xl flex items-center justify-center text-foreground/70 shadow-[var(--shadow-soft)]"
+                  style={{ backgroundImage: `var(--${g.gradient.includes("mint") ? "gradient-mint" : g.gradient.includes("peach") ? "gradient-peach" : "gradient-lav"})` }}
+                >
+                  <g.icon className="h-7 w-7" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-lg text-foreground">{g.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{g.desc}</p>
+                </div>
+                <span className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-foreground/70 group-hover:gap-2 transition-all">
+                  {t("open")} <ArrowRight className="h-4 w-4" />
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bottom tools */}
       <div className="grid gap-5 md:grid-cols-2">
         <Breather />
         <MoodCheckIn />
