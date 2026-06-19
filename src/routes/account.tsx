@@ -3,6 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/adminSubmissions";
+import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
@@ -19,6 +21,17 @@ function AccountPage() {
   const { user, loading, signOut, isConfigured } = useAuth();
   const navigate = useNavigate();
   const isAdmin = user && isAdminEmail(user.email);
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      if (user) {
+        const userProfile = await getCurrentUserProfile(user.id);
+        setProfile(userProfile);
+      }
+    }
+    loadProfile();
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -110,10 +123,59 @@ function AccountPage() {
         {/* Account Card */}
         <div className="glass-card rounded-2xl p-6 sm:p-8 mb-6">
           <div className="space-y-6">
+            {/* Profile Header */}
+            <div className="flex items-center gap-4 mb-6">
+              {profile?.avatar_url ? (
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center text-3xl shadow-[var(--shadow-soft)]">
+                  {profile.avatar_url}
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center text-3xl shadow-[var(--shadow-soft)]">
+                  👤
+                </div>
+              )}
+              <div className="flex-1">
+                <h2 className="text-2xl font-display font-bold text-foreground">
+                  {profile?.display_name || getDisplayName(profile, user.email)}
+                </h2>
+                {profile?.username && (
+                  <p className="text-muted-foreground text-sm">@{profile.username}</p>
+                )}
+              </div>
+              <Link
+                to="/onboarding" as any
+                className="px-4 py-2 bg-white/50 hover:bg-white/70 border border-white/30 rounded-lg text-sm font-medium text-foreground/80 transition-all"
+              >
+                {t("editProfile")}
+              </Link>
+            </div>
+
+            {/* Profile Details */}
+            {profile && (
+              <div className="space-y-4 pb-6 border-b border-white/20">
+                {profile.role_label && (
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">
+                      {t("roleVibe")}
+                    </label>
+                    <p className="text-foreground">{profile.role_label}</p>
+                  </div>
+                )}
+                {profile.preferred_mood && (
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">
+                      {t("preferredMood")}
+                    </label>
+                    <p className="text-foreground">{profile.preferred_mood}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-2">
-                {t("email")}
+                {t("accountLoginEmail")}
               </label>
               <p className="text-foreground font-medium">{user.email}</p>
             </div>

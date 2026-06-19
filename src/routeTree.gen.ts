@@ -16,6 +16,7 @@ import { Route as StoryDraftsRouteImport } from './routes/story-drafts'
 import { Route as SnakeRouteImport } from './routes/snake'
 import { Route as SmasherRouteImport } from './routes/smasher'
 import { Route as ShredderRouteImport } from './routes/shredder'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MySubmissionsRouteImport } from './routes/my-submissions'
 import { Route as MelodyRouteImport } from './routes/melody'
 import { Route as MatchRouteImport } from './routes/match'
@@ -63,6 +64,11 @@ const SmasherRoute = SmasherRouteImport.update({
 const ShredderRoute = ShredderRouteImport.update({
   id: '/shredder',
   path: '/shredder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MySubmissionsRoute = MySubmissionsRouteImport.update({
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
   '/my-submissions': typeof MySubmissionsRoute
+  '/onboarding': typeof OnboardingRoute
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
   '/my-submissions': typeof MySubmissionsRoute
+  '/onboarding': typeof OnboardingRoute
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
   '/my-submissions': typeof MySubmissionsRoute
+  '/onboarding': typeof OnboardingRoute
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/match'
     | '/melody'
     | '/my-submissions'
+    | '/onboarding'
     | '/shredder'
     | '/smasher'
     | '/snake'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/match'
     | '/melody'
     | '/my-submissions'
+    | '/onboarding'
     | '/shredder'
     | '/smasher'
     | '/snake'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/match'
     | '/melody'
     | '/my-submissions'
+    | '/onboarding'
     | '/shredder'
     | '/smasher'
     | '/snake'
@@ -280,6 +292,7 @@ export interface RootRouteChildren {
   MatchRoute: typeof MatchRoute
   MelodyRoute: typeof MelodyRoute
   MySubmissionsRoute: typeof MySubmissionsRoute
+  OnboardingRoute: typeof OnboardingRoute
   ShredderRoute: typeof ShredderRoute
   SmasherRoute: typeof SmasherRoute
   SnakeRoute: typeof SnakeRoute
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/shredder'
       fullPath: '/shredder'
       preLoaderRoute: typeof ShredderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-submissions': {
@@ -457,6 +477,7 @@ const rootRouteChildren: RootRouteChildren = {
   MatchRoute: MatchRoute,
   MelodyRoute: MelodyRoute,
   MySubmissionsRoute: MySubmissionsRoute,
+  OnboardingRoute: OnboardingRoute,
   ShredderRoute: ShredderRoute,
   SmasherRoute: SmasherRoute,
   SnakeRoute: SnakeRoute,

@@ -3,6 +3,7 @@ import { Heart, Trash2, Image as ImageIcon, Video, X } from "lucide-react";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { getPublishedWatercoolerPosts, createWatercoolerPost, deleteOwnWatercoolerPost, getWatercoolerDisplayName } from "@/lib/watercoolerPosts";
+import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
 
 type MediaType = "image" | "video" | null;
 
@@ -194,9 +195,14 @@ export function WatercoolerWall() {
     // If logged in and using Supabase, post to cloud
     if (user && isConfigured && !usingLocalStorage) {
       setError(null);
+      
+      // Get user profile for display name
+      const profile = await getCurrentUserProfile(user.id);
+      const displayName = getDisplayName(profile, user.email);
+      
       const { post: cloudPost, error } = await createWatercoolerPost(user.id, {
         body: text.trim(),
-        nickname: user.email?.split("@")[0] || undefined,
+        nickname: displayName,
         mood_tag: category,
       });
 

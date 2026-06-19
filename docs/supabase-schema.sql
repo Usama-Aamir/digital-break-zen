@@ -9,8 +9,14 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Stores user profile information linked to auth.users
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
   display_name TEXT,
+  username TEXT,
   avatar_url TEXT,
+  role_label TEXT,
+  preferred_mood TEXT,
+  language TEXT,
+  onboarding_completed BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -38,8 +44,8 @@ CREATE POLICY "Users can update own profile"
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id)
-  VALUES (NEW.id);
+  INSERT INTO public.profiles (id, email)
+  VALUES (NEW.id, NEW.email);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -209,3 +215,12 @@ CREATE INDEX IF NOT EXISTS idx_watercooler_posts_created_at ON public.watercoole
 -- Trigger to auto-update updated_at
 CREATE TRIGGER update_watercooler_posts_updated_at BEFORE UPDATE ON public.watercooler_posts
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Safe alter table statements for existing profiles table
+-- These will add columns if they don't exist, without causing errors if they do
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS username TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role_label TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS preferred_mood TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS language TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT false;

@@ -4,7 +4,8 @@ import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { saveLocalDraft, saveCloudDraft } from "@/lib/storyDrafts";
 import { submitCommunityStory } from "@/lib/storySubmissions";
-import { useState } from "react";
+import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/submit-story")({
   head: () => ({
@@ -26,6 +27,19 @@ function SubmitStoryPage() {
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // Prefill nickname and email from profile
+  useEffect(() => {
+    async function loadProfile() {
+      if (user) {
+        const profile = await getCurrentUserProfile(user.id);
+        const displayName = getDisplayName(profile, user.email);
+        setNickname(displayName);
+        setEmail(user.email || "");
+      }
+    }
+    loadProfile();
+  }, [user]);
 
   // Draft fields
   const [draftTitle, setDraftTitle] = useState("");

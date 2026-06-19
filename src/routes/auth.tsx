@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
+import { getCurrentUserProfile, isProfileComplete } from "@/lib/profiles";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/auth")({
@@ -28,7 +29,16 @@ function AuthPage() {
   // Auto-redirect if already logged in
   useEffect(() => {
     if (user && isConfigured) {
-      navigate({ to: "/account" });
+      async function checkProfile() {
+        if (!user) return;
+        const profile = await getCurrentUserProfile(user.id);
+        if (isProfileComplete(profile)) {
+          navigate({ to: "/" });
+        } else {
+          navigate({ to: "/onboarding" as any });
+        }
+      }
+      checkProfile();
     }
   }, [user, isConfigured, navigate]);
 
@@ -56,8 +66,17 @@ function AuthPage() {
       } else {
         // Sign up successful and user is logged in
         setSuccess(t("redirectingToAccount"));
-        setTimeout(() => {
-          navigate({ to: "/account" });
+        setTimeout(async () => {
+          if (user) {
+            const profile = await getCurrentUserProfile(user.id);
+            if (isProfileComplete(profile)) {
+              navigate({ to: "/" });
+            } else {
+              navigate({ to: "/onboarding" as any });
+            }
+          } else {
+            navigate({ to: "/" });
+          }
         }, 1000);
       }
     } else {
@@ -67,8 +86,17 @@ function AuthPage() {
       } else {
         // Sign in successful
         setSuccess(t("redirectingToAccount"));
-        setTimeout(() => {
-          navigate({ to: "/account" });
+        setTimeout(async () => {
+          if (user) {
+            const profile = await getCurrentUserProfile(user.id);
+            if (isProfileComplete(profile)) {
+              navigate({ to: "/" });
+            } else {
+              navigate({ to: "/onboarding" as any });
+            }
+          } else {
+            navigate({ to: "/" });
+          }
         }, 1000);
       }
     }
