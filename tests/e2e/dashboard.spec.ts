@@ -47,7 +47,7 @@ test.describe('Dashboard', () => {
     await goTo(page, '/');
     
     // Check for watercooler link or reference
-    const watercoolerLink = page.locator('a[href="/watercooler"], text=/watercooler/i');
+    const watercoolerLink = page.locator('a[href="/watercooler"]');
     const hasWatercoolerLink = await watercoolerLink.count() > 0;
     
     // Watercooler link should exist in navigation
