@@ -224,3 +224,46 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role_label TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS preferred_mood TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS language TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT false;
+
+-- ============================================================================
+-- SUPABASE STORAGE SETUP FOR WATERCOOLER MEDIA
+-- ============================================================================
+-- 
+-- The following setup must be done manually in the Supabase Dashboard:
+--
+-- 1. Create Storage Bucket:
+--    - Go to Storage → New bucket
+--    - Bucket name: watercooler-media
+--    - Make bucket public: YES (this allows public read access)
+--    - File size limit: 25MB (to support video uploads)
+--
+-- 2. Storage Policies (SQL):
+--    Run the following policies in Supabase SQL Editor:
+--
+--    -- Public read policy (allow anyone to read files)
+--    CREATE POLICY "Public can read watercooler media"
+--      ON storage.objects FOR SELECT
+--      TO public
+--      USING (bucket_id = 'watercooler-media');
+--
+--    -- Authenticated upload policy (allow logged-in users to upload)
+--    CREATE POLICY "Authenticated users can upload watercooler media"
+--      ON storage.objects FOR INSERT
+--      TO authenticated
+--      WITH CHECK (
+--        bucket_id = 'watercooler-media' AND
+--        auth.uid()::text = (storage.foldername(name))[1]
+--      );
+--
+--    -- User can delete own files (optional, for future deletion feature)
+--    CREATE POLICY "Users can delete own watercooler media"
+--      ON storage.objects FOR DELETE
+--      TO authenticated
+--      USING (
+--        bucket_id = 'watercooler-media' AND
+--        auth.uid()::text = (storage.foldername(name))[1]
+--      );
+--
+-- Note: The path format used by the app is: user_id/timestamp-filename
+-- This ensures users can only upload to their own folder and delete their own files.
+--

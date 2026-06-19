@@ -4,6 +4,7 @@ import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { getPublishedWatercoolerPosts, createWatercoolerPost, deleteOwnWatercoolerPost, getWatercoolerDisplayName } from "@/lib/watercoolerPosts";
 import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
+import { uploadWatercoolerMedia, validateWatercoolerMedia, getWatercoolerMediaType } from "@/lib/watercoolerMedia";
 
 type MediaType = "image" | "video" | null;
 
@@ -109,13 +110,14 @@ export function WatercoolerWall() {
           const convertedPosts: Post[] = cloudPosts.map((post) => ({
             id: post.id,
             text: post.body,
-            mediaType: null, // Media not implemented in cloud yet
+            mediaType: post.media_type as MediaType,
+            mediaUrl: post.media_url || undefined,
             category: post.mood_tag || "Random Vibes",
             timestamp: new Date(post.created_at).getTime(),
             isStarter: false,
             liked: false,
           }));
-          setPosts(converted);
+          setPosts(convertedPosts);
         }
         setIsLoading(false);
       } else {
@@ -159,23 +161,20 @@ export function WatercoolerWall() {
 
     setError(null);
 
-    // Check file type
-    if (file.type.startsWith("image/")) {
-      setMediaType("image");
-    } else if (file.type.startsWith("video/")) {
-      setMediaType("video");
-    } else {
-      setError(t("unsupportedMedia"));
+    // Use the new validation function
+    const validation = validateWatercoolerMedia(file);
+    if (!validation.valid) {
+      // Map validation errors to i18n keys
+      const errorMap: Record<string, string> = {
+        imageTooLarge: t("imageTooLarge"),
+        videoTooLarge: t("videoTooLarge"),
+        unsupportedMediaType: t("unsupportedMediaType"),
+      };
+      setError(errorMap[validation.error] || t("mediaValidationError"));
       return;
     }
 
-    // Check file size
-    const maxSize = mediaType === "video" ? 10 * 1024 * 1024 : 3 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setError(t("mediaTooLarge"));
-      return;
-    }
-
+    setMediaType(validation.mediaType);
     setMediaFile(file);
     setMediaPreview(URL.createObjectURL(file));
   };
@@ -196,6 +195,20 @@ export function WatercoolerWall() {
     if (user && isConfigured && !usingLocalStorage) {
       setError(null);
       
+      // Upload media first if selected
+      let mediaUrl: string | null = null;
+      let mediaTypeResult: 'image' | 'video' | null = null;
+      
+      if (mediaFile) {
+        const { result, error: uploadError } = await uploadWatercoolerMedia(user.id, mediaFile);
+        if (uploadError || !result) {
+          setError(t("mediaUploadError"));
+          return;
+        }
+        mediaUrl = result.publicUrl;
+        mediaTypeResult = result.mediaType;
+      }
+      
       // Get user profile for display name
       const profile = await getCurrentUserProfile(user.id);
       const displayName = getDisplayName(profile, user.email);
@@ -204,6 +217,8 @@ export function WatercoolerWall() {
         body: text.trim(),
         nickname: displayName,
         mood_tag: category,
+        media_url: mediaUrl || undefined,
+        media_type: mediaTypeResult || undefined,
       });
 
       if (error) {
@@ -220,7 +235,8 @@ export function WatercoolerWall() {
         const convertedPosts: Post[] = refreshedPosts.map((post) => ({
           id: post.id,
           text: post.body,
-          mediaType: null,
+          mediaType: post.media_type as MediaType,
+          mediaUrl: post.media_url || undefined,
           category: post.mood_tag || "Random Vibes",
           timestamp: new Date(post.created_at).getTime(),
           isStarter: false,
@@ -436,9 +452,12 @@ export function WatercoolerWall() {
               </button>
             </div>
 
-            <p className="mt-3 text-xs text-muted-foreground text-center">
-              {t("mediaComingSoon")}
-            </p>
+            {/* Media public notice */}
+            {isConfigured && !usingLocalStorage && (
+              <p className="mt-3 text-xs text-muted-foreground text-center">
+                {t("mediaPublicNotice")}
+              </p>
+            )}
           </>
         )}
       </div>
@@ -478,42 +497,19 @@ export function WatercoolerWall() {
               {/* Media Display */}
               {post.mediaUrl && post.mediaType && (
                 <div className="mb-3 rounded-xl overflow-hidden bg-white/20">
-                  {(() => {
-                    // Try to load the media URL, if it fails show expired message
-                    try {
-                      if (post.mediaType === "image") {
-                        return (
-                          <img
-                            src={post.mediaUrl}
-                            alt="Post media"
-                            className="w-full max-h-[300px] object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = "none";
-                              (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
-                            }}
-                          />
-                        );
-                      } else if (post.mediaType === "video") {
-                        return (
-                          <video
-                            src={post.mediaUrl}
-                            controls
-                            className="w-full max-h-[300px]"
-                            onError={(e) => {
-                              (e.target as HTMLVideoElement).style.display = "none";
-                              (e.target as HTMLVideoElement).nextElementSibling?.classList.remove("hidden");
-                            }}
-                          />
-                        );
-                      }
-                    } catch (e) {
-                      console.error("[WatercoolerWall] Media load error:", e);
-                    }
-                    return null;
-                  })()}
-                  <div className="hidden p-4 text-center text-sm text-muted-foreground">
-                    {t("mediaPreviewExpired")}
-                  </div>
+                  {post.mediaType === "image" ? (
+                    <img
+                      src={post.mediaUrl}
+                      alt="Post media"
+                      className="w-full max-h-[300px] object-contain"
+                    />
+                  ) : (
+                    <video
+                      src={post.mediaUrl}
+                      controls
+                      className="w-full max-h-[300px]"
+                    />
+                  )}
                 </div>
               )}
 
