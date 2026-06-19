@@ -12,7 +12,6 @@ import { WatercoolerWall } from "@/components/WatercoolerWall";
 import { WatercoolerPreviewCard } from "@/components/WatercoolerPreviewCard";
 import { DashboardHero } from "@/components/DashboardHero";
 import { MoodSwitcher } from "@/components/MoodSwitcher";
-import { FeatureRail } from "@/components/FeatureRail";
 import { PersonalActivityCards } from "@/components/PersonalActivityCards";
 import { CircleDot, Layers, Grid3x3, ArrowRight, Music2, Palmtree, Scissors, Sparkles, Worm } from "lucide-react";
 import { useMood, useLocalizedMoodMeta } from "@/lib/mood";
@@ -109,15 +108,12 @@ function Index() {
       {/* B. Mood quick switcher */}
       <MoodSwitcher />
 
-      {/* C. Stories-style feature rail */}
-      <FeatureRail />
-
-      {/* D. Primary community section - Watercooler preview */}
+      {/* C. Primary community section - Watercooler preview */}
       <div className="mb-8">
         <WatercoolerPreviewCard />
       </div>
 
-      {/* E. Mood-specific content area */}
+      {/* D. Mood-specific content area */}
       <div className="mb-8">
         <h2 className="text-sm font-semibold text-muted-foreground tracking-wide uppercase mb-4">
           {t("recommendedForMood")}
@@ -148,12 +144,12 @@ function Index() {
         )}
       </div>
 
-      {/* F. Personal activity section */}
+      {/* E. Personal activity section */}
       <div className="mb-8">
         <PersonalActivityCards />
       </div>
 
-      {/* Games grid */}
+      {/* F. Games grid */}
       <div className="mb-8">
         <h2 className="text-sm font-semibold text-muted-foreground tracking-wide uppercase mb-4">
           {t("exploreBreakroom")}
@@ -193,7 +189,7 @@ function Index() {
         </div>
       </div>
 
-      {/* Bottom tools */}
+      {/* G. Bottom tools */}
       <div className="grid gap-5 md:grid-cols-2">
         <Breather />
         <MoodCheckIn />
