@@ -4,6 +4,11 @@ import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { getCurrentUserProfile, isProfileComplete } from "@/lib/profiles";
 import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "");
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -75,9 +80,22 @@ function AuthPage() {
               navigate({ to: "/onboarding" as any });
             }
           } else {
-            navigate({ to: "/" });
+            // Session might not be ready yet, wait and check again
+            setTimeout(async () => {
+              const { data: { user: delayedUser } } = await supabase.auth.getUser();
+              if (delayedUser) {
+                const profile = await getCurrentUserProfile(delayedUser.id);
+                if (isProfileComplete(profile)) {
+                  navigate({ to: "/" });
+                } else {
+                  navigate({ to: "/onboarding" as any });
+                }
+              } else {
+                navigate({ to: "/" });
+              }
+            }, 500);
           }
-        }, 1000);
+        }, 500);
       }
     } else {
       const result = await signIn(email, password);
@@ -95,9 +113,22 @@ function AuthPage() {
               navigate({ to: "/onboarding" as any });
             }
           } else {
-            navigate({ to: "/" });
+            // Session might not be ready yet, wait and check again
+            setTimeout(async () => {
+              const { data: { user: delayedUser } } = await supabase.auth.getUser();
+              if (delayedUser) {
+                const profile = await getCurrentUserProfile(delayedUser.id);
+                if (isProfileComplete(profile)) {
+                  navigate({ to: "/" });
+                } else {
+                  navigate({ to: "/onboarding" as any });
+                }
+              } else {
+                navigate({ to: "/" });
+              }
+            }, 500);
           }
-        }, 1000);
+        }, 500);
       }
     }
 

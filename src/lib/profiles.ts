@@ -29,10 +29,13 @@ export async function getCurrentUserProfile(userId: string): Promise<Profile | n
       .from("profiles")
       .select("*")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      console.error("[profiles] Error fetching profile:", error);
+      // Only log real Supabase errors, not "no row found"
+      if (error.code !== 'PGRST116') {
+        console.error("[profiles] Error fetching profile:", error);
+      }
       return null;
     }
 

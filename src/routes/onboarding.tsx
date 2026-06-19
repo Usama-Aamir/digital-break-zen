@@ -75,6 +75,7 @@ function Onboarding() {
 
     try {
       await upsertUserProfile(user.id, {
+        email: user.email,
         display_name: displayName.trim(),
         username: username.trim() || null,
         role_label: role || null,

@@ -32,7 +32,7 @@ export function DashboardHero() {
               displayName ? (
                 `${t("welcomeBack")}, ${displayName}`
               ) : (
-                t("welcomeBack")
+                `${t("welcomeBack")}, ${t("friendFallback")}`
               )
             ) : (
               t("welcomeToBreakroom")
