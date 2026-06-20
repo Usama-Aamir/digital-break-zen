@@ -1,12 +1,11 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/adminSubmissions";
 import { getAllWatercoolerPostsForAdmin, updateWatercoolerPostStatus } from "@/lib/watercoolerPosts";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
-
-const ADMIN_EMAIL = "aamirusama8@gmail.com";
 
 export const Route = createFileRoute("/admin-watercooler")({
   head: () => ({
@@ -20,41 +19,28 @@ export const Route = createFileRoute("/admin-watercooler")({
 
 function AdminWatercooler() {
   const { t } = useLanguage();
-  const { user, isConfigured } = useAuth();
-  const navigate = useNavigate();
+  const { user, loading, isConfigured } = useAuth();
   const [posts, setPosts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Check if user is admin
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdmin = user && isAdminEmail(user.email);
 
   useEffect(() => {
-    if (!isConfigured) {
-      return;
+    if (isAdmin) {
+      loadPosts();
     }
-
-    if (!user) {
-      // Redirect to auth if not logged in
-      navigate({ to: "/auth" });
-      return;
-    }
-
-    if (!isAdmin) {
-      // Show access denied if not admin
-      return;
-    }
-
-    loadPosts();
-  }, [user, isConfigured, isAdmin, navigate, statusFilter]);
+  }, [isAdmin, statusFilter]);
 
   async function loadPosts() {
     if (!isAdmin) return;
 
     setIsLoading(true);
-    setError(null);
+    setLoadError(null);
 
     try {
       const { posts: adminPosts, error: fetchError } = await getAllWatercoolerPostsForAdmin(
@@ -62,26 +48,27 @@ function AdminWatercooler() {
       );
 
       if (fetchError) {
-        setError(fetchError);
+        setLoadError(fetchError);
       } else {
         setPosts(adminPosts || []);
       }
     } catch (e) {
-      setError("Could not load posts for moderation.");
+      setLoadError("Could not load posts for moderation.");
     } finally {
       setIsLoading(false);
     }
   }
 
   async function handleUpdateStatus(postId: string, status: "published" | "hidden" | "deleted", hiddenReason?: string) {
-    setIsLoading(true);
-    setError(null);
+    setIsUpdating(true);
+    setUpdateError(null);
+    setSuccessMessage(null);
 
     try {
       const { error } = await updateWatercoolerPostStatus(postId, status, hiddenReason);
 
       if (error) {
-        setError(t("moderationActionError"));
+        setUpdateError(error);
         return;
       }
 
@@ -90,27 +77,54 @@ function AdminWatercooler() {
         status === "published" ? t("postUnhidden") :
         t("postMarkedDeleted")
       );
-      setTimeout(() => setSuccessMessage(null), 3000);
 
       await loadPosts();
+
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (e) {
-      setError(t("moderationActionError"));
+      setUpdateError(t("moderationActionError"));
     } finally {
-      setIsLoading(false);
+      setIsUpdating(false);
     }
   }
 
   if (!isConfigured) {
     return (
       <AppShell>
-        <div className="max-w-md mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto px-4 py-12">
           <div className="glass-card rounded-2xl p-8 text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-yellow-100 to-orange-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+            </div>
             <h1 className="text-2xl font-display font-bold text-foreground mb-4">
               Setup Required
             </h1>
             <p className="text-muted-foreground mb-6">
               {t("supabaseNotConfigured")}
             </p>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+            >
+              Back to Home
+            </Link>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="max-w-4xl mx-auto px-4 py-12">
+          <div className="glass-card rounded-2xl p-8 text-center">
+            <div className="animate-spin w-8 h-8 mx-auto mb-4 border-4 border-[var(--gradient-mint)] border-t-transparent rounded-full"></div>
+            <p className="text-muted-foreground">Loading...</p>
           </div>
         </div>
       </AppShell>
@@ -120,20 +134,20 @@ function AdminWatercooler() {
   if (!user) {
     return (
       <AppShell>
-        <div className="max-w-md mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto px-4 py-12">
           <div className="glass-card rounded-2xl p-8 text-center">
-            <h1 className="text-2xl font-display font-bold text-foreground mb-4">
-              Sign In Required
+            <h1 className="text-3xl font-display font-bold text-foreground mb-4">
+              {t("adminSignInRequired")}
             </h1>
             <p className="text-muted-foreground mb-6">
-              You must be signed in to access this page.
+              {t("adminOnlyArea")}
             </p>
-            <button
-              onClick={() => navigate({ to: "/auth" })}
-              className="px-6 py-3 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
             >
-              Sign In
-            </button>
+              {t("signIn")}
+            </Link>
           </div>
         </div>
       </AppShell>
@@ -143,20 +157,20 @@ function AdminWatercooler() {
   if (!isAdmin) {
     return (
       <AppShell>
-        <div className="max-w-md mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto px-4 py-12">
           <div className="glass-card rounded-2xl p-8 text-center">
-            <h1 className="text-2xl font-display font-bold text-foreground mb-4">
-              Access Denied
+            <h1 className="text-3xl font-display font-bold text-foreground mb-4">
+              {t("accessDenied")}
             </h1>
             <p className="text-muted-foreground mb-6">
-              You do not have permission to access this page.
+              {t("adminOnlyArea")}
             </p>
-            <button
-              onClick={() => navigate({ to: "/" })}
-              className="px-6 py-3 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+            <Link
+              to="/account"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
             >
-              Back to Home
-            </button>
+              Back to Account
+            </Link>
           </div>
         </div>
       </AppShell>
@@ -184,87 +198,79 @@ function AdminWatercooler() {
         )}
 
         {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-100/50 border border-red-200/50 rounded-xl text-sm text-red-700">
-            {error}
+        {updateError && (
+          <div className="glass-card rounded-2xl p-4 mb-6 bg-gradient-to-br from-red-100/30 to-orange-100/30 border-red-200/30">
+            <p className="text-sm text-red-700 text-center">
+              {updateError}
+            </p>
           </div>
         )}
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <button
-            onClick={() => setStatusFilter("all")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              statusFilter === "all"
-                ? "bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground"
-                : "bg-white/50 hover:bg-white/70 text-foreground/80"
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setStatusFilter("published")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              statusFilter === "published"
-                ? "bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground"
-                : "bg-white/50 hover:bg-white/70 text-foreground/80"
-            }`}
-          >
-            {t("published")}
-          </button>
-          <button
-            onClick={() => setStatusFilter("hidden")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              statusFilter === "hidden"
-                ? "bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground"
-                : "bg-white/50 hover:bg-white/70 text-foreground/80"
-            }`}
-          >
-            {t("hidden")}
-          </button>
-          <button
-            onClick={() => setStatusFilter("deleted")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              statusFilter === "deleted"
-                ? "bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground"
-                : "bg-white/50 hover:bg-white/70 text-foreground/80"
-            }`}
-          >
-            {t("deleted")}
-          </button>
-          <button
-            onClick={() => setStatusFilter("reported")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              statusFilter === "reported"
-                ? "bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground"
-                : "bg-white/50 hover:bg-white/70 text-foreground/80"
-            }`}
-          >
-            {t("reportedPosts")}
-          </button>
+        {/* Filter Buttons */}
+        <div className="glass-card rounded-2xl p-4 mb-6 bg-white/40 border border-white/30 backdrop-blur-md">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {["all", "published", "hidden", "deleted", "reported"].map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                  statusFilter === status
+                    ? "bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground shadow-[var(--shadow-glow)]"
+                    : "bg-white/60 text-muted-foreground hover:bg-white/80"
+                }`}
+              >
+                {status === "all" ? "All" :
+                 status === "published" ? t("published") :
+                 status === "hidden" ? t("hidden") :
+                 status === "deleted" ? t("deleted") :
+                 t("reportedPosts")}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="text-center py-12">
+          <div className="glass-card rounded-2xl p-8 text-center mb-6">
             <div className="animate-spin w-8 h-8 mx-auto mb-4 border-4 border-[var(--gradient-mint)] border-t-transparent rounded-full"></div>
-            <p className="text-muted-foreground">Loading posts...</p>
+            <p className="text-muted-foreground">Loading...</p>
           </div>
         )}
 
-        {/* Posts List */}
-        {!isLoading && posts.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No posts found for this filter.</p>
+        {/* Error State */}
+        {loadError && (
+          <div className="glass-card rounded-2xl p-6 mb-6 bg-gradient-to-br from-red-100/30 to-orange-100/30 border-red-200/30">
+            <p className="text-sm text-muted-foreground text-center">
+              {loadError}
+            </p>
           </div>
         )}
 
-        {!isLoading && posts.length > 0 && (
+        {/* Empty State */}
+        {!isLoading && !loadError && posts.length === 0 && (
+          <div className="glass-card rounded-2xl p-8 text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-xl font-display font-bold text-foreground mb-2">
+              {t("noModerationItems")}
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              {t("noModerationItemsText")}
+            </p>
+          </div>
+        )}
+
+        {!isLoading && !loadError && posts.length > 0 && (
           <div className="space-y-4">
             {posts.map((post) => (
               <div
                 key={post.id}
-                className="glass-card rounded-2xl p-6 border border-white/30"
+                className="glass-card rounded-2xl p-6 bg-white/40 border border-white/30 backdrop-blur-md hover:scale-[1.01] transition-transform"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -316,21 +322,21 @@ function AdminWatercooler() {
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-4 border-t border-white/20">
+                <div className="flex flex-wrap gap-2">
                   {post.status === "published" && (
                     <>
                       <button
                         onClick={() => handleUpdateStatus(post.id, "hidden", "Hidden by admin")}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-yellow-50 hover:bg-yellow-100 rounded-lg border border-yellow-200 text-xs font-medium text-yellow-700 transition-all"
+                        disabled={isUpdating}
+                        className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] disabled:opacity-50"
                       >
-                        <EyeOff className="h-3.5 w-3.5" />
                         {t("hidePost")}
                       </button>
                       <button
                         onClick={() => handleUpdateStatus(post.id, "deleted")}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 text-xs font-medium text-red-700 transition-all"
+                        disabled={isUpdating}
+                        className="px-4 py-2 bg-gradient-to-r from-red-400 to-pink-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] disabled:opacity-50"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
                         {t("markDeleted")}
                       </button>
                     </>
@@ -339,16 +345,16 @@ function AdminWatercooler() {
                     <>
                       <button
                         onClick={() => handleUpdateStatus(post.id, "published")}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 text-xs font-medium text-green-700 transition-all"
+                        disabled={isUpdating}
+                        className="px-4 py-2 bg-gradient-to-r from-green-400 to-emerald-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] disabled:opacity-50"
                       >
-                        <Eye className="h-3.5 w-3.5" />
                         {t("unhidePost")}
                       </button>
                       <button
                         onClick={() => handleUpdateStatus(post.id, "deleted")}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 text-xs font-medium text-red-700 transition-all"
+                        disabled={isUpdating}
+                        className="px-4 py-2 bg-gradient-to-r from-red-400 to-pink-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] disabled:opacity-50"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
                         {t("markDeleted")}
                       </button>
                     </>
@@ -356,9 +362,9 @@ function AdminWatercooler() {
                   {post.status === "deleted" && (
                     <button
                       onClick={() => handleUpdateStatus(post.id, "published")}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 text-xs font-medium text-green-700 transition-all"
+                      disabled={isUpdating}
+                      className="px-4 py-2 bg-gradient-to-r from-green-400 to-emerald-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] disabled:opacity-50"
                     >
-                      <Eye className="h-3.5 w-3.5" />
                       {t("unhidePost")}
                     </button>
                   )}
@@ -367,6 +373,13 @@ function AdminWatercooler() {
             ))}
           </div>
         )}
+
+        {/* Back Link */}
+        <div className="text-center mt-8">
+          <Link to="/account" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            ← Back to Account
+          </Link>
+        </div>
       </div>
     </AppShell>
   );

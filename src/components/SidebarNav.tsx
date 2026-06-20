@@ -77,6 +77,7 @@ export function SidebarNav() {
       title: t("admin"),
       items: [
         { label: t("adminModeration"), to: "/admin-submissions", icon: Shield },
+        { label: t("watercoolerModeration"), to: "/admin-watercooler", icon: Shield },
       ],
     });
   }
