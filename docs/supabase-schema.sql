@@ -179,6 +179,10 @@ CREATE TABLE IF NOT EXISTS public.watercooler_posts (
   media_type TEXT,
   likes_count INTEGER DEFAULT 0,
   status TEXT DEFAULT 'published',
+  report_count INTEGER DEFAULT 0,
+  hidden_reason TEXT,
+  hidden_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  hidden_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -216,6 +220,35 @@ CREATE INDEX IF NOT EXISTS idx_watercooler_posts_created_at ON public.watercoole
 CREATE TRIGGER update_watercooler_posts_updated_at BEFORE UPDATE ON public.watercooler_posts
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+-- Watercooler post reports table
+-- Stores reports on Watercooler posts for moderation
+CREATE TABLE IF NOT EXISTS public.watercooler_post_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID REFERENCES public.watercooler_posts(id) ON DELETE CASCADE,
+  reporter_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  reason TEXT NOT NULL,
+  details TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.watercooler_post_reports ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for watercooler_post_reports
+-- Authenticated users can insert reports
+CREATE POLICY "Users can insert reports"
+  ON public.watercooler_post_reports FOR INSERT
+  WITH CHECK (auth.uid() = reporter_id);
+
+-- Users can view their own reports
+CREATE POLICY "Users can view own reports"
+  ON public.watercooler_post_reports FOR SELECT
+  USING (auth.uid() = reporter_id);
+
+-- Indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_watercooler_post_reports_post_id ON public.watercooler_post_reports(post_id);
+CREATE INDEX IF NOT EXISTS idx_watercooler_post_reports_reporter_id ON public.watercooler_post_reports(reporter_id);
+
 -- Safe alter table statements for existing profiles table
 -- These will add columns if they don't exist, without causing errors if they do
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
@@ -224,6 +257,13 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role_label TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS preferred_mood TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS language TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT false;
+
+-- Safe alter table statements for existing watercooler_posts table
+-- These will add moderation columns if they don't exist
+ALTER TABLE public.watercooler_posts ADD COLUMN IF NOT EXISTS report_count INTEGER DEFAULT 0;
+ALTER TABLE public.watercooler_posts ADD COLUMN IF NOT EXISTS hidden_reason TEXT;
+ALTER TABLE public.watercooler_posts ADD COLUMN IF NOT EXISTS hidden_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE public.watercooler_posts ADD COLUMN IF NOT EXISTS hidden_at TIMESTAMPTZ;
 
 -- ============================================================================
 -- SUPABASE STORAGE SETUP FOR WATERCOOLER MEDIA

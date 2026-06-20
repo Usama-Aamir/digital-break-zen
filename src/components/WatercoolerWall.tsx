@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { Heart, Trash2, Image as ImageIcon, Video, X } from "lucide-react";
+import { Heart, Trash2, Image as ImageIcon, Video, X, Flag } from "lucide-react";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
-import { getPublishedWatercoolerPosts, createWatercoolerPost, deleteOwnWatercoolerPost, getWatercoolerDisplayName } from "@/lib/watercoolerPosts";
+import { getPublishedWatercoolerPosts, createWatercoolerPost, deleteOwnWatercoolerPost, getWatercoolerDisplayName, reportWatercoolerPost } from "@/lib/watercoolerPosts";
 import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
 import { uploadWatercoolerMedia, validateWatercoolerMedia, getWatercoolerMediaType } from "@/lib/watercoolerMedia";
 
@@ -18,6 +18,7 @@ interface Post {
   timestamp: number;
   isStarter: boolean;
   liked: boolean;
+  userId?: string; // For ownership check
 }
 
 const CATEGORIES = [
@@ -94,6 +95,12 @@ export function WatercoolerWall() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const [usingLocalStorage, setUsingLocalStorage] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load posts from Supabase or localStorage on mount
@@ -117,6 +124,7 @@ export function WatercoolerWall() {
             timestamp: new Date(post.created_at).getTime(),
             isStarter: false,
             liked: false,
+            userId: post.user_id || undefined,
           }));
           setPosts(convertedPosts);
           setUsingLocalStorage(false);
@@ -301,8 +309,76 @@ export function WatercoolerWall() {
     ));
   };
 
-  const handleDelete = (id: string) => {
-    setPosts(posts.filter((post) => post.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+    
+    setIsDeleting(true);
+    setError(null);
+
+    try {
+      const { error } = await deleteOwnWatercoolerPost(id, user.id);
+      if (error) {
+        setError(t("postDeleteError"));
+        return;
+      }
+
+      setSuccessMessage(t("postDeleted"));
+      setTimeout(() => setSuccessMessage(null), 3000);
+
+      // Refresh posts from cloud
+      const { posts: refreshedPosts } = await getPublishedWatercoolerPosts();
+      if (refreshedPosts) {
+        const convertedPosts: Post[] = refreshedPosts.map((post) => ({
+          id: post.id,
+          text: post.body,
+          mediaType: post.media_type as MediaType,
+          mediaUrl: post.media_url || undefined,
+          category: post.mood_tag || "Random Vibes",
+          timestamp: new Date(post.created_at).getTime(),
+          isStarter: false,
+          liked: false,
+          userId: post.user_id || undefined,
+        }));
+        setPosts(convertedPosts);
+      }
+
+      setDeleteConfirm(null);
+    } catch (e) {
+      setError(t("postDeleteError"));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleReport = async () => {
+    if (!user || !showReportDialog) return;
+
+    setIsReporting(true);
+    setError(null);
+
+    try {
+      const { error } = await reportWatercoolerPost(
+        showReportDialog,
+        user.id,
+        reportReason,
+        reportDetails || undefined
+      );
+
+      if (error) {
+        setError(t("reportError"));
+        return;
+      }
+
+      setSuccessMessage(t("reportSubmitted"));
+      setTimeout(() => setSuccessMessage(null), 3000);
+      setShowReportDialog(null);
+      setReportReason("");
+      setReportDetails("");
+    } catch (e) {
+      setError(t("reportError"));
+    } finally {
+      setIsReporting(false);
+    }
   };
 
   const formatTimestamp = (timestamp: number) => {
@@ -552,20 +628,159 @@ export function WatercoolerWall() {
                   {post.liked ? t("liked") : t("like")}
                 </button>
 
-                {!post.isStarter && (
-                  <button
-                    onClick={() => handleDelete(post.id)}
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-500 transition-all"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    {t("delete")}
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {/* Report button for logged-in users */}
+                  {user && !post.isStarter && (
+                    <button
+                      onClick={() => {
+                        if (!user) {
+                          setError(t("signInToPost"));
+                          return;
+                        }
+                        setShowReportDialog(post.id);
+                      }}
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-orange-500 transition-all"
+                    >
+                      <Flag className="h-4 w-4" />
+                      {t("reportPost")}
+                    </button>
+                  )}
+
+                  {/* Delete button only for post owners */}
+                  {!post.isStarter && post.userId === user?.id && (
+                    <button
+                      onClick={() => setDeleteConfirm(post.id)}
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-500 transition-all"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {t("deletePost")}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {/* Report Dialog */}
+      {showReportDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="glass-card rounded-2xl p-6 max-w-md w-full bg-white/90">
+            <h3 className="text-lg font-display font-bold text-foreground mb-2">
+              {t("reportPost")}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t("reportReason")}
+            </p>
+            
+            <div className="space-y-2 mb-4">
+              <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/50 cursor-pointer border border-transparent hover:border-white/30">
+                <input
+                  type="radio"
+                  name="reportReason"
+                  value="Spam"
+                  checked={reportReason === "Spam"}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">{t("reportSpam")}</span>
+              </label>
+              <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/50 cursor-pointer border border-transparent hover:border-white/30">
+                <input
+                  type="radio"
+                  name="reportReason"
+                  value="Harassment"
+                  checked={reportReason === "Harassment"}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">{t("reportHarassment")}</span>
+              </label>
+              <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/50 cursor-pointer border border-transparent hover:border-white/30">
+                <input
+                  type="radio"
+                  name="reportReason"
+                  value="Inappropriate media"
+                  checked={reportReason === "Inappropriate media"}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">{t("reportInappropriateMedia")}</span>
+              </label>
+              <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/50 cursor-pointer border border-transparent hover:border-white/30">
+                <input
+                  type="radio"
+                  name="reportReason"
+                  value="Other"
+                  checked={reportReason === "Other"}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">{t("reportOther")}</span>
+              </label>
+            </div>
+
+            <textarea
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              placeholder="Additional details (optional)"
+              className="w-full px-3 py-2 rounded-lg bg-white/50 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/30 text-sm min-h-[80px]"
+              maxLength={500}
+            />
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => {
+                  setShowReportDialog(null);
+                  setReportReason("");
+                  setReportDetails("");
+                }}
+                className="flex-1 px-4 py-2 bg-white/50 hover:bg-white/70 rounded-lg border border-white/30 text-sm font-medium text-foreground transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReport}
+                disabled={!reportReason || isReporting}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-400 to-red-400 text-white rounded-lg text-sm font-medium transition-all hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isReporting ? "Submitting..." : t("submitReport")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="glass-card rounded-2xl p-6 max-w-sm w-full bg-white/90">
+            <h3 className="text-lg font-display font-bold text-foreground mb-2">
+              {t("deletePost")}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t("deletePostConfirm")}
+            </p>
+            
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 px-4 py-2 bg-white/50 hover:bg-white/70 rounded-lg border border-white/30 text-sm font-medium text-foreground transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirm)}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? "Deleting..." : t("deletePost")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
