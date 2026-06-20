@@ -264,6 +264,151 @@ ALTER TABLE public.watercooler_posts ADD COLUMN IF NOT EXISTS report_count INTEG
 ALTER TABLE public.watercooler_posts ADD COLUMN IF NOT EXISTS hidden_reason TEXT;
 ALTER TABLE public.watercooler_posts ADD COLUMN IF NOT EXISTS hidden_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
 ALTER TABLE public.watercooler_posts ADD COLUMN IF NOT EXISTS hidden_at TIMESTAMPTZ;
+ALTER TABLE public.watercooler_posts ADD COLUMN IF NOT EXISTS likes_count INTEGER DEFAULT 0;
+
+-- ============================================================================
+-- WATERCOOLER POST LIKES TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.watercooler_post_likes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES public.watercooler_posts(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(post_id, user_id)
+);
+
+-- RLS for watercooler_post_likes
+ALTER TABLE public.watercooler_post_likes ENABLE ROW LEVEL SECURITY;
+
+-- Public can view likes (for like counts)
+CREATE POLICY "Public can view watercooler post likes"
+  ON public.watercooler_post_likes FOR SELECT
+  TO public
+  USING (true);
+
+-- Authenticated users can insert their own likes
+CREATE POLICY "Authenticated users can insert own like"
+  ON public.watercooler_post_likes FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+-- Authenticated users can delete their own likes
+CREATE POLICY "Authenticated users can delete own like"
+  ON public.watercooler_post_likes FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Indexes for watercooler_post_likes
+CREATE INDEX IF NOT EXISTS idx_watercooler_post_likes_post_id ON public.watercooler_post_likes(post_id);
+CREATE INDEX IF NOT EXISTS idx_watercooler_post_likes_user_id ON public.watercooler_post_likes(user_id);
+
+-- Function to increment likes_count on post when like is inserted
+CREATE OR REPLACE FUNCTION increment_watercooler_post_likes_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.watercooler_posts
+  SET likes_count = likes_count + 1
+  WHERE id = NEW.post_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to increment likes_count on like insert
+DROP TRIGGER IF EXISTS trigger_increment_watercooler_post_likes_count ON public.watercooler_post_likes;
+CREATE TRIGGER trigger_increment_watercooler_post_likes_count
+  AFTER INSERT ON public.watercooler_post_likes
+  FOR EACH ROW
+  EXECUTE FUNCTION increment_watercooler_post_likes_count();
+
+-- Function to decrement likes_count on post when like is deleted
+CREATE OR REPLACE FUNCTION decrement_watercooler_post_likes_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.watercooler_posts
+  SET likes_count = GREATEST(likes_count - 1, 0)
+  WHERE id = OLD.post_id;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to decrement likes_count on like delete
+DROP TRIGGER IF EXISTS trigger_decrement_watercooler_post_likes_count ON public.watercooler_post_likes;
+CREATE TRIGGER trigger_decrement_watercooler_post_likes_count
+  AFTER DELETE ON public.watercooler_post_likes
+  FOR EACH ROW
+  EXECUTE FUNCTION decrement_watercooler_post_likes_count();
+
+-- ============================================================================
+-- WATERCOOLER POST COMMENTS TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.watercooler_post_comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES public.watercooler_posts(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  nickname TEXT,
+  body TEXT NOT NULL,
+  status TEXT DEFAULT 'published',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS for watercooler_post_comments
+ALTER TABLE public.watercooler_post_comments ENABLE ROW LEVEL SECURITY;
+
+-- Public can view published comments
+CREATE POLICY "Public can view published watercooler post comments"
+  ON public.watercooler_post_comments FOR SELECT
+  TO public
+  USING (status = 'published');
+
+-- Authenticated users can insert comments with own user_id
+CREATE POLICY "Authenticated users can insert own comment"
+  ON public.watercooler_post_comments FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own comments
+CREATE POLICY "Users can update own watercooler post comments"
+  ON public.watercooler_post_comments FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Users can delete their own comments
+CREATE POLICY "Users can delete own watercooler post comments"
+  ON public.watercooler_post_comments FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Admin can update all comments
+CREATE POLICY "Admin can update all watercooler post comments"
+  ON public.watercooler_post_comments FOR UPDATE
+  TO authenticated
+  USING (
+    auth.jwt()->>'email' = 'aamirusama8@gmail.com'
+  );
+
+-- Indexes for watercooler_post_comments
+CREATE INDEX IF NOT EXISTS idx_watercooler_post_comments_post_id ON public.watercooler_post_comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_watercooler_post_comments_user_id ON public.watercooler_post_comments(user_id);
+CREATE INDEX IF NOT EXISTS idx_watercooler_post_comments_status ON public.watercooler_post_comments(status);
+
+-- Function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_watercooler_post_comments_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to update updated_at on comment update
+DROP TRIGGER IF EXISTS trigger_update_watercooler_post_comments_updated_at ON public.watercooler_post_comments;
+CREATE TRIGGER trigger_update_watercooler_post_comments_updated_at
+  BEFORE UPDATE ON public.watercooler_post_comments
+  FOR EACH ROW
+  EXECUTE FUNCTION update_watercooler_post_comments_updated_at();
 
 -- ============================================================================
 -- SUPABASE STORAGE SETUP FOR WATERCOOLER MEDIA

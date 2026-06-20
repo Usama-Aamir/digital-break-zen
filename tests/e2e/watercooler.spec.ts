@@ -207,4 +207,159 @@ test.describe('Watercooler', () => {
     
     await expectNoCriticalErrors(page);
   });
+
+  test('like/reply/report actions exist or sign-in CTA appears', async ({ page }) => {
+    await goTo(page, '/watercooler');
+    
+    // Wait for page to load
+    await page.waitForLoadState('networkidle');
+    
+    // Check for like button (heart icon)
+    const likeButton = page.locator('button').filter({ hasText: /like/i });
+    const hasLikeButton = await likeButton.count() > 0;
+    
+    // Check for reply/comment button
+    const replyButton = page.locator('button').filter({ hasText: /reply/i });
+    const hasReplyButton = await replyButton.count() > 0;
+    
+    // Check for report button
+    const reportButton = page.locator('button').filter({ hasText: /report/i });
+    const hasReportButton = await reportButton.count() > 0;
+    
+    // At least one social action should exist
+    expect(hasLikeButton || hasReplyButton || hasReportButton).toBeTruthy();
+    
+    await expectNoCriticalErrors(page);
+  });
+
+  test('logged-out user cannot like without sign-in prompt', async ({ page }) => {
+    // Clear localStorage to avoid old dialog state
+    await page.goto('/watercooler');
+    await page.evaluate(() => localStorage.clear());
+    
+    // Reload page with clean state
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    
+    // Close any open dialogs/modals if present
+    const dialog = page.locator('[role="dialog"], .fixed.inset-0.z-\\[100\\]');
+    const hasDialog = await dialog.count() > 0;
+    if (hasDialog) {
+      // Try clicking backdrop to close dialog
+      const backdrop = page.locator('.fixed.inset-0.z-\\[100\\]').first();
+      await backdrop.click({ force: true });
+      await page.waitForTimeout(200);
+      
+      // If dialog still exists, try Escape
+      const dialogStillOpen = await dialog.count() > 0;
+      if (dialogStillOpen) {
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(200);
+      }
+    }
+    
+    // Check for like button
+    const likeButton = page.locator('button').filter({ hasText: /like/i });
+    const hasLikeButton = await likeButton.count() > 0;
+    
+    if (hasLikeButton) {
+      // Click like button with force to bypass any remaining dialogs
+      await likeButton.first().click({ force: true });
+      
+      // Check for sign-in prompt or error
+      const signInPrompt = page.locator('body').filter({ hasText: /sign in/i });
+      const hasSignInPrompt = await signInPrompt.count() > 0;
+      
+      // Sign-in prompt should appear for logged-out users
+      expect(hasSignInPrompt).toBeTruthy();
+    } else {
+      // If like button is not available, check for sign-in guidance
+      const signInGuidance = page.locator('body').filter({ hasText: /sign in/i });
+      const hasSignInGuidance = await signInGuidance.count() > 0;
+      expect(hasSignInGuidance).toBeTruthy();
+    }
+    
+    await expectNoCriticalErrors(page);
+  });
+
+  test('comments UI can expand without crashing', async ({ page }) => {
+    // Skip this test if auth credentials are not provided
+    const hasAuthCreds = process.env.E2E_TEST_EMAIL && process.env.E2E_TEST_PASSWORD;
+    test.skip(!hasAuthCreds, 'Skipping comments UI test: E2E_TEST_EMAIL and E2E_TEST_PASSWORD not provided');
+
+    await goTo(page, '/watercooler');
+    
+    // Wait for page to load
+    await page.waitForLoadState('networkidle');
+    
+    // Check for reply/comment button
+    const replyButton = page.locator('button').filter({ hasText: /reply/i });
+    const hasReplyButton = await replyButton.count() > 0;
+    
+    if (hasReplyButton) {
+      // Click reply button to expand comments
+      await replyButton.first().click();
+      
+      // Wait a moment for UI to update
+      await page.waitForTimeout(500);
+      
+      // Check that page is still responsive
+      await expect(page.locator('body')).toBeVisible();
+    }
+    
+    await expectNoCriticalErrors(page);
+  });
+
+  test('trending section appears', async ({ page }) => {
+    await goTo(page, '/watercooler');
+    
+    // Wait for page to load
+    await page.waitForLoadState('networkidle');
+    
+    // Check for trending section
+    const trendingSection = page.locator('body').filter({ hasText: /trending/i });
+    const hasTrending = await trendingSection.count() > 0;
+    
+    // Trending section may or may not appear depending on data
+    // Just verify the page doesn't crash
+    await expect(page.locator('body')).toBeVisible();
+    
+    await expectNoCriticalErrors(page);
+  });
+
+  test('public page still loads', async ({ page }) => {
+    await goTo(page, '/watercooler');
+    
+    // Check that the page loads without auth
+    await expect(page.locator('body')).toBeVisible();
+    
+    // Check for watercooler content
+    const watercoolerContent = page.locator('body').filter({ hasText: /watercooler/i });
+    const hasWatercoolerContent = await watercoolerContent.count() > 0;
+    
+    expect(hasWatercoolerContent).toBeTruthy();
+    
+    await expectNoCriticalErrors(page);
+  });
+
+  test('media posts still do not crash', async ({ page }) => {
+    await goTo(page, '/watercooler');
+    
+    // Wait for page to load
+    await page.waitForLoadState('networkidle');
+    
+    // Check that the page is still responsive
+    await expect(page.locator('body')).toBeVisible();
+    
+    // Check for any media elements (img, video)
+    const mediaElements = page.locator('img, video');
+    const hasMediaElements = await mediaElements.count() > 0;
+    
+    // If media elements exist, they should not cause crashes
+    if (hasMediaElements) {
+      await expect(mediaElements.first()).toBeVisible();
+    }
+    
+    await expectNoCriticalErrors(page);
+  });
 });

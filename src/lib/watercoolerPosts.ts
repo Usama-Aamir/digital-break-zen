@@ -26,6 +26,17 @@ export interface WatercoolerPostInput {
   media_type?: string;
 }
 
+export interface WatercoolerComment {
+  id: string;
+  post_id: string;
+  user_id: string | null;
+  nickname: string | null;
+  body: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 /**
  * Get all published watercooler posts for public display
  */
@@ -253,5 +264,227 @@ export async function updateWatercoolerPostStatus(
   } catch (error) {
     console.error("[watercooler] status update failed with exception:", error);
     return { error: "Could not update post status. Please try again." };
+  }
+}
+
+/**
+ * Like a watercooler post
+ */
+export async function likeWatercoolerPost(
+  postId: string,
+  userId: string
+): Promise<{ error: string | null }> {
+  if (!isSupabaseConfigured || !supabase) {
+    return { error: "Supabase is not configured" };
+  }
+
+  try {
+    const { error } = await supabase
+      .from("watercooler_post_likes")
+      .insert({
+        post_id: postId,
+        user_id: userId,
+      });
+
+    if (error) {
+      console.error("[watercooler] like failed:", error);
+      return { error: error.message };
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error("[watercooler] like failed with exception:", error);
+    return { error: "Could not like post. Please try again." };
+  }
+}
+
+/**
+ * Unlike a watercooler post
+ */
+export async function unlikeWatercoolerPost(
+  postId: string,
+  userId: string
+): Promise<{ error: string | null }> {
+  if (!isSupabaseConfigured || !supabase) {
+    return { error: "Supabase is not configured" };
+  }
+
+  try {
+    const { error } = await supabase
+      .from("watercooler_post_likes")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("[watercooler] unlike failed:", error);
+      return { error: error.message };
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error("[watercooler] unlike failed with exception:", error);
+    return { error: "Could not unlike post. Please try again." };
+  }
+}
+
+/**
+ * Get IDs of posts liked by a user
+ */
+export async function getUserLikedPostIds(
+  userId: string,
+  postIds: string[]
+): Promise<{ likedPostIds: string[]; error: string | null }> {
+  if (!isSupabaseConfigured || !supabase) {
+    return { likedPostIds: [], error: "Supabase is not configured" };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("watercooler_post_likes")
+      .select("post_id")
+      .eq("user_id", userId)
+      .in("post_id", postIds);
+
+    if (error) {
+      console.error("[watercooler] get liked post ids failed:", error);
+      return { likedPostIds: [], error: error.message };
+    }
+
+    const likedPostIds = (data || []).map((like) => like.post_id);
+    return { likedPostIds, error: null };
+  } catch (error) {
+    console.error("[watercooler] get liked post ids failed with exception:", error);
+    return { likedPostIds: [], error: "Could not fetch liked posts. Please try again." };
+  }
+}
+
+/**
+ * Get comments for a post
+ */
+export async function getCommentsForPost(
+  postId: string
+): Promise<{ comments: WatercoolerComment[]; error: string | null }> {
+  if (!isSupabaseConfigured || !supabase) {
+    return { comments: [], error: "Supabase is not configured" };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("watercooler_post_comments")
+      .select("id, post_id, user_id, nickname, body, status, created_at, updated_at")
+      .eq("post_id", postId)
+      .eq("status", "published")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("[watercooler] get comments failed:", error);
+      return { comments: [], error: error.message };
+    }
+
+    return { comments: data || [], error: null };
+  } catch (error) {
+    console.error("[watercooler] get comments failed with exception:", error);
+    return { comments: [], error: "Could not load comments. Please try again." };
+  }
+}
+
+/**
+ * Create a comment on a post
+ */
+export async function createWatercoolerComment(
+  postId: string,
+  userId: string,
+  nickname: string | null,
+  body: string
+): Promise<{ comment: WatercoolerComment | null; error: string | null }> {
+  if (!isSupabaseConfigured || !supabase) {
+    return { comment: null, error: "Supabase is not configured" };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("watercooler_post_comments")
+      .insert({
+        post_id: postId,
+        user_id: userId,
+        nickname: nickname || null,
+        body,
+        status: "published",
+      })
+      .select("id, post_id, user_id, nickname, body, status, created_at, updated_at")
+      .maybeSingle();
+
+    if (error) {
+      console.error("[watercooler] create comment failed:", error);
+      return { comment: null, error: error.message };
+    }
+
+    return { comment: data, error: null };
+  } catch (error) {
+    console.error("[watercooler] create comment failed with exception:", error);
+    return { comment: null, error: "Could not post reply. Please try again." };
+  }
+}
+
+/**
+ * Delete own comment
+ */
+export async function deleteOwnWatercoolerComment(
+  commentId: string,
+  userId: string
+): Promise<{ error: string | null }> {
+  if (!isSupabaseConfigured || !supabase) {
+    return { error: "Supabase is not configured" };
+  }
+
+  try {
+    const { error } = await supabase
+      .from("watercooler_post_comments")
+      .delete()
+      .eq("id", commentId)
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("[watercooler] delete comment failed:", error);
+      return { error: error.message };
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error("[watercooler] delete comment failed with exception:", error);
+    return { error: "Could not delete reply. Please try again." };
+  }
+}
+
+/**
+ * Get trending watercooler posts (last 7 days, most liked)
+ */
+export async function getTrendingWatercoolerPosts(): Promise<{ posts: WatercoolerPost[]; error: string | null }> {
+  if (!isSupabaseConfigured || !supabase) {
+    return { posts: [], error: "Supabase is not configured" };
+  }
+
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const { data, error } = await supabase
+      .from("watercooler_posts")
+      .select("id, user_id, nickname, body, mood_tag, media_url, media_type, likes_count, status, report_count, hidden_reason, hidden_by, hidden_at, created_at, updated_at")
+      .eq("status", "published")
+      .gte("created_at", sevenDaysAgo.toISOString())
+      .order("likes_count", { ascending: false })
+      .limit(3);
+
+    if (error) {
+      console.error("[watercooler] get trending posts failed:", error);
+      return { posts: [], error: error.message };
+    }
+
+    return { posts: data || [], error: null };
+  } catch (error) {
+    console.error("[watercooler] get trending posts failed with exception:", error);
+    return { posts: [], error: "Could not load trending posts. Please try again." };
   }
 }

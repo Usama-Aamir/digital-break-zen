@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { Heart, Trash2, Image as ImageIcon, Video, X, Flag } from "lucide-react";
+import { Heart, Trash2, Image as ImageIcon, Video, X, Flag, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
-import { getPublishedWatercoolerPosts, createWatercoolerPost, deleteOwnWatercoolerPost, getWatercoolerDisplayName, reportWatercoolerPost } from "@/lib/watercoolerPosts";
+import { getPublishedWatercoolerPosts, createWatercoolerPost, deleteOwnWatercoolerPost, getWatercoolerDisplayName, reportWatercoolerPost, likeWatercoolerPost, unlikeWatercoolerPost, getUserLikedPostIds, getCommentsForPost, createWatercoolerComment, deleteOwnWatercoolerComment, getTrendingWatercoolerPosts } from "@/lib/watercoolerPosts";
 import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
 import { uploadWatercoolerMedia, validateWatercoolerMedia, getWatercoolerMediaType } from "@/lib/watercoolerMedia";
 
@@ -18,7 +18,17 @@ interface Post {
   timestamp: number;
   isStarter: boolean;
   liked: boolean;
+  likesCount: number;
   userId?: string; // For ownership check
+}
+
+interface Comment {
+  id: string;
+  post_id: string;
+  user_id: string | null;
+  nickname: string | null;
+  body: string;
+  created_at: string;
 }
 
 const CATEGORIES = [
@@ -40,6 +50,7 @@ const STARTER_POSTS: Post[] = [
     timestamp: Date.now(),
     isStarter: true,
     liked: false,
+    likesCount: 0,
   },
   {
     id: "starter-2",
@@ -49,6 +60,7 @@ const STARTER_POSTS: Post[] = [
     timestamp: Date.now(),
     isStarter: true,
     liked: false,
+    likesCount: 0,
   },
   {
     id: "starter-3",
@@ -58,6 +70,7 @@ const STARTER_POSTS: Post[] = [
     timestamp: Date.now(),
     isStarter: true,
     liked: false,
+    likesCount: 0,
   },
   {
     id: "starter-4",
@@ -67,6 +80,7 @@ const STARTER_POSTS: Post[] = [
     timestamp: Date.now(),
     isStarter: true,
     liked: false,
+    likesCount: 0,
   },
   {
     id: "starter-5",
@@ -76,6 +90,7 @@ const STARTER_POSTS: Post[] = [
     timestamp: Date.now(),
     isStarter: true,
     liked: false,
+    likesCount: 0,
   },
 ];
 
@@ -102,6 +117,14 @@ export function WatercoolerWall() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Social features state
+  const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [comments, setComments] = useState<Record<string, Comment[]>>({});
+  const [commentText, setCommentText] = useState<Record<string, string>>({});
+  const [isPostingComment, setIsPostingComment] = useState(false);
+  const [trendingPosts, setTrendingPosts] = useState<Post[]>([]);
 
   // Load posts from Supabase or localStorage on mount
   useEffect(() => {
@@ -124,10 +147,18 @@ export function WatercoolerWall() {
             timestamp: new Date(post.created_at).getTime(),
             isStarter: false,
             liked: false,
+            likesCount: post.likes_count || 0,
             userId: post.user_id || undefined,
           }));
           setPosts(convertedPosts);
           setUsingLocalStorage(false);
+
+          // Load liked post IDs for current user
+          if (user) {
+            const postIds = convertedPosts.map(p => p.id);
+            const { likedPostIds } = await getUserLikedPostIds(user.id, postIds);
+            setLikedPostIds(new Set(likedPostIds));
+          }
         }
         setIsLoading(false);
       } else {
@@ -137,6 +168,32 @@ export function WatercoolerWall() {
     }
 
     loadPosts();
+  }, [isConfigured, user]);
+
+  // Load trending posts
+  useEffect(() => {
+    async function loadTrending() {
+      if (isConfigured) {
+        const { posts: trending } = await getTrendingWatercoolerPosts();
+        if (trending.length > 0) {
+          const convertedTrending: Post[] = trending.map((post) => ({
+            id: post.id,
+            text: post.body,
+            mediaType: post.media_type as MediaType,
+            mediaUrl: post.media_url || undefined,
+            category: post.mood_tag || "Random Vibes",
+            timestamp: new Date(post.created_at).getTime(),
+            isStarter: false,
+            liked: false,
+            likesCount: post.likes_count || 0,
+            userId: post.user_id || undefined,
+          }));
+          setTrendingPosts(convertedTrending);
+        }
+      }
+    }
+
+    loadTrending();
   }, [isConfigured]);
 
   function loadLocalStoragePosts() {
@@ -268,6 +325,7 @@ export function WatercoolerWall() {
             timestamp: new Date(post.created_at).getTime(),
             isStarter: false,
             liked: false,
+            likesCount: post.likes_count || 0,
           }));
           setPosts(convertedPosts);
         }
@@ -294,6 +352,7 @@ export function WatercoolerWall() {
         timestamp: Date.now(),
         isStarter: false,
         liked: false,
+        likesCount: 0,
       };
 
       setPosts([newPost, ...posts]);
@@ -303,10 +362,144 @@ export function WatercoolerWall() {
     }
   };
 
-  const handleLike = (id: string) => {
+  const handleLike = async (id: string) => {
+    if (!user) {
+      setError(t("signInToLike"));
+      return;
+    }
+
+    if (usingLocalStorage) {
+      // LocalStorage fallback - just toggle local state
+      setPosts(posts.map((post) => 
+        post.id === id ? { ...post, liked: !post.liked } : post
+      ));
+      return;
+    }
+
+    // Supabase - call API
+    const isLiked = likedPostIds.has(id);
+    const { error } = isLiked
+      ? await unlikeWatercoolerPost(id, user.id)
+      : await likeWatercoolerPost(id, user.id);
+
+    if (error) {
+      setError(error);
+      return;
+    }
+
+    // Update local state optimistically
+    const newLikedPostIds = new Set(likedPostIds);
+    if (isLiked) {
+      newLikedPostIds.delete(id);
+    } else {
+      newLikedPostIds.add(id);
+    }
+    setLikedPostIds(newLikedPostIds);
+
+    // Update posts with new like count
     setPosts(posts.map((post) => 
-      post.id === id ? { ...post, liked: !post.liked } : post
+      post.id === id 
+        ? { ...post, liked: !isLiked, likesCount: post.likesCount + (isLiked ? -1 : 1) }
+        : post
     ));
+  };
+
+  const handleToggleComments = async (postId: string) => {
+    if (!user) {
+      setError(t("signInToReply"));
+      return;
+    }
+
+    const newExpanded = new Set(expandedComments);
+    if (newExpanded.has(postId)) {
+      newExpanded.delete(postId);
+      setExpandedComments(newExpanded);
+    } else {
+      newExpanded.add(postId);
+      setExpandedComments(newExpanded);
+
+      // Load comments if not already loaded
+      if (!comments[postId] && !usingLocalStorage) {
+        const { comments: postComments } = await getCommentsForPost(postId);
+        setComments(prev => ({ ...prev, [postId]: postComments }));
+      }
+    }
+  };
+
+  const handlePostComment = async (postId: string) => {
+    if (!user) {
+      setError(t("signInToReply"));
+      return;
+    }
+
+    const text = commentText[postId]?.trim();
+    if (!text) return;
+
+    if (usingLocalStorage) {
+      // LocalStorage fallback - not supported for comments
+      setError("Comments require Supabase");
+      return;
+    }
+
+    setIsPostingComment(true);
+    setError(null);
+
+    try {
+      const profile = await getCurrentUserProfile(user.id);
+      const nickname = profile?.display_name || profile?.username || null;
+
+      const { comment, error } = await createWatercoolerComment(
+        postId,
+        user.id,
+        nickname,
+        text
+      );
+
+      if (error) {
+        setError(error);
+        return;
+      }
+
+      if (comment) {
+        setComments(prev => ({
+          ...prev,
+          [postId]: [...(prev[postId] || []), comment]
+        }));
+        setCommentText(prev => ({ ...prev, [postId]: "" }));
+        setSuccessMessage(t("replyPosted"));
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    } catch (e) {
+      setError(t("replyError"));
+    } finally {
+      setIsPostingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string, postId: string) => {
+    if (!user) return;
+
+    if (usingLocalStorage) {
+      setError("Comments require Supabase");
+      return;
+    }
+
+    try {
+      const { error } = await deleteOwnWatercoolerComment(commentId, user.id);
+      if (error) {
+        setError(error);
+        return;
+      }
+
+      setComments(prev => ({
+        ...prev,
+        [postId]: prev[postId]?.filter(c => c.id !== commentId) || []
+      }));
+      setSuccessMessage(t("replyDeleted"));
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (e) {
+      setError(t("replyDeleteError"));
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -337,6 +530,7 @@ export function WatercoolerWall() {
           timestamp: new Date(post.created_at).getTime(),
           isStarter: false,
           liked: false,
+          likesCount: post.likes_count || 0,
           userId: post.user_id || undefined,
         }));
         setPosts(convertedPosts);
@@ -564,15 +758,39 @@ export function WatercoolerWall() {
         )}
       </div>
 
+      {/* Trending Section */}
+      {trendingPosts.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <span className="text-lg">🔥</span>
+            {t("trendingThisWeek")}
+          </h3>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {trendingPosts.map((post) => (
+              <div
+                key={post.id}
+                className="flex-shrink-0 w-48 p-3 bg-white/30 rounded-xl border border-white/30 hover:bg-white/40 transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-1 mb-2">
+                  <Heart className="h-3 w-3 text-red-500" />
+                  <span className="text-xs text-foreground/70">{post.likesCount}</span>
+                </div>
+                <p className="text-xs text-foreground line-clamp-2">{post.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Posts Feed */}
       <div className="space-y-4">
         {posts.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground text-sm">
-              {t("noWatercoolerPostsYet")}
+            <p className="text-foreground font-medium mb-2">
+              {t("quietBreakroom")}
             </p>
-            <p className="text-muted-foreground text-xs mt-2">
-              {t("noWatercoolerPostsText")}
+            <p className="text-muted-foreground text-sm">
+              {t("startFirstTinyWin")}
             </p>
           </div>
         ) : (
@@ -616,17 +834,27 @@ export function WatercoolerWall() {
               )}
 
               <div className="flex items-center justify-between mt-3">
-                <button
-                  onClick={() => handleLike(post.id)}
-                  className="flex items-center gap-1.5 text-xs text-foreground/70 hover:text-foreground transition-all"
-                >
-                  <Heart
-                    className={`h-4 w-4 ${
-                      post.liked ? "fill-red-500 text-red-500" : ""
-                    }`}
-                  />
-                  {post.liked ? t("liked") : t("like")}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleLike(post.id)}
+                    className="flex items-center gap-1.5 text-xs text-foreground/70 hover:text-foreground transition-all"
+                  >
+                    <Heart
+                      className={`h-4 w-4 ${
+                        likedPostIds.has(post.id) ? "fill-red-500 text-red-500" : ""
+                      }`}
+                    />
+                    {post.likesCount > 0 && <span>{post.likesCount}</span>}
+                  </button>
+
+                  <button
+                    onClick={() => handleToggleComments(post.id)}
+                    className="flex items-center gap-1.5 text-xs text-foreground/70 hover:text-foreground transition-all"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    {comments[post.id]?.length || 0}
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-2">
                   {/* Report button for logged-in users */}
@@ -658,6 +886,71 @@ export function WatercoolerWall() {
                   )}
                 </div>
               </div>
+
+              {/* Comments Section */}
+              {expandedComments.has(post.id) && (
+                <div className="mt-4 pt-4 border-t border-white/20">
+                  {/* Existing Comments */}
+                  {comments[post.id]?.length > 0 ? (
+                    <div className="space-y-3 mb-4">
+                      {comments[post.id].slice(0, 3).map((comment) => (
+                        <div key={comment.id} className="flex gap-2 items-start">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center text-xs font-medium text-white shrink-0">
+                            {comment.nickname?.[0] || "?"}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-medium text-foreground">
+                                {comment.nickname || "Anonymous"}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {formatTimestamp(new Date(comment.created_at).getTime())}
+                              </span>
+                            </div>
+                            <p className="text-xs text-foreground/80">{comment.body}</p>
+                            {comment.user_id === user?.id && (
+                              <button
+                                onClick={() => handleDeleteComment(comment.id, post.id)}
+                                className="mt-1 text-xs text-muted-foreground hover:text-red-500 transition-colors"
+                              >
+                                {t("deleteReply")}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {comments[post.id]?.length > 3 && (
+                        <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                          {t("viewMoreReplies")}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mb-4">
+                      {t("noRepliesYet")}
+                    </p>
+                  )}
+
+                  {/* Comment Input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={commentText[post.id] || ""}
+                      onChange={(e) => setCommentText(prev => ({ ...prev, [post.id]: e.target.value }))}
+                      placeholder={t("writeReply")}
+                      className="flex-1 px-3 py-2 bg-white/50 rounded-lg border border-white/30 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                      onKeyPress={(e) => e.key === "Enter" && handlePostComment(post.id)}
+                    />
+                    <button
+                      onClick={() => handlePostComment(post.id)}
+                      disabled={!commentText[post.id]?.trim() || isPostingComment}
+                      className="px-3 py-2 bg-gradient-to-r from-blue-400 to-purple-400 text-white rounded-lg text-xs font-medium hover:opacity-95 transition-opacity disabled:opacity-50"
+                    >
+                      {t("postReply")}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}
