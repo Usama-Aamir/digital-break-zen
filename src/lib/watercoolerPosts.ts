@@ -74,16 +74,16 @@ export async function createWatercoolerPost(
         likes_count: 0,
       })
       .select("id, user_id, nickname, body, mood_tag, media_url, media_type, likes_count, status, created_at, updated_at")
-      .single();
+      .maybeSingle();
 
     if (error) {
-      console.error("Error creating watercooler post:", error);
+      console.error("[watercooler] create post failed:", error);
       return { post: null, error: error.message };
     }
 
     return { post: data, error: null };
   } catch (error) {
-    console.error("Error creating watercooler post:", error);
+    console.error("[watercooler] create post failed:", error);
     return { post: null, error: "Could not publish your post. Your typed text is still safe." };
   }
 }

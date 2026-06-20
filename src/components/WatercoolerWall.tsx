@@ -92,6 +92,7 @@ export function WatercoolerWall() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
   const [usingLocalStorage, setUsingLocalStorage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -101,12 +102,12 @@ export function WatercoolerWall() {
       if (isConfigured) {
         setIsLoading(true);
         const { posts: cloudPosts, error } = await getPublishedWatercoolerPosts();
-        if (error || cloudPosts.length === 0) {
-          // Fallback to localStorage if Supabase fails or has no posts
+        if (error) {
+          // Fallback to localStorage only if Supabase fails
           setUsingLocalStorage(true);
           loadLocalStoragePosts();
         } else {
-          // Convert cloud posts to local Post format
+          // Convert cloud posts to local Post format (empty array is fine)
           const convertedPosts: Post[] = cloudPosts.map((post) => ({
             id: post.id,
             text: post.body,
@@ -118,6 +119,7 @@ export function WatercoolerWall() {
             liked: false,
           }));
           setPosts(convertedPosts);
+          setUsingLocalStorage(false);
         }
         setIsLoading(false);
       } else {
@@ -191,65 +193,89 @@ export function WatercoolerWall() {
   const handlePost = async () => {
     if (!text.trim() && !mediaFile) return;
 
-    // If logged in and using Supabase, post to cloud
-    if (user && isConfigured && !usingLocalStorage) {
+    // If not logged in, show sign-in CTA and don't clear text
+    if (!user) {
+      setError(t("signInToPost"));
+      return;
+    }
+
+    // If logged in and Supabase is configured, post to cloud
+    if (isConfigured) {
       setError(null);
-      
-      // Upload media first if selected
-      let mediaUrl: string | null = null;
-      let mediaTypeResult: 'image' | 'video' | null = null;
-      
-      if (mediaFile) {
-        const { result, error: uploadError } = await uploadWatercoolerMedia(user.id, mediaFile);
-        if (uploadError || !result) {
-          setError(t("mediaUploadError"));
+      setIsPosting(true);
+
+      try {
+        // Upload media first if selected
+        let mediaUrl: string | null = null;
+        let mediaTypeResult: 'image' | 'video' | null = null;
+
+        if (mediaFile) {
+          const { result, error: uploadError } = await uploadWatercoolerMedia(user.id, mediaFile);
+          if (uploadError || !result) {
+            setError(t("mediaUploadError"));
+            setIsPosting(false);
+            return;
+          }
+          mediaUrl = result.publicUrl;
+          mediaTypeResult = result.mediaType;
+        }
+
+        // Get user profile for display name
+        const profile = await getCurrentUserProfile(user.id);
+        const displayName = getDisplayName(profile, user.email);
+
+        const payload = {
+          body: text.trim(),
+          nickname: displayName,
+          mood_tag: category,
+          media_url: mediaUrl || undefined,
+          media_type: mediaTypeResult || undefined,
+        };
+
+        console.info("[watercooler] creating cloud post", payload);
+
+        const { post: cloudPost, error } = await createWatercoolerPost(user.id, payload);
+
+        if (error) {
+          console.error("[watercooler] create post failed", error);
+          setError("Could not publish your post. Your typed text is still safe.");
+          setIsPosting(false);
           return;
         }
-        mediaUrl = result.publicUrl;
-        mediaTypeResult = result.mediaType;
+
+        console.info("[watercooler] cloud post created", cloudPost);
+
+        setSuccessMessage(t("watercoolerPostPublished"));
+        setTimeout(() => setSuccessMessage(null), 3000);
+
+        // Refresh posts from cloud
+        const { posts: refreshedPosts } = await getPublishedWatercoolerPosts();
+        if (refreshedPosts) {
+          const convertedPosts: Post[] = refreshedPosts.map((post) => ({
+            id: post.id,
+            text: post.body,
+            mediaType: post.media_type as MediaType,
+            mediaUrl: post.media_url || undefined,
+            category: post.mood_tag || "Random Vibes",
+            timestamp: new Date(post.created_at).getTime(),
+            isStarter: false,
+            liked: false,
+          }));
+          setPosts(convertedPosts);
+        }
+
+        // Only clear text and media after successful post
+        setText("");
+        setCategory("Random Vibes");
+        removeMedia();
+      } catch (e) {
+        console.error("[watercooler] post failed with exception", e);
+        setError("Could not publish your post. Your typed text is still safe.");
+      } finally {
+        setIsPosting(false);
       }
-      
-      // Get user profile for display name
-      const profile = await getCurrentUserProfile(user.id);
-      const displayName = getDisplayName(profile, user.email);
-      
-      const { post: cloudPost, error } = await createWatercoolerPost(user.id, {
-        body: text.trim(),
-        nickname: displayName,
-        mood_tag: category,
-        media_url: mediaUrl || undefined,
-        media_type: mediaTypeResult || undefined,
-      });
-
-      if (error) {
-        setError(t("watercoolerPostError"));
-        return;
-      }
-
-      setSuccessMessage(t("watercoolerPostPublished"));
-      setTimeout(() => setSuccessMessage(null), 3000);
-
-      // Refresh posts from cloud
-      const { posts: refreshedPosts } = await getPublishedWatercoolerPosts();
-      if (refreshedPosts) {
-        const convertedPosts: Post[] = refreshedPosts.map((post) => ({
-          id: post.id,
-          text: post.body,
-          mediaType: post.media_type as MediaType,
-          mediaUrl: post.media_url || undefined,
-          category: post.mood_tag || "Random Vibes",
-          timestamp: new Date(post.created_at).getTime(),
-          isStarter: false,
-          liked: false,
-        }));
-        setPosts(convertedPosts);
-      }
-
-      setText("");
-      setCategory("Random Vibes");
-      removeMedia();
     } else {
-      // Fallback to localStorage
+      // Fallback to localStorage only when Supabase is not configured
       const newPost: Post = {
         id: `post-${Date.now()}`,
         text: text.trim(),
@@ -445,10 +471,10 @@ export function WatercoolerWall() {
 
               <button
                 onClick={handlePost}
-                disabled={isPostDisabled}
+                disabled={isPostDisabled || isPosting}
                 className="px-5 py-2 bg-gradient-to-r from-pink-300 to-cyan-300 text-slate-700 rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
-                {t("postToWatercooler")}
+                {isPosting ? "Posting..." : t("postToWatercooler")}
               </button>
             </div>
 
