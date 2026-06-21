@@ -130,6 +130,7 @@ export function WatercoolerWall() {
   // Load posts from Supabase or localStorage on mount
   useEffect(() => {
     async function loadPosts() {
+      console.log("[watercooler] load posts");
       if (isConfigured) {
         setIsLoading(true);
         const { posts: cloudPosts, error } = await getPublishedWatercoolerPosts();
@@ -156,6 +157,7 @@ export function WatercoolerWall() {
 
           // Load liked post IDs for current user
           if (user) {
+            console.log("[watercooler] load liked ids");
             const postIds = convertedPosts.map(p => p.id);
             const { likedPostIds } = await getUserLikedPostIds(user.id, postIds);
             setLikedPostIds(new Set(likedPostIds));
@@ -169,11 +171,12 @@ export function WatercoolerWall() {
     }
 
     loadPosts();
-  }, [isConfigured, user]);
+  }, [isConfigured, user?.id]);
 
   // Load trending posts
   useEffect(() => {
     async function loadTrending() {
+      console.log("[watercooler] load trending");
       if (isConfigured) {
         const { posts: trending } = await getTrendingWatercoolerPosts();
         if (trending.length > 0) {
@@ -311,37 +314,31 @@ export function WatercoolerWall() {
 
         console.info("[watercooler] cloud post created", cloudPost);
 
-        // Track watercooler post activity
-        (async () => {
-          try {
-            await trackUserActivity({
-              userId: user.id,
-              activityType: 'watercooler_post',
-              moodTag: category,
-            });
-          } catch (err) {
-            console.warn('Failed to track watercooler post activity:', err);
-          }
-        })();
+        // Track watercooler post activity (fire-and-forget)
+        void trackUserActivity({
+          userId: user.id,
+          activityType: 'watercooler_post',
+          moodTag: category,
+        }).catch(console.warn);
 
         setSuccessMessage(t("watercoolerPostPublished"));
         setTimeout(() => setSuccessMessage(null), 3000);
 
-        // Refresh posts from cloud
-        const { posts: refreshedPosts } = await getPublishedWatercoolerPosts();
-        if (refreshedPosts) {
-          const convertedPosts: Post[] = refreshedPosts.map((post) => ({
-            id: post.id,
-            text: post.body,
-            mediaType: post.media_type as MediaType,
-            mediaUrl: post.media_url || undefined,
-            category: post.mood_tag || "Random Vibes",
-            timestamp: new Date(post.created_at).getTime(),
+        // Prepend the new post to state instead of refetching
+        if (cloudPost) {
+          const newPost: Post = {
+            id: cloudPost.id,
+            text: cloudPost.body,
+            mediaType: cloudPost.media_type as MediaType,
+            mediaUrl: cloudPost.media_url || undefined,
+            category: cloudPost.mood_tag || "Random Vibes",
+            timestamp: new Date(cloudPost.created_at).getTime(),
             isStarter: false,
             liked: false,
-            likesCount: post.likes_count || 0,
-          }));
-          setPosts(convertedPosts);
+            likesCount: cloudPost.likes_count || 0,
+            userId: cloudPost.user_id || undefined,
+          };
+          setPosts([newPost, ...posts]);
         }
 
         // Only clear text and media after successful post
@@ -401,18 +398,12 @@ export function WatercoolerWall() {
       return;
     }
 
-    // Track watercooler like activity (only on like, not unlike)
+    // Track watercooler like activity (only on like, not unlike) - fire-and-forget
     if (!isLiked) {
-      (async () => {
-        try {
-          await trackUserActivity({
-            userId: user.id,
-            activityType: 'watercooler_like',
-          });
-        } catch (err) {
-          console.warn('Failed to track watercooler like activity:', err);
-        }
-      })();
+      void trackUserActivity({
+        userId: user.id,
+        activityType: 'watercooler_like',
+      }).catch(console.warn);
     }
 
     // Update local state optimistically
@@ -489,17 +480,11 @@ export function WatercoolerWall() {
       }
 
       if (comment) {
-        // Track watercooler comment activity
-        (async () => {
-          try {
-            await trackUserActivity({
-              userId: user.id,
-              activityType: 'watercooler_comment',
-            });
-          } catch (err) {
-            console.warn('Failed to track watercooler comment activity:', err);
-          }
-        })();
+        // Track watercooler comment activity (fire-and-forget)
+        void trackUserActivity({
+          userId: user.id,
+          activityType: 'watercooler_comment',
+        }).catch(console.warn);
 
         setComments(prev => ({
           ...prev,
@@ -558,23 +543,8 @@ export function WatercoolerWall() {
       setSuccessMessage(t("postDeleted"));
       setTimeout(() => setSuccessMessage(null), 3000);
 
-      // Refresh posts from cloud
-      const { posts: refreshedPosts } = await getPublishedWatercoolerPosts();
-      if (refreshedPosts) {
-        const convertedPosts: Post[] = refreshedPosts.map((post) => ({
-          id: post.id,
-          text: post.body,
-          mediaType: post.media_type as MediaType,
-          mediaUrl: post.media_url || undefined,
-          category: post.mood_tag || "Random Vibes",
-          timestamp: new Date(post.created_at).getTime(),
-          isStarter: false,
-          liked: false,
-          likesCount: post.likes_count || 0,
-          userId: post.user_id || undefined,
-        }));
-        setPosts(convertedPosts);
-      }
+      // Remove the deleted post from state instead of refetching
+      setPosts(posts.filter(post => post.id !== id));
 
       setDeleteConfirm(null);
     } catch (e) {
