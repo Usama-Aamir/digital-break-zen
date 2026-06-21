@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { getPublishedWatercoolerPosts, createWatercoolerPost, deleteOwnWatercoolerPost, getWatercoolerDisplayName, reportWatercoolerPost, likeWatercoolerPost, unlikeWatercoolerPost, getUserLikedPostIds, getCommentsForPost, createWatercoolerComment, deleteOwnWatercoolerComment, getTrendingWatercoolerPosts } from "@/lib/watercoolerPosts";
 import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
 import { uploadWatercoolerMedia, validateWatercoolerMedia, getWatercoolerMediaType } from "@/lib/watercoolerMedia";
+import { trackUserActivity } from "@/lib/userActivity";
 
 type MediaType = "image" | "video" | null;
 
@@ -310,6 +311,19 @@ export function WatercoolerWall() {
 
         console.info("[watercooler] cloud post created", cloudPost);
 
+        // Track watercooler post activity
+        (async () => {
+          try {
+            await trackUserActivity({
+              userId: user.id,
+              activityType: 'watercooler_post',
+              moodTag: category,
+            });
+          } catch (err) {
+            console.warn('Failed to track watercooler post activity:', err);
+          }
+        })();
+
         setSuccessMessage(t("watercoolerPostPublished"));
         setTimeout(() => setSuccessMessage(null), 3000);
 
@@ -387,6 +401,20 @@ export function WatercoolerWall() {
       return;
     }
 
+    // Track watercooler like activity (only on like, not unlike)
+    if (!isLiked) {
+      (async () => {
+        try {
+          await trackUserActivity({
+            userId: user.id,
+            activityType: 'watercooler_like',
+          });
+        } catch (err) {
+          console.warn('Failed to track watercooler like activity:', err);
+        }
+      })();
+    }
+
     // Update local state optimistically
     const newLikedPostIds = new Set(likedPostIds);
     if (isLiked) {
@@ -461,6 +489,18 @@ export function WatercoolerWall() {
       }
 
       if (comment) {
+        // Track watercooler comment activity
+        (async () => {
+          try {
+            await trackUserActivity({
+              userId: user.id,
+              activityType: 'watercooler_comment',
+            });
+          } catch (err) {
+            console.warn('Failed to track watercooler comment activity:', err);
+          }
+        })();
+
         setComments(prev => ({
           ...prev,
           [postId]: [...(prev[postId] || []), comment]

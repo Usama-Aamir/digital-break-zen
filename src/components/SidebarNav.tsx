@@ -13,7 +13,8 @@ import {
   User, 
   LayoutGrid, 
   Gamepad2,
-  Shield
+  Shield,
+  Coffee
 } from "lucide-react";
 
 interface NavItem {
@@ -57,6 +58,7 @@ export function SidebarNav() {
     {
       title: t("personal"),
       items: [
+        { label: t("myBreakroom"), to: "/my-breakroom", icon: Coffee },
         { label: t("cloudDraftsTitle"), to: "/story-drafts", icon: FileText },
         { label: t("mySubmissions"), to: "/my-submissions", icon: FolderOpen },
         { label: t("accountTitle"), to: "/account", icon: User },

@@ -18,6 +18,7 @@ import { Route as SmasherRouteImport } from './routes/smasher'
 import { Route as ShredderRouteImport } from './routes/shredder'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MySubmissionsRouteImport } from './routes/my-submissions'
+import { Route as MyBreakroomRouteImport } from './routes/my-breakroom'
 import { Route as MelodyRouteImport } from './routes/melody'
 import { Route as MatchRouteImport } from './routes/match'
 import { Route as CommunityStoriesRouteImport } from './routes/community-stories'
@@ -75,6 +76,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const MySubmissionsRoute = MySubmissionsRouteImport.update({
   id: '/my-submissions',
   path: '/my-submissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyBreakroomRoute = MyBreakroomRouteImport.update({
+  id: '/my-breakroom',
+  path: '/my-breakroom',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MelodyRoute = MelodyRouteImport.update({
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/community-stories': typeof CommunityStoriesRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
+  '/my-breakroom': typeof MyBreakroomRoute
   '/my-submissions': typeof MySubmissionsRoute
   '/onboarding': typeof OnboardingRoute
   '/shredder': typeof ShredderRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/community-stories': typeof CommunityStoriesRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
+  '/my-breakroom': typeof MyBreakroomRoute
   '/my-submissions': typeof MySubmissionsRoute
   '/onboarding': typeof OnboardingRoute
   '/shredder': typeof ShredderRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/community-stories': typeof CommunityStoriesRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
+  '/my-breakroom': typeof MyBreakroomRoute
   '/my-submissions': typeof MySubmissionsRoute
   '/onboarding': typeof OnboardingRoute
   '/shredder': typeof ShredderRoute
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/community-stories'
     | '/match'
     | '/melody'
+    | '/my-breakroom'
     | '/my-submissions'
     | '/onboarding'
     | '/shredder'
@@ -255,6 +265,7 @@ export interface FileRouteTypes {
     | '/community-stories'
     | '/match'
     | '/melody'
+    | '/my-breakroom'
     | '/my-submissions'
     | '/onboarding'
     | '/shredder'
@@ -279,6 +290,7 @@ export interface FileRouteTypes {
     | '/community-stories'
     | '/match'
     | '/melody'
+    | '/my-breakroom'
     | '/my-submissions'
     | '/onboarding'
     | '/shredder'
@@ -304,6 +316,7 @@ export interface RootRouteChildren {
   CommunityStoriesRoute: typeof CommunityStoriesRoute
   MatchRoute: typeof MatchRoute
   MelodyRoute: typeof MelodyRoute
+  MyBreakroomRoute: typeof MyBreakroomRoute
   MySubmissionsRoute: typeof MySubmissionsRoute
   OnboardingRoute: typeof OnboardingRoute
   ShredderRoute: typeof ShredderRoute
@@ -378,6 +391,13 @@ declare module '@tanstack/react-router' {
       path: '/my-submissions'
       fullPath: '/my-submissions'
       preLoaderRoute: typeof MySubmissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-breakroom': {
+      id: '/my-breakroom'
+      path: '/my-breakroom'
+      fullPath: '/my-breakroom'
+      preLoaderRoute: typeof MyBreakroomRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/melody': {
@@ -497,6 +517,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityStoriesRoute: CommunityStoriesRoute,
   MatchRoute: MatchRoute,
   MelodyRoute: MelodyRoute,
+  MyBreakroomRoute: MyBreakroomRoute,
   MySubmissionsRoute: MySubmissionsRoute,
   OnboardingRoute: OnboardingRoute,
   ShredderRoute: ShredderRoute,

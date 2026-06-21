@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { saveLocalDraft, saveCloudDraft } from "@/lib/storyDrafts";
 import { submitCommunityStory } from "@/lib/storySubmissions";
 import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
+import { trackUserActivity } from "@/lib/userActivity";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/submit-story")({
@@ -77,6 +78,18 @@ function SubmitStoryPage() {
         setError(t("submissionsSaveError"));
         return;
       }
+
+      // Track story submission activity
+      (async () => {
+        try {
+          await trackUserActivity({
+            userId: user.id,
+            activityType: 'story_submission',
+          });
+        } catch (err) {
+          console.warn('Failed to track story submission activity:', err);
+        }
+      })();
 
       setSuccess(true);
     } else {

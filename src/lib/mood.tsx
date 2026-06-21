@@ -1,5 +1,10 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useLanguage } from "./language";
+import { trackUserActivity } from "./userActivity";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export type Mood = "frustrated" | "tired" | "demotivated" | "happy" | "fun";
 
@@ -95,6 +100,23 @@ export function MoodProvider({ children }: { children: ReactNode }) {
   const setMood = (m: Mood) => {
     setMoodState(m);
     try { localStorage.setItem(KEY, m); } catch {}
+    
+    // Track mood check-in activity for logged-in users
+    (async () => {
+      try {
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await trackUserActivity({
+            userId: user.id,
+            activityType: 'mood_checkin',
+            moodTag: m,
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to track mood check-in:', err);
+      }
+    })();
   };
   const clearMood = () => {
     setMoodState(null);

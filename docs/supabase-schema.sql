@@ -451,4 +451,42 @@ CREATE TRIGGER trigger_update_watercooler_post_comments_updated_at
 --
 -- Note: The path format used by the app is: user_id/timestamp-filename
 -- This ensures users can only upload to their own folder and delete their own files.
---
+
+-- ============================================================================
+-- USER BREAK ACTIVITY TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.user_break_activity (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  activity_type TEXT NOT NULL,
+  mood_tag TEXT,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS for user_break_activity
+ALTER TABLE public.user_break_activity ENABLE ROW LEVEL SECURITY;
+
+-- Authenticated users can view their own activity
+CREATE POLICY "Users can view own break activity"
+  ON public.user_break_activity FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Authenticated users can insert their own activity
+CREATE POLICY "Users can insert own break activity"
+  ON public.user_break_activity FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+-- Authenticated users can delete their own activity
+CREATE POLICY "Users can delete own break activity"
+  ON public.user_break_activity FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Indexes for user_break_activity
+CREATE INDEX IF NOT EXISTS idx_user_break_activity_user_id ON public.user_break_activity(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_break_activity_activity_type ON public.user_break_activity(activity_type);
+CREATE INDEX IF NOT EXISTS idx_user_break_activity_created_at ON public.user_break_activity(created_at DESC);

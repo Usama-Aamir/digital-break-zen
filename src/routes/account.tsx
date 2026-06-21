@@ -200,6 +200,22 @@ function AccountPage() {
           </div>
         </div>
 
+        {/* My Breakroom Card */}
+        <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-green-100/30 to-teal-100/30 border-green-200/30 mb-6">
+          <h3 className="text-lg font-display font-bold text-foreground mb-2">
+            {t("myBreakroom")}
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            {t("myBreakroomSubtitle")}
+          </p>
+          <Link
+            to="/my-breakroom"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-400 to-teal-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+          >
+            View My Breakroom →
+          </Link>
+        </div>
+
         {/* Cloud Drafts Card */}
         <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-teal-100/30 to-cyan-100/30 border-teal-200/30 mb-6">
           <h3 className="text-lg font-display font-bold text-foreground mb-2">

@@ -102,4 +102,16 @@ test.describe('Navigation', () => {
     await expect(page.locator('body')).toBeVisible();
     await expectNoCriticalErrors(page);
   });
+
+  test('navigate to my-breakroom', async ({ page }) => {
+    await goTo(page, '/');
+    
+    // Navigate to my-breakroom
+    await page.goto('/my-breakroom');
+    await page.waitForURL('/my-breakroom');
+    
+    // Verify the page loads
+    await expect(page.locator('body')).toBeVisible();
+    await expectNoCriticalErrors(page);
+  });
 });
