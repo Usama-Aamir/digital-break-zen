@@ -143,7 +143,7 @@ function AccountPage() {
                 )}
               </div>
               <Link
-                to="/onboarding" as any
+                to="/onboarding"
                 className="px-4 py-2 bg-white/50 hover:bg-white/70 border border-white/30 rounded-lg text-sm font-medium text-foreground/80 transition-all"
               >
                 {t("editProfile")}
@@ -213,6 +213,38 @@ function AccountPage() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-400 to-teal-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
           >
             View My Breakroom →
+          </Link>
+        </div>
+
+        {/* Friends Card */}
+        <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-blue-100/30 to-indigo-100/30 border-blue-200/30 mb-6">
+          <h3 className="text-lg font-display font-bold text-foreground mb-2">
+            {t("friends")}
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            {t("friendsSubtitle")}
+          </p>
+          <Link
+            to="/friends" as any
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-400 to-indigo-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+          >
+            {t("findFriends")} →
+          </Link>
+        </div>
+
+        {/* Messages Card */}
+        <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-purple-100/30 to-pink-100/30 border-purple-200/30 mb-6">
+          <h3 className="text-lg font-display font-bold text-foreground mb-2">
+            {t("messages")}
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            {t("messagesSubtitle")}
+          </p>
+          <Link
+            to="/messages" as any
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+          >
+            {t("openMessages")} →
           </Link>
         </div>
 

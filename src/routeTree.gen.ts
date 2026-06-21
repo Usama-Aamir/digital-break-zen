@@ -19,8 +19,10 @@ import { Route as ShredderRouteImport } from './routes/shredder'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MySubmissionsRouteImport } from './routes/my-submissions'
 import { Route as MyBreakroomRouteImport } from './routes/my-breakroom'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MelodyRouteImport } from './routes/melody'
 import { Route as MatchRouteImport } from './routes/match'
+import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as CommunityStoriesRouteImport } from './routes/community-stories'
 import { Route as BubblesRouteImport } from './routes/bubbles'
 import { Route as BlogRouteImport } from './routes/blog'
@@ -83,6 +85,11 @@ const MyBreakroomRoute = MyBreakroomRouteImport.update({
   path: '/my-breakroom',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MelodyRoute = MelodyRouteImport.update({
   id: '/melody',
   path: '/melody',
@@ -91,6 +98,11 @@ const MelodyRoute = MelodyRouteImport.update({
 const MatchRoute = MatchRouteImport.update({
   id: '/match',
   path: '/match',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FriendsRoute = FriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityStoriesRoute = CommunityStoriesRouteImport.update({
@@ -160,8 +172,10 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
   '/community-stories': typeof CommunityStoriesRoute
+  '/friends': typeof FriendsRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
+  '/messages': typeof MessagesRoute
   '/my-breakroom': typeof MyBreakroomRoute
   '/my-submissions': typeof MySubmissionsRoute
   '/onboarding': typeof OnboardingRoute
@@ -185,8 +199,10 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
   '/community-stories': typeof CommunityStoriesRoute
+  '/friends': typeof FriendsRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
+  '/messages': typeof MessagesRoute
   '/my-breakroom': typeof MyBreakroomRoute
   '/my-submissions': typeof MySubmissionsRoute
   '/onboarding': typeof OnboardingRoute
@@ -211,8 +227,10 @@ export interface FileRoutesById {
   '/blog': typeof BlogRouteWithChildren
   '/bubbles': typeof BubblesRoute
   '/community-stories': typeof CommunityStoriesRoute
+  '/friends': typeof FriendsRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
+  '/messages': typeof MessagesRoute
   '/my-breakroom': typeof MyBreakroomRoute
   '/my-submissions': typeof MySubmissionsRoute
   '/onboarding': typeof OnboardingRoute
@@ -238,8 +256,10 @@ export interface FileRouteTypes {
     | '/blog'
     | '/bubbles'
     | '/community-stories'
+    | '/friends'
     | '/match'
     | '/melody'
+    | '/messages'
     | '/my-breakroom'
     | '/my-submissions'
     | '/onboarding'
@@ -263,8 +283,10 @@ export interface FileRouteTypes {
     | '/blog'
     | '/bubbles'
     | '/community-stories'
+    | '/friends'
     | '/match'
     | '/melody'
+    | '/messages'
     | '/my-breakroom'
     | '/my-submissions'
     | '/onboarding'
@@ -288,8 +310,10 @@ export interface FileRouteTypes {
     | '/blog'
     | '/bubbles'
     | '/community-stories'
+    | '/friends'
     | '/match'
     | '/melody'
+    | '/messages'
     | '/my-breakroom'
     | '/my-submissions'
     | '/onboarding'
@@ -314,8 +338,10 @@ export interface RootRouteChildren {
   BlogRoute: typeof BlogRouteWithChildren
   BubblesRoute: typeof BubblesRoute
   CommunityStoriesRoute: typeof CommunityStoriesRoute
+  FriendsRoute: typeof FriendsRoute
   MatchRoute: typeof MatchRoute
   MelodyRoute: typeof MelodyRoute
+  MessagesRoute: typeof MessagesRoute
   MyBreakroomRoute: typeof MyBreakroomRoute
   MySubmissionsRoute: typeof MySubmissionsRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -400,6 +426,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyBreakroomRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/melody': {
       id: '/melody'
       path: '/melody'
@@ -412,6 +445,13 @@ declare module '@tanstack/react-router' {
       path: '/match'
       fullPath: '/match'
       preLoaderRoute: typeof MatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/friends': {
+      id: '/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof FriendsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community-stories': {
@@ -515,8 +555,10 @@ const rootRouteChildren: RootRouteChildren = {
   BlogRoute: BlogRouteWithChildren,
   BubblesRoute: BubblesRoute,
   CommunityStoriesRoute: CommunityStoriesRoute,
+  FriendsRoute: FriendsRoute,
   MatchRoute: MatchRoute,
   MelodyRoute: MelodyRoute,
+  MessagesRoute: MessagesRoute,
   MyBreakroomRoute: MyBreakroomRoute,
   MySubmissionsRoute: MySubmissionsRoute,
   OnboardingRoute: OnboardingRoute,

@@ -490,3 +490,235 @@ CREATE POLICY "Users can delete own break activity"
 CREATE INDEX IF NOT EXISTS idx_user_break_activity_user_id ON public.user_break_activity(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_break_activity_activity_type ON public.user_break_activity(activity_type);
 CREATE INDEX IF NOT EXISTS idx_user_break_activity_created_at ON public.user_break_activity(created_at DESC);
+
+-- ============================================================================
+-- FRIEND REQUESTS TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.friend_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  requester_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  receiver_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'cancelled')),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(requester_id, receiver_id),
+  CHECK (requester_id != receiver_id)
+);
+
+-- RLS for friend_requests
+ALTER TABLE public.friend_requests ENABLE ROW LEVEL SECURITY;
+
+-- Authenticated users can insert friend requests as requester
+CREATE POLICY "Users can insert own friend requests"
+  ON public.friend_requests FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = requester_id);
+
+-- Users can view friend requests where they are requester or receiver
+CREATE POLICY "Users can view own friend requests"
+  ON public.friend_requests FOR SELECT
+  TO authenticated
+  USING (auth.uid() = requester_id OR auth.uid() = receiver_id);
+
+-- Receiver can update request status
+CREATE POLICY "Receiver can update friend request status"
+  ON public.friend_requests FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = receiver_id AND status = 'pending')
+  WITH CHECK (auth.uid() = receiver_id AND status IN ('accepted', 'rejected'));
+
+-- Requester can cancel own pending request
+CREATE POLICY "Requester can cancel own pending request"
+  ON public.friend_requests FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = requester_id AND status = 'pending')
+  WITH CHECK (auth.uid() = requester_id AND status = 'cancelled');
+
+-- Indexes for friend_requests
+CREATE INDEX IF NOT EXISTS idx_friend_requests_requester_id ON public.friend_requests(requester_id);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_receiver_id ON public.friend_requests(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_status ON public.friend_requests(status);
+CREATE INDEX IF NOT EXISTS idx_friend_requests_created_at ON public.friend_requests(created_at DESC);
+
+-- Trigger to update updated_at
+DROP TRIGGER IF EXISTS trigger_update_friend_requests_updated_at ON public.friend_requests;
+CREATE TRIGGER trigger_update_friend_requests_updated_at
+  BEFORE UPDATE ON public.friend_requests
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
+-- ============================================================================
+-- FRIENDSHIPS TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.friendships (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  friend_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user_id, friend_id),
+  CHECK (user_id != friend_id)
+);
+
+-- RLS for friendships
+ALTER TABLE public.friendships ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own friendships
+CREATE POLICY "Users can view own friendships"
+  ON public.friendships FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Users can insert friendships (for MVP, done from frontend after accept)
+CREATE POLICY "Users can insert own friendships"
+  ON public.friendships FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+-- Users can delete own friendships
+CREATE POLICY "Users can delete own friendships"
+  ON public.friendships FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Indexes for friendships
+CREATE INDEX IF NOT EXISTS idx_friendships_user_id ON public.friendships(user_id);
+CREATE INDEX IF NOT EXISTS idx_friendships_friend_id ON public.friendships(friend_id);
+CREATE INDEX IF NOT EXISTS idx_friendships_created_at ON public.friendships(created_at DESC);
+
+-- ============================================================================
+-- DIRECT CONVERSATIONS TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.direct_conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS for direct_conversations
+ALTER TABLE public.direct_conversations ENABLE ROW LEVEL SECURITY;
+
+-- Users can only view conversations where they are a member (via join with members table)
+CREATE POLICY "Users can view conversations they are member of"
+  ON public.direct_conversations FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.direct_conversation_members
+      WHERE conversation_id = direct_conversations.id AND user_id = auth.uid()
+    )
+  );
+
+-- Users can insert conversations (for MVP, done via helper that also adds members)
+CREATE POLICY "Users can insert conversations"
+  ON public.direct_conversations FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+-- Indexes for direct_conversations
+CREATE INDEX IF NOT EXISTS idx_direct_conversations_created_at ON public.direct_conversations(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_direct_conversations_updated_at ON public.direct_conversations(updated_at DESC);
+
+-- Trigger to update updated_at
+DROP TRIGGER IF EXISTS trigger_update_direct_conversations_updated_at ON public.direct_conversations;
+CREATE TRIGGER trigger_update_direct_conversations_updated_at
+  BEFORE UPDATE ON public.direct_conversations
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
+-- ============================================================================
+-- DIRECT CONVERSATION MEMBERS TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.direct_conversation_members (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID NOT NULL REFERENCES public.direct_conversations(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(conversation_id, user_id)
+);
+
+-- RLS for direct_conversation_members
+ALTER TABLE public.direct_conversation_members ENABLE ROW LEVEL SECURITY;
+
+-- Users can view conversation memberships where they are the user
+CREATE POLICY "Users can view own conversation memberships"
+  ON public.direct_conversation_members FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Users can insert conversation memberships (for MVP, done via helper)
+CREATE POLICY "Users can insert conversation memberships"
+  ON public.direct_conversation_members FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+-- Indexes for direct_conversation_members
+CREATE INDEX IF NOT EXISTS idx_direct_conversation_members_conversation_id ON public.direct_conversation_members(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_direct_conversation_members_user_id ON public.direct_conversation_members(user_id);
+
+-- ============================================================================
+-- DIRECT MESSAGES TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.direct_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID NOT NULL REFERENCES public.direct_conversations(id) ON DELETE CASCADE,
+  sender_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  body TEXT NOT NULL,
+  status TEXT DEFAULT 'sent' CHECK (status IN ('sent', 'delivered', 'read')),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  read_at TIMESTAMPTZ
+);
+
+-- RLS for direct_messages
+ALTER TABLE public.direct_messages ENABLE ROW LEVEL SECURITY;
+
+-- Users can only view messages in conversations where they are a member
+CREATE POLICY "Users can view messages in their conversations"
+  ON public.direct_messages FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.direct_conversation_members
+      WHERE conversation_id = direct_messages.conversation_id AND user_id = auth.uid()
+    )
+  );
+
+-- Users can only insert messages into conversations where they are a member
+CREATE POLICY "Users can insert messages in their conversations"
+  ON public.direct_messages FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    auth.uid() = sender_id AND
+    EXISTS (
+      SELECT 1 FROM public.direct_conversation_members
+      WHERE conversation_id = direct_messages.conversation_id AND user_id = auth.uid()
+    )
+  );
+
+-- Indexes for direct_messages
+CREATE INDEX IF NOT EXISTS idx_direct_messages_conversation_id ON public.direct_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_direct_messages_sender_id ON public.direct_messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_direct_messages_created_at ON public.direct_messages(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_direct_messages_status ON public.direct_messages(status);
+
+-- Function to update conversation updated_at when message is inserted
+CREATE OR REPLACE FUNCTION update_direct_conversation_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.direct_conversations
+  SET updated_at = NOW()
+  WHERE id = NEW.conversation_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to update conversation updated_at on message insert
+DROP TRIGGER IF EXISTS trigger_update_direct_conversation_updated_at ON public.direct_messages;
+CREATE TRIGGER trigger_update_direct_conversation_updated_at
+  AFTER INSERT ON public.direct_messages
+  FOR EACH ROW
+  EXECUTE FUNCTION update_direct_conversation_updated_at();
