@@ -40,7 +40,7 @@ function MessagesPage() {
 
   useEffect(() => {
     async function loadData() {
-      if (!user || !isConfigured) {
+      if (!user?.id || !isConfigured) {
         setLoading(false);
         return;
       }
@@ -55,13 +55,14 @@ function MessagesPage() {
         if (friendsData.friends) setFriends(friendsData.friends);
       } catch (err) {
         console.error("Failed to load messages data:", err);
+        setError("Could not load conversations. Please refresh.");
       } finally {
         setLoading(false);
       }
     }
 
     loadData();
-  }, [user, isConfigured]);
+  }, [user?.id, isConfigured]);
 
   useEffect(() => {
     async function loadMessages() {

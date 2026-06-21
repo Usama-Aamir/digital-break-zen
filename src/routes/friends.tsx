@@ -45,7 +45,7 @@ function FriendsPage() {
 
   useEffect(() => {
     async function loadData() {
-      if (!user || !isConfigured) {
+      if (!user?.id || !isConfigured) {
         setLoading(false);
         return;
       }
@@ -62,29 +62,41 @@ function FriendsPage() {
         if (friendsData.friends) setFriends(friendsData.friends);
       } catch (err) {
         console.error("Failed to load friends data:", err);
+        setError("Could not load friends. Please refresh.");
       } finally {
         setLoading(false);
       }
     }
 
     loadData();
-  }, [user, isConfigured]);
+  }, [user?.id, isConfigured]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim() || !user) return;
 
+    // Stop searching if query is less than 2 characters
+    if (searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
     setSearching(true);
     setError(null);
 
-    const { users, error } = await searchUsers(searchQuery, user.id);
-    
-    if (error) {
-      setError(error);
-    } else {
-      setSearchResults(users);
+    try {
+      const { users, error } = await searchUsers(searchQuery, user.id);
+      
+      if (error) {
+        setError("Could not search users. Please try again.");
+      } else {
+        setSearchResults(users);
+      }
+    } catch (err) {
+      console.error("Search error:", err);
+      setError("Could not search users. Please try again.");
+    } finally {
+      setSearching(false);
     }
-    
-    setSearching(false);
   };
 
   const handleSendRequest = async (receiverId: string) => {
@@ -130,6 +142,8 @@ function FriendsPage() {
   };
 
   const handleRejectRequest = async (requestId: string) => {
+    if (!user) return;
+
     const { error } = await rejectFriendRequest(requestId);
     
     if (error) {
@@ -145,6 +159,8 @@ function FriendsPage() {
   };
 
   const handleCancelRequest = async (requestId: string) => {
+    if (!user) return;
+
     const { error } = await cancelFriendRequest(requestId);
     
     if (error) {
@@ -273,6 +289,7 @@ function FriendsPage() {
                   profile={profile}
                   onSendRequest={handleSendRequest}
                   currentUserId={user.id}
+                  t={t}
                 />
               ))}
             </div>
@@ -302,6 +319,7 @@ function FriendsPage() {
                   onAccept={handleAcceptRequest}
                   onReject={handleRejectRequest}
                   currentUserId={user.id}
+                  t={t}
                 />
               ))}
             </div>
@@ -324,6 +342,7 @@ function FriendsPage() {
                   type="outgoing"
                   onCancel={handleCancelRequest}
                   currentUserId={user.id}
+                  t={t}
                 />
               ))}
             </div>
@@ -353,6 +372,7 @@ function FriendsPage() {
                   key={friend.id}
                   friend={friend}
                   onRemove={handleRemoveFriend}
+                  t={t}
                 />
               ))}
             </div>
@@ -363,7 +383,7 @@ function FriendsPage() {
   );
 }
 
-function FriendSearchResult({ profile, onSendRequest, currentUserId }: { profile: UserProfile; onSendRequest: (id: string) => void; currentUserId: string }) {
+function FriendSearchResult({ profile, onSendRequest, currentUserId, t }: { profile: UserProfile; onSendRequest: (id: string) => void; currentUserId: string; t: (key: string) => string }) {
   const [status, setStatus] = useState<{ isFriend: boolean; requestStatus: string | null }>({ isFriend: false, requestStatus: null });
   const [loading, setLoading] = useState(true);
 
@@ -449,13 +469,14 @@ function FriendSearchResult({ profile, onSendRequest, currentUserId }: { profile
   );
 }
 
-function FriendRequestCard({ request, type, onAccept, onReject, onCancel, currentUserId }: { 
+function FriendRequestCard({ request, type, onAccept, onReject, onCancel, currentUserId, t }: { 
   request: FriendRequest; 
   type: "incoming" | "outgoing"; 
   onAccept?: (id: string, requesterId: string) => void; 
   onReject?: (id: string) => void; 
   onCancel?: (id: string) => void;
   currentUserId: string;
+  t: (key: string) => string;
 }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
@@ -477,7 +498,7 @@ function FriendRequestCard({ request, type, onAccept, onReject, onCancel, curren
     }
 
     loadProfile();
-  }, [request, type]);
+  }, [request.id, type]);
 
   if (!profile) return null;
 
@@ -523,7 +544,7 @@ function FriendRequestCard({ request, type, onAccept, onReject, onCancel, curren
   );
 }
 
-function FriendCard({ friend, onRemove }: { friend: UserProfile; onRemove: (id: string) => void }) {
+function FriendCard({ friend, onRemove, t }: { friend: UserProfile; onRemove: (id: string) => void; t: (key: string) => string }) {
   return (
     <div className="p-4 bg-white/30 rounded-xl flex items-center justify-between">
       <div className="flex items-center gap-3">

@@ -219,28 +219,37 @@ export async function getFriends(userId: string): Promise<{ friends: UserProfile
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    const { data, error } = await supabase
+    // Step 1: Query friendships to get friend_ids
+    const { data: friendships, error: friendshipsError } = await supabase
       .from('friendships')
-      .select(`
-        friend_id,
-        profiles!friendships_friend_id_fkey (
-          id,
-          display_name,
-          username,
-          avatar_url,
-          role_label
-        )
-      `)
+      .select('friend_id')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
     
-    if (error) {
-      console.warn('Failed to get friends:', error.message);
-      return { friends: [], error: error.message };
+    if (friendshipsError) {
+      console.warn('Failed to get friendships:', friendshipsError.message);
+      return { friends: [], error: friendshipsError.message };
     }
     
-    const friends = data?.map((f: any) => f.profiles).filter(Boolean) || [];
-    return { friends, error: null };
+    if (!friendships || friendships.length === 0) {
+      return { friends: [], error: null };
+    }
+    
+    // Step 2: Extract friend_ids
+    const friendIds = friendships.map((f: any) => f.friend_id);
+    
+    // Step 3: Query profiles separately
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, display_name, username, avatar_url, role_label')
+      .in('id', friendIds);
+    
+    if (profilesError) {
+      console.warn('Failed to get friend profiles:', profilesError.message);
+      return { friends: [], error: profilesError.message };
+    }
+    
+    return { friends: profiles || [], error: null };
   } catch (err) {
     console.warn('Error getting friends:', err);
     return { friends: [], error: err instanceof Error ? err.message : 'Unknown error' };

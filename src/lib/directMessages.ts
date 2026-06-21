@@ -105,7 +105,7 @@ export async function getDirectConversations(userId: string): Promise<{ conversa
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    // Get all conversation IDs where user is a member
+    // Step 1: Get all conversation IDs where user is a member
     const { data: members, error: memberError } = await supabase
       .from('direct_conversation_members')
       .select('conversation_id')
@@ -122,23 +122,43 @@ export async function getDirectConversations(userId: string): Promise<{ conversa
     
     const conversationIds = members.map(m => m.conversation_id);
     
-    // Get conversations with friend details and last message
+    // Step 2: Get all members for these conversations
+    const { data: allMembers, error: allMembersError } = await supabase
+      .from('direct_conversation_members')
+      .select('conversation_id, user_id')
+      .in('conversation_id', conversationIds);
+    
+    if (allMembersError) {
+      console.warn('Failed to get all conversation members:', allMembersError.message);
+      return { conversations: [], error: allMembersError.message };
+    }
+    
+    // Extract unique user IDs (excluding current user)
+    const userIds = [...new Set((allMembers || [])
+      .map((m: any) => m.user_id)
+      .filter((id: string) => id !== userId))];
+    
+    // Step 3: Get profiles for all users
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, display_name, username, avatar_url, role_label')
+      .in('id', userIds);
+    
+    if (profilesError) {
+      console.warn('Failed to get profiles:', profilesError.message);
+      return { conversations: [], error: profilesError.message };
+    }
+    
+    // Create a map of user_id to profile
+    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+    
+    // Step 4: Get conversations with last message
     const { data: conversations, error: convError } = await supabase
       .from('direct_conversations')
       .select(`
         id,
         created_at,
         updated_at,
-        direct_conversation_members!inner (
-          user_id,
-          profiles!direct_conversation_members_user_id_fkey (
-            id,
-            display_name,
-            username,
-            avatar_url,
-            role_label
-          )
-        ),
         direct_messages (
           body,
           created_at
@@ -152,10 +172,10 @@ export async function getDirectConversations(userId: string): Promise<{ conversa
       return { conversations: [], error: convError.message };
     }
     
-    // Transform data to include friend details and last message
+    // Step 5: Transform data to include friend details and last message
     const transformedConversations: ConversationWithDetails[] = (conversations || []).map((conv: any) => {
-      const friendMember = conv.direct_conversation_members.find((m: any) => m.user_id !== userId);
-      const friend = friendMember?.profiles;
+      const friendMember = allMembers?.find((m: any) => m.conversation_id === conv.id && m.user_id !== userId);
+      const friend = friendMember ? profileMap.get(friendMember.user_id) : null;
       const messages = conv.direct_messages || [];
       const lastMessage = messages[0];
       
