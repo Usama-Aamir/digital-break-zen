@@ -389,19 +389,14 @@ function FriendSearchResult({ profile, onSendRequest, currentUserId, t }: { prof
 
   useEffect(() => {
     async function checkStatus() {
-      const supabase = await import("@supabase/supabase-js").then(m => m.createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY
-      ));
-      
       const [friendCheck, requestCheck] = await Promise.all([
-        supabase.from("friendships").select("id").eq("user_id", currentUserId).eq("friend_id", profile.id).single(),
-        supabase.from("friend_requests").select("status").eq("requester_id", currentUserId).eq("receiver_id", profile.id).single(),
+        areFriends(currentUserId, profile.id),
+        getFriendRequestStatus(currentUserId, profile.id),
       ]);
 
       setStatus({
-        isFriend: !!friendCheck.data,
-        requestStatus: requestCheck.data?.status || null,
+        isFriend: friendCheck.isFriend,
+        requestStatus: requestCheck.status,
       });
       setLoading(false);
     }

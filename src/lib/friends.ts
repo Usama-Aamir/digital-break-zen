@@ -294,9 +294,9 @@ export async function areFriends(userId: string, friendId: string): Promise<{ is
       .select('id')
       .eq('user_id', userId)
       .eq('friend_id', friendId)
-      .single();
+      .maybeSingle();
     
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.warn('Failed to check friendship:', error.message);
       return { isFriend: false, error: error.message };
     }
@@ -318,9 +318,9 @@ export async function getFriendRequestStatus(requesterId: string, receiverId: st
       .select('status')
       .eq('requester_id', requesterId)
       .eq('receiver_id', receiverId)
-      .single();
+      .maybeSingle();
     
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.warn('Failed to get friend request status:', error.message);
       return { status: null, error: error.message };
     }
