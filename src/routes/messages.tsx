@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   getDirectConversations, 
   getDirectMessages, 
@@ -13,7 +13,7 @@ import {
   type DirectMessage 
 } from "@/lib/directMessages";
 import { getFriends, areFriends, type UserProfile } from "@/lib/friends";
-import { Send, MessageCircle, Users, ArrowLeft, Search } from "lucide-react";
+import { Send, MessageCircle, Users, ArrowLeft, Search, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/messages")({
   head: () => ({
@@ -37,6 +37,10 @@ function MessagesPage() {
   const [error, setError] = useState<string | null>(null);
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [showFriendPicker, setShowFriendPicker] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const channelRef = useRef<any>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -74,6 +78,11 @@ function MessagesPage() {
         
         // Mark conversation as read
         await markConversationRead(selectedConversation.id);
+        
+        // Scroll to bottom
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
       } catch (err) {
         console.error("Failed to load messages:", err);
       }
@@ -82,9 +91,117 @@ function MessagesPage() {
     loadMessages();
   }, [selectedConversation]);
 
+  // Realtime subscription for new messages
+  useEffect(() => {
+    if (!selectedConversation) return;
+
+    const setupRealtimeSubscription = async () => {
+      try {
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(
+          import.meta.env.VITE_SUPABASE_URL,
+          import.meta.env.VITE_SUPABASE_ANON_KEY
+        );
+
+        const channel = supabase
+          .channel(`direct-messages-${selectedConversation.id}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "direct_messages",
+              filter: `conversation_id=eq.${selectedConversation.id}`,
+            },
+            (payload: any) => {
+              const newMessage = payload.new as DirectMessage;
+              setMessages((prev) => {
+                // Avoid duplicates
+                if (prev.some((m) => m.id === newMessage.id)) return prev;
+                return [...prev, newMessage];
+              });
+              
+              // Update conversation preview
+              setConversations((prev) =>
+                prev.map((conv) =>
+                  conv.id === selectedConversation.id
+                    ? { ...conv, last_message: newMessage.body, last_message_at: newMessage.created_at }
+                    : conv
+                )
+              );
+              
+              // Scroll to bottom
+              setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+              }, 100);
+            }
+          )
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              console.log("Realtime subscription active");
+            } else if (status === "CHANNEL_ERROR") {
+              console.warn("Realtime subscription failed, falling back to polling");
+              startPolling();
+            }
+          });
+
+        channelRef.current = channel;
+      } catch (err) {
+        console.warn("Failed to setup realtime, falling back to polling:", err);
+        startPolling();
+      }
+    };
+
+    const startPolling = () => {
+      // Clear any existing polling
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      
+      // Poll every 15 seconds
+      pollingIntervalRef.current = setInterval(async () => {
+        if (!selectedConversation) return;
+        
+        try {
+          const { messages: messagesData } = await getDirectMessages(selectedConversation.id);
+          if (messagesData) {
+            setMessages((prev) => {
+              // Only add new messages
+              const existingIds = new Set(prev.map((m) => m.id));
+              const newMessages = messagesData.filter((m) => !existingIds.has(m.id));
+              if (newMessages.length > 0) {
+                setTimeout(() => {
+                  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+              }
+              return [...prev, ...newMessages];
+            });
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+        }
+      }, 15000);
+    };
+
+    setupRealtimeSubscription();
+
+    // Cleanup
+    return () => {
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [selectedConversation?.id]);
+
   const handleSendMessage = async () => {
     if (!messageText.trim() || !selectedConversation || !user) return;
 
+    const tempMessageText = messageText;
     setSending(true);
     setError(null);
 
@@ -92,19 +209,43 @@ function MessagesPage() {
     
     if (error) {
       setError(error);
+      setSending(false);
     } else if (message) {
-      setMessages([...messages, message]);
+      setMessages((prev) => [...prev, message]);
       setMessageText("");
+      setSending(false);
       
       // Update conversation with last message
-      setConversations(prev => prev.map(conv => 
+      setConversations((prev) => prev.map((conv) => 
         conv.id === selectedConversation.id 
           ? { ...conv, last_message: message.body, last_message_at: message.created_at }
           : conv
       ));
+      
+      // Scroll to bottom
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
     }
+  };
+
+  const handleRefresh = async () => {
+    if (!selectedConversation) return;
     
-    setSending(false);
+    setIsRefreshing(true);
+    try {
+      const { messages: messagesData } = await getDirectMessages(selectedConversation.id);
+      if (messagesData) {
+        setMessages(messagesData);
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
+    } catch (err) {
+      console.error("Failed to refresh messages:", err);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleSelectFriend = async (friend: UserProfile) => {
@@ -243,11 +384,11 @@ function MessagesPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg flex-shrink-0">
-                          {conv.friend_avatar_url || conv.friend_display_name?.[0] || "?"}
+                          {conv.friend_avatar_url || conv.friend_display_name?.[0] || conv.friend_username?.[0] || "💬"}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-foreground truncate">
-                            {conv.friend_display_name || conv.friend_username}
+                            {conv.friend_display_name || conv.friend_username || "Breakroom friend"}
                           </p>
                           <p className="text-sm text-muted-foreground truncate">
                             {conv.last_message || t("noMessages")}
@@ -272,18 +413,28 @@ function MessagesPage() {
               {selectedConversation ? (
                 <>
                   {/* Chat Header */}
-                  <div className="flex items-center gap-3 pb-4 border-b border-white/20 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
-                      {selectedConversation.friend_avatar_url || selectedConversation.friend_display_name?.[0] || "?"}
+                  <div className="flex items-center justify-between pb-4 border-b border-white/20 mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
+                        {selectedConversation.friend_avatar_url || selectedConversation.friend_display_name?.[0] || selectedConversation.friend_username?.[0] || "💬"}
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">
+                          {selectedConversation.friend_display_name || selectedConversation.friend_username || "Breakroom friend"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          @{selectedConversation.friend_username || ""}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {selectedConversation.friend_display_name || selectedConversation.friend_username}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        @{selectedConversation.friend_username}
-                      </p>
-                    </div>
+                    <button
+                      onClick={handleRefresh}
+                      disabled={isRefreshing}
+                      className="p-2 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50"
+                      title="Refresh messages"
+                    >
+                      <RefreshCw className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`} />
+                    </button>
                   </div>
 
                   {/* Messages */}
@@ -293,25 +444,28 @@ function MessagesPage() {
                         {t("startChatting")}
                       </div>
                     ) : (
-                      messages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}
-                        >
+                      <>
+                        {messages.map((msg) => (
                           <div
-                            className={`max-w-[70%] p-3 rounded-2xl ${
-                              msg.sender_id === user.id
-                                ? "bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground"
-                                : "bg-white/30 text-foreground"
-                            }`}
+                            key={msg.id}
+                            className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}
                           >
-                            <p className="text-sm break-words">{msg.body}</p>
-                            <p className="text-xs opacity-70 mt-1">
-                              {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </p>
+                            <div
+                              className={`max-w-[70%] p-3 rounded-2xl ${
+                                msg.sender_id === user.id
+                                  ? "bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground"
+                                  : "bg-white/30 text-foreground"
+                              }`}
+                            >
+                              <p className="text-sm break-words">{msg.body}</p>
+                              <p className="text-xs opacity-70 mt-1">
+                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        ))}
+                        <div ref={messagesEndRef} />
+                      </>
                     )}
                   </div>
 
