@@ -65,7 +65,7 @@ export function generateRoomCode(): string {
   for (let i = 0; i < 6; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  return code;
+  return code.toUpperCase();
 }
 
 // Create a new game room
@@ -83,6 +83,7 @@ export async function createGameRoom(userId: string, gameType: string = 'tic_tac
         game_type: gameType,
         status: 'waiting',
         max_players: 2,
+        current_turn_user_id: userId,
         game_state: {
           board: ['', '', '', '', '', '', '', '', ''],
           moves: [],
@@ -125,50 +126,76 @@ export async function joinGameRoom(roomCode: string, userId: string): Promise<{ 
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
+    // Normalize room code
+    const normalizedCode = roomCode.trim().toUpperCase();
+    
     // Get the room
     const { data: room, error: roomError } = await supabase
       .from('game_rooms')
       .select('*')
-      .eq('room_code', roomCode)
-      .single();
+      .eq('room_code', normalizedCode)
+      .maybeSingle();
     
     if (roomError) {
       console.warn('Failed to get game room:', roomError.message);
       return { room: null, error: roomError.message };
     }
     
-    // Check if room is waiting and not full
-    if (room.status !== 'waiting') {
+    if (!room) {
+      return { room: null, error: 'Invalid room code' };
+    }
+    
+    // Check if room is available for joining
+    if (room.status === 'finished' || room.status === 'cancelled') {
       return { room: null, error: 'Room is not available for joining' };
     }
     
-    // Get current players
+    // Check if user is already in the room
+    const { data: existingPlayer, error: existingPlayerError } = await supabase
+      .from('game_room_players')
+      .select('*')
+      .eq('room_id', room.id)
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (existingPlayerError) {
+      console.warn('Failed to check existing player:', existingPlayerError.message);
+      return { room: null, error: existingPlayerError.message };
+    }
+    
+    if (existingPlayer) {
+      // User is already in the room, return the room
+      return { room, error: null };
+    }
+    
+    // Get current joined players
     const { data: players, error: playersError } = await supabase
       .from('game_room_players')
       .select('*')
-      .eq('room_id', room.id);
+      .eq('room_id', room.id)
+      .eq('status', 'joined');
     
     if (playersError) {
       console.warn('Failed to get players:', playersError.message);
       return { room: null, error: playersError.message };
     }
     
-    if (players && players.length >= room.max_players) {
+    const joinedPlayers = players || [];
+    
+    if (joinedPlayers.length >= room.max_players) {
       return { room: null, error: 'Room is full' };
     }
     
-    // Check if user is already in the room
-    if (players && players.some(p => p.user_id === userId)) {
-      return { room: null, error: 'You are already in this room' };
-    }
+    // Assign symbol based on player count
+    const symbol = joinedPlayers.length === 0 ? 'X' : 'O';
     
-    // Add user as second player with symbol O
+    // Add user as player
     const { error: addPlayerError } = await supabase
       .from('game_room_players')
       .insert({
         room_id: room.id,
         user_id: userId,
-        symbol: 'O',
+        symbol,
         status: 'joined'
       });
     
@@ -177,21 +204,26 @@ export async function joinGameRoom(roomCode: string, userId: string): Promise<{ 
       return { room: null, error: addPlayerError.message };
     }
     
-    // Update room status to active and set current turn to host (X)
-    const { error: updateError } = await supabase
-      .from('game_rooms')
-      .update({
-        status: 'active',
-        current_turn_user_id: room.host_id
-      })
-      .eq('id', room.id);
-    
-    if (updateError) {
-      console.warn('Failed to update room status:', updateError.message);
-      return { room: null, error: updateError.message };
+    // If this makes 2 players, update room status to active
+    if (joinedPlayers.length === 1) {
+      const xPlayer = joinedPlayers.find(p => p.symbol === 'X');
+      const { error: updateError } = await supabase
+        .from('game_rooms')
+        .update({
+          status: 'active',
+          current_turn_user_id: xPlayer?.user_id || userId
+        })
+        .eq('id', room.id);
+      
+      if (updateError) {
+        console.warn('Failed to update room status:', updateError.message);
+        return { room: null, error: updateError.message };
+      }
+      
+      return { room: { ...room, status: 'active', current_turn_user_id: xPlayer?.user_id || userId }, error: null };
     }
     
-    return { room: { ...room, status: 'active', current_turn_user_id: room.host_id }, error: null };
+    return { room, error: null };
   } catch (err) {
     console.warn('Error joining game room:', err);
     return { room: null, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -203,11 +235,13 @@ export async function getGameRoom(roomCode: string): Promise<{ room: GameRoom | 
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
+    const normalizedCode = roomCode.trim().toUpperCase();
+    
     const { data, error } = await supabase
       .from('game_rooms')
       .select('*')
-      .eq('room_code', roomCode)
-      .single();
+      .eq('room_code', normalizedCode)
+      .maybeSingle();
     
     if (error) {
       console.warn('Failed to get game room:', error.message);
@@ -226,18 +260,70 @@ export async function getMyGameRooms(userId: string): Promise<{ rooms: GameRoom[
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    const { data, error } = await supabase
+    // Step A: Get hosted rooms
+    const { data: hostedRooms, error: hostedError } = await supabase
       .from('game_rooms')
       .select('*')
-      .or(`host_id.eq.${userId},id.in.(select room_id from game_room_players where user_id.eq.${userId})`)
+      .eq('host_id', userId)
       .order('created_at', { ascending: false });
     
-    if (error) {
-      console.warn('Failed to get game rooms:', error.message);
-      return { rooms: [], error: error.message };
+    if (hostedError) {
+      console.warn('Failed to get hosted rooms:', hostedError.message);
+      return { rooms: [], error: hostedError.message };
     }
     
-    return { rooms: data || [], error: null };
+    // Step B: Get player rows to find rooms user is in
+    const { data: playerRows, error: playerError } = await supabase
+      .from('game_room_players')
+      .select('room_id')
+      .eq('user_id', userId)
+      .eq('status', 'joined');
+    
+    if (playerError) {
+      console.warn('Failed to get player rows:', playerError.message);
+      return { rooms: [], error: playerError.message };
+    }
+    
+    // Step C: Fetch rooms by ids from player rows
+    const roomIds = playerRows?.map(p => p.room_id) || [];
+    let playerRooms: GameRoom[] = [];
+    
+    if (roomIds.length > 0) {
+      const { data: roomsData, error: roomsError } = await supabase
+        .from('game_rooms')
+        .select('*')
+        .in('id', roomIds)
+        .order('created_at', { ascending: false });
+      
+      if (roomsError) {
+        console.warn('Failed to get player rooms:', roomsError.message);
+        return { rooms: [], error: roomsError.message };
+      }
+      
+      playerRooms = roomsData || [];
+    }
+    
+    // Step D: Merge by id, prioritizing hosted rooms
+    const roomMap = new Map<string, GameRoom>();
+    
+    // Add hosted rooms first
+    (hostedRooms || []).forEach(room => {
+      roomMap.set(room.id, room);
+    });
+    
+    // Add player rooms (only if not already in map)
+    playerRooms.forEach(room => {
+      if (!roomMap.has(room.id)) {
+        roomMap.set(room.id, room);
+      }
+    });
+    
+    // Convert to array and sort by created_at
+    const allRooms = Array.from(roomMap.values()).sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    
+    return { rooms: allRooms, error: null };
   } catch (err) {
     console.warn('Error getting game rooms:', err);
     return { rooms: [], error: err instanceof Error ? err.message : 'Unknown error' };
@@ -385,7 +471,7 @@ export async function makeTicTacToeMove(roomId: string, userId: string, cellInde
       .select('*')
       .eq('room_id', roomId)
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
     
     if (playersError || !players) {
       return { room: null, error: 'Could not find player' };
@@ -511,11 +597,15 @@ export async function resetOrCancelRoom(roomId: string, userId: string): Promise
       .from('game_rooms')
       .select('*')
       .eq('id', roomId)
-      .single();
+      .maybeSingle();
     
     if (roomError) {
       console.warn('Failed to get room:', roomError.message);
       return { error: roomError.message };
+    }
+    
+    if (!room) {
+      return { error: 'Room not found' };
     }
     
     // Only host can cancel

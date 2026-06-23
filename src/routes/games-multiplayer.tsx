@@ -172,6 +172,8 @@ function MultiplayerGamesPage() {
         setMyRooms([room, ...myRooms]);
         setSelectedRoom(room);
         setRoomCodeInput("");
+      } else {
+        setError("Could not join room. Please try again.");
       }
     } catch (err) {
       console.error("Failed to join room:", err);
