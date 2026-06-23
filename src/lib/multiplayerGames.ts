@@ -496,6 +496,13 @@ export async function makeTicTacToeMove(roomId: string, userId: string, cellInde
       isDraw
     };
     
+    // Get all players for turn switching and result saving
+    const { data: allPlayers } = await supabase
+      .from('game_room_players')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('status', 'joined');
+    
     // Determine next turn
     let nextTurnUserId: string | null = null;
     let newStatus = room.status;
@@ -508,12 +515,6 @@ export async function makeTicTacToeMove(roomId: string, userId: string, cellInde
       newStatus = 'finished';
     } else {
       // Switch turn
-      const { data: allPlayers } = await supabase
-        .from('game_room_players')
-        .select('*')
-        .eq('room_id', roomId)
-        .eq('status', 'joined');
-      
       if (allPlayers && allPlayers.length === 2) {
         nextTurnUserId = allPlayers.find(p => p.user_id !== userId)?.user_id || null;
       }

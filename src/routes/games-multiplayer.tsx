@@ -20,6 +20,7 @@ import {
   type TicTacToeState
 } from "@/lib/multiplayerGames";
 import { getFriends, type UserProfile } from "@/lib/friends";
+import { getCurrentUserProfile } from "@/lib/profiles";
 import { Copy, Users, RefreshCw, Gamepad2, ArrowLeft, X, Circle } from "lucide-react";
 
 export const Route = createFileRoute("/games-multiplayer")({
@@ -287,6 +288,17 @@ function MultiplayerGamesPage() {
   const gameState = selectedRoom?.game_state as TicTacToeState || { board: [], moves: [], winner: null, isDraw: false };
   const isMyTurn = selectedRoom?.current_turn_user_id === user?.id;
   const mySymbol = roomPlayers.find(p => p.user_id === user?.id)?.symbol;
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      if (user?.id) {
+        const userProfile = await getCurrentUserProfile(user.id);
+        setProfile(userProfile);
+      }
+    }
+    loadProfile();
+  }, [user?.id]);
 
   if (!user || !isConfigured) {
     return (
@@ -518,19 +530,36 @@ function MultiplayerGamesPage() {
 
             {/* Players */}
             <div className="flex items-center justify-center gap-8 mb-6">
-              {roomPlayers.map((player) => (
-                <div key={player.id} className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-2xl mb-2">
-                    {player.symbol === 'X' ? <X className="h-8 w-8" /> : <Circle className="h-8 w-8" />}
-                  </div>
-                  <p className="font-medium text-foreground">
-                    {player.user_id === user.id ? "You" : "Friend"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {player.symbol}
-                  </p>
+              {roomPlayers.length > 0 ? (
+                roomPlayers.map((player) => {
+                  const isCurrentUser = player.user_id === user.id;
+                  const playerProfile = friends.find(f => f.id === player.user_id);
+                  const displayName = isCurrentUser 
+                    ? "You" 
+                    : playerProfile?.display_name || playerProfile?.username || `Player ${player.symbol}`;
+                  const avatar = isCurrentUser 
+                    ? (profile?.avatar_url || "👤") 
+                    : (playerProfile?.avatar_url || (player.symbol === 'X' ? "❌" : "⭕"));
+                  
+                  return (
+                    <div key={player.id} className="text-center">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-2xl mb-2">
+                        {player.symbol === 'X' ? <X className="h-8 w-8" /> : <Circle className="h-8 w-8" />}
+                      </div>
+                      <p className="font-medium text-foreground">
+                        {displayName}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {player.symbol}
+                      </p>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center">
+                  <p className="text-muted-foreground">Waiting for players...</p>
                 </div>
-              ))}
+              )}
             </div>
 
             {/* Game Status */}
@@ -552,17 +581,21 @@ function MultiplayerGamesPage() {
 
             {selectedRoom.status === 'finished' && (
               <div className="text-center mb-6">
-                {gameState.winner === mySymbol ? (
+                {selectedRoom.winner_user_id === user.id ? (
                   <p className="text-foreground font-medium text-green-600">
                     {t("youWon")}
                   </p>
-                ) : gameState.winner ? (
+                ) : selectedRoom.winner_user_id ? (
                   <p className="text-foreground font-medium text-red-600">
                     {t("youLost")}
                   </p>
-                ) : (
+                ) : gameState.isDraw ? (
                   <p className="text-foreground font-medium">
                     {t("draw")}
+                  </p>
+                ) : (
+                  <p className="text-foreground font-medium">
+                    Game Finished
                   </p>
                 )}
               </div>
