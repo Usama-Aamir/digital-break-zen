@@ -73,7 +73,7 @@ export function SidebarNav() {
       items: [
         { label: t("blog"), to: "/blog", icon: LayoutGrid },
         { label: t("breakTools"), to: "/", icon: LayoutGrid },
-        { label: t("games"), to: "/", icon: Gamepad2 },
+        { label: t("multiplayerGames"), to: "/games-multiplayer", icon: Gamepad2 },
       ],
     },
   ];

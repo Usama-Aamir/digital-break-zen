@@ -722,3 +722,223 @@ CREATE TRIGGER trigger_update_direct_conversation_updated_at
   AFTER INSERT ON public.direct_messages
   FOR EACH ROW
   EXECUTE FUNCTION update_direct_conversation_updated_at();
+
+-- ============================================================================
+-- GAME ROOMS TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.game_rooms (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_code TEXT UNIQUE NOT NULL,
+  host_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  game_type TEXT NOT NULL DEFAULT 'tic_tac_toe',
+  status TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'active', 'finished', 'cancelled')),
+  max_players INTEGER DEFAULT 2,
+  current_turn_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  winner_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  game_state JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS for game_rooms
+ALTER TABLE public.game_rooms ENABLE ROW LEVEL SECURITY;
+
+-- Users can view rooms where they are host or a player
+CREATE POLICY "Users can view game rooms they are in"
+  ON public.game_rooms FOR SELECT
+  TO authenticated
+  USING (
+    host_id = auth.uid() OR
+    EXISTS (
+      SELECT 1 FROM public.game_room_players
+      WHERE room_id = game_rooms.id AND user_id = auth.uid()
+    )
+  );
+
+-- Authenticated users can create game rooms as host
+CREATE POLICY "Users can create game rooms"
+  ON public.game_rooms FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = host_id);
+
+-- Users can update game rooms only if they are a player in that room
+CREATE POLICY "Players can update game rooms"
+  ON public.game_rooms FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.game_room_players
+      WHERE room_id = game_rooms.id AND user_id = auth.uid()
+    )
+  );
+
+-- Indexes for game_rooms
+CREATE INDEX IF NOT EXISTS idx_game_rooms_room_code ON public.game_rooms(room_code);
+CREATE INDEX IF NOT EXISTS idx_game_rooms_host_id ON public.game_rooms(host_id);
+CREATE INDEX IF NOT EXISTS idx_game_rooms_status ON public.game_rooms(status);
+CREATE INDEX IF NOT EXISTS idx_game_rooms_created_at ON public.game_rooms(created_at DESC);
+
+-- Trigger to update updated_at
+DROP TRIGGER IF EXISTS trigger_update_game_rooms_updated_at ON public.game_rooms;
+CREATE TRIGGER trigger_update_game_rooms_updated_at
+  BEFORE UPDATE ON public.game_rooms
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
+-- ============================================================================
+-- GAME ROOM PLAYERS TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.game_room_players (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id UUID NOT NULL REFERENCES public.game_rooms(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  symbol TEXT CHECK (symbol IN ('X', 'O')),
+  status TEXT DEFAULT 'joined' CHECK (status IN ('joined', 'left')),
+  joined_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(room_id, user_id)
+);
+
+-- RLS for game_room_players
+ALTER TABLE public.game_room_players ENABLE ROW LEVEL SECURITY;
+
+-- Users can view game_room_players for rooms they are in
+CREATE POLICY "Users can view game room players in their rooms"
+  ON public.game_room_players FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.game_rooms
+      WHERE id = game_room_players.room_id AND
+            (host_id = auth.uid() OR
+             EXISTS (
+               SELECT 1 FROM public.game_room_players grp2
+               WHERE grp2.room_id = game_room_players.room_id AND grp2.user_id = auth.uid()
+             ))
+    )
+  );
+
+-- Users can insert themselves as player
+CREATE POLICY "Users can insert themselves as game room player"
+  ON public.game_room_players FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own player status
+CREATE POLICY "Users can update own game room player status"
+  ON public.game_room_players FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Indexes for game_room_players
+CREATE INDEX IF NOT EXISTS idx_game_room_players_room_id ON public.game_room_players(room_id);
+CREATE INDEX IF NOT EXISTS idx_game_room_players_user_id ON public.game_room_players(user_id);
+CREATE INDEX IF NOT EXISTS idx_game_room_players_status ON public.game_room_players(status);
+
+-- ============================================================================
+-- GAME INVITES TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.game_invites (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id UUID NOT NULL REFERENCES public.game_rooms(id) ON DELETE CASCADE,
+  inviter_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  invitee_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'cancelled')),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS for game_invites
+ALTER TABLE public.game_invites ENABLE ROW LEVEL SECURITY;
+
+-- Users can view invites where inviter_id or invitee_id = auth.uid()
+CREATE POLICY "Users can view own game invites"
+  ON public.game_invites FOR SELECT
+  TO authenticated
+  USING (auth.uid() = inviter_id OR auth.uid() = invitee_id);
+
+-- Users can create invites for their own room
+CREATE POLICY "Users can create game invites for their room"
+  ON public.game_invites FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    auth.uid() = inviter_id AND
+    EXISTS (
+      SELECT 1 FROM public.game_rooms
+      WHERE id = game_invites.room_id AND host_id = auth.uid()
+    )
+  );
+
+-- Invitee can accept/reject invite
+CREATE POLICY "Invitee can respond to game invites"
+  ON public.game_invites FOR UPDATE
+  TO authenticated
+  USING (
+    auth.uid() = invitee_id AND
+    status = 'pending'
+  )
+  WITH CHECK (
+    auth.uid() = invitee_id AND
+    status IN ('accepted', 'rejected')
+  );
+
+-- Inviter can cancel invite
+CREATE POLICY "Inviter can cancel game invites"
+  ON public.game_invites FOR UPDATE
+  TO authenticated
+  USING (
+    auth.uid() = inviter_id AND
+    status = 'pending'
+  )
+  WITH CHECK (
+    auth.uid() = inviter_id AND
+    status = 'cancelled'
+  );
+
+-- Indexes for game_invites
+CREATE INDEX IF NOT EXISTS idx_game_invites_room_id ON public.game_invites(room_id);
+CREATE INDEX IF NOT EXISTS idx_game_invites_inviter_id ON public.game_invites(inviter_id);
+CREATE INDEX IF NOT EXISTS idx_game_invites_invitee_id ON public.game_invites(invitee_id);
+CREATE INDEX IF NOT EXISTS idx_game_invites_status ON public.game_invites(status);
+
+-- Trigger to update updated_at
+DROP TRIGGER IF EXISTS trigger_update_game_invites_updated_at ON public.game_invites;
+CREATE TRIGGER trigger_update_game_invites_updated_at
+  BEFORE UPDATE ON public.game_invites
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
+-- ============================================================================
+-- GAME RESULTS TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.game_results (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id UUID NOT NULL REFERENCES public.game_rooms(id) ON DELETE CASCADE,
+  game_type TEXT NOT NULL,
+  player_one_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  player_two_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  winner_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  result TEXT NOT NULL CHECK (result IN ('player_one_win', 'player_two_win', 'draw', 'cancelled')),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS for game_results
+ALTER TABLE public.game_results ENABLE ROW LEVEL SECURITY;
+
+-- Game results can be viewed by players in that game
+CREATE POLICY "Players can view game results"
+  ON public.game_results FOR SELECT
+  TO authenticated
+  USING (
+    player_one_id = auth.uid() OR
+    player_two_id = auth.uid()
+  );
+
+-- Indexes for game_results
+CREATE INDEX IF NOT EXISTS idx_game_results_room_id ON public.game_results(room_id);
+CREATE INDEX IF NOT EXISTS idx_game_results_player_one_id ON public.game_results(player_one_id);
+CREATE INDEX IF NOT EXISTS idx_game_results_player_two_id ON public.game_results(player_two_id);
+CREATE INDEX IF NOT EXISTS idx_game_results_created_at ON public.game_results(created_at DESC);

@@ -22,6 +22,7 @@ import { Route as MyBreakroomRouteImport } from './routes/my-breakroom'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MelodyRouteImport } from './routes/melody'
 import { Route as MatchRouteImport } from './routes/match'
+import { Route as GamesMultiplayerRouteImport } from './routes/games-multiplayer'
 import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as CommunityStoriesRouteImport } from './routes/community-stories'
 import { Route as BubblesRouteImport } from './routes/bubbles'
@@ -100,6 +101,11 @@ const MatchRoute = MatchRouteImport.update({
   path: '/match',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GamesMultiplayerRoute = GamesMultiplayerRouteImport.update({
+  id: '/games-multiplayer',
+  path: '/games-multiplayer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FriendsRoute = FriendsRouteImport.update({
   id: '/friends',
   path: '/friends',
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/bubbles': typeof BubblesRoute
   '/community-stories': typeof CommunityStoriesRoute
   '/friends': typeof FriendsRoute
+  '/games-multiplayer': typeof GamesMultiplayerRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
   '/messages': typeof MessagesRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/bubbles': typeof BubblesRoute
   '/community-stories': typeof CommunityStoriesRoute
   '/friends': typeof FriendsRoute
+  '/games-multiplayer': typeof GamesMultiplayerRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
   '/messages': typeof MessagesRoute
@@ -228,6 +236,7 @@ export interface FileRoutesById {
   '/bubbles': typeof BubblesRoute
   '/community-stories': typeof CommunityStoriesRoute
   '/friends': typeof FriendsRoute
+  '/games-multiplayer': typeof GamesMultiplayerRoute
   '/match': typeof MatchRoute
   '/melody': typeof MelodyRoute
   '/messages': typeof MessagesRoute
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
     | '/bubbles'
     | '/community-stories'
     | '/friends'
+    | '/games-multiplayer'
     | '/match'
     | '/melody'
     | '/messages'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/bubbles'
     | '/community-stories'
     | '/friends'
+    | '/games-multiplayer'
     | '/match'
     | '/melody'
     | '/messages'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/bubbles'
     | '/community-stories'
     | '/friends'
+    | '/games-multiplayer'
     | '/match'
     | '/melody'
     | '/messages'
@@ -339,6 +351,7 @@ export interface RootRouteChildren {
   BubblesRoute: typeof BubblesRoute
   CommunityStoriesRoute: typeof CommunityStoriesRoute
   FriendsRoute: typeof FriendsRoute
+  GamesMultiplayerRoute: typeof GamesMultiplayerRoute
   MatchRoute: typeof MatchRoute
   MelodyRoute: typeof MelodyRoute
   MessagesRoute: typeof MessagesRoute
@@ -445,6 +458,13 @@ declare module '@tanstack/react-router' {
       path: '/match'
       fullPath: '/match'
       preLoaderRoute: typeof MatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games-multiplayer': {
+      id: '/games-multiplayer'
+      path: '/games-multiplayer'
+      fullPath: '/games-multiplayer'
+      preLoaderRoute: typeof GamesMultiplayerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/friends': {
@@ -556,6 +576,7 @@ const rootRouteChildren: RootRouteChildren = {
   BubblesRoute: BubblesRoute,
   CommunityStoriesRoute: CommunityStoriesRoute,
   FriendsRoute: FriendsRoute,
+  GamesMultiplayerRoute: GamesMultiplayerRoute,
   MatchRoute: MatchRoute,
   MelodyRoute: MelodyRoute,
   MessagesRoute: MessagesRoute,

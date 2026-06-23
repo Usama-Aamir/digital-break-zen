@@ -225,7 +225,7 @@ function AccountPage() {
             {t("friendsSubtitle")}
           </p>
           <Link
-            to="/friends" as any
+            to="/friends"
             className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-400 to-indigo-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
           >
             {t("findFriends")} →
@@ -241,10 +241,26 @@ function AccountPage() {
             {t("messagesSubtitle")}
           </p>
           <Link
-            to="/messages" as any
+            to="/messages"
             className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
           >
             {t("openMessages")} →
+          </Link>
+        </div>
+
+        {/* Multiplayer Games Card */}
+        <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-orange-100/30 to-yellow-100/30 border-orange-200/30 mb-6">
+          <h3 className="text-lg font-display font-bold text-foreground mb-2">
+            {t("multiplayerGames")}
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            {t("multiplayerGamesSubtitle")}
+          </p>
+          <Link
+            to="/games-multiplayer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-400 to-yellow-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+          >
+            {t("playWithFriends")} →
           </Link>
         </div>
 
