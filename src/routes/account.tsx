@@ -4,6 +4,7 @@ import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/adminSubmissions";
 import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
+import { getPendingGameInviteCount } from "@/lib/multiplayerGames";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/account")({
@@ -22,15 +23,21 @@ function AccountPage() {
   const navigate = useNavigate();
   const isAdmin = user && isAdminEmail(user.email);
   const [profile, setProfile] = useState<any>(null);
+  const [pendingInviteCount, setPendingInviteCount] = useState(0);
 
   useEffect(() => {
-    async function loadProfile() {
+    async function loadData() {
       if (user) {
         const userProfile = await getCurrentUserProfile(user.id);
         setProfile(userProfile);
+        
+        const inviteCountData = await getPendingGameInviteCount(user.id);
+        if (inviteCountData.count !== undefined) {
+          setPendingInviteCount(inviteCountData.count);
+        }
       }
     }
-    loadProfile();
+    loadData();
   }, [user]);
 
   const handleSignOut = async () => {
@@ -255,6 +262,11 @@ function AccountPage() {
           </h3>
           <p className="text-muted-foreground mb-4">
             {t("multiplayerGamesSubtitle")}
+            {pendingInviteCount > 0 && (
+              <span className="ml-2 text-orange-600 font-medium">
+                ({t("youHaveGameInvites")}: {pendingInviteCount})
+              </span>
+            )}
           </p>
           <Link
             to="/games-multiplayer"

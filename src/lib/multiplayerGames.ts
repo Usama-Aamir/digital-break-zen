@@ -363,6 +363,68 @@ export async function inviteFriendToGame(roomId: string, friendId: string): Prom
       return { invite: null, error: 'Not authenticated' };
     }
     
+    if (user.id === friendId) {
+      return { invite: null, error: 'Cannot invite yourself' };
+    }
+    
+    // Check room exists and user is host/player
+    const { data: room, error: roomError } = await supabase
+      .from('game_rooms')
+      .select('*')
+      .eq('id', roomId)
+      .maybeSingle();
+    
+    if (roomError || !room) {
+      return { invite: null, error: 'Room not found' };
+    }
+    
+    if (room.status === 'finished' || room.status === 'cancelled') {
+      return { invite: null, error: 'Room is not available for inviting' };
+    }
+    
+    // Check if user is host or player in room
+    const { data: playerCheck } = await supabase
+      .from('game_room_players')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    if (room.host_id !== user.id && !playerCheck) {
+      return { invite: null, error: 'You must be the host or a player to invite' };
+    }
+    
+    // Check existing invite
+    const { data: existingInvite } = await supabase
+      .from('game_invites')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('invitee_id', friendId)
+      .maybeSingle();
+    
+    if (existingInvite) {
+      if (existingInvite.status === 'pending') {
+        return { invite: null, error: 'Invite already sent' };
+      } else if (existingInvite.status === 'accepted') {
+        return { invite: null, error: 'Friend already accepted' };
+      }
+      // If rejected or cancelled, update back to pending
+      const { data, error } = await supabase
+        .from('game_invites')
+        .update({ status: 'pending' })
+        .eq('id', existingInvite.id)
+        .select('*')
+        .single();
+      
+      if (error) {
+        console.warn('Failed to update invite:', error.message);
+        return { invite: null, error: error.message };
+      }
+      
+      return { invite: data, error: null };
+    }
+    
+    // Create new invite
     const { data, error } = await supabase
       .from('game_invites')
       .insert({
@@ -386,23 +448,57 @@ export async function inviteFriendToGame(roomId: string, friendId: string): Prom
   }
 }
 
-// Get game invites for a user
-export async function getMyGameInvites(userId: string): Promise<{ invites: GameInvite[]; error: string | null }> {
+// Get game invites for a user (incoming pending invites)
+export async function getMyGameInvites(userId: string): Promise<{ invites: any[]; error: string | null }> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    const { data, error } = await supabase
+    // Get pending invites where user is invitee
+    const { data: invites, error: invitesError } = await supabase
       .from('game_invites')
       .select('*')
-      .or(`inviter_id.eq.${userId},invitee_id.eq.${userId}`)
+      .eq('invitee_id', userId)
+      .eq('status', 'pending')
       .order('created_at', { ascending: false });
     
-    if (error) {
-      console.warn('Failed to get game invites:', error.message);
-      return { invites: [], error: error.message };
+    if (invitesError) {
+      console.warn('Failed to get game invites:', invitesError.message);
+      return { invites: [], error: invitesError.message };
     }
     
-    return { invites: data || [], error: null };
+    if (!invites || invites.length === 0) {
+      return { invites: [], error: null };
+    }
+    
+    // Get room details
+    const roomIds = invites.map(i => i.room_id);
+    const { data: rooms } = await supabase
+      .from('game_rooms')
+      .select('*')
+      .in('id', roomIds);
+    
+    // Get inviter profiles
+    const inviterIds = invites.map(i => i.inviter_id);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, display_name, username, avatar_url')
+      .in('id', inviterIds);
+    
+    // Combine data
+    const enrichedInvites = invites.map(invite => {
+      const room = rooms?.find(r => r.id === invite.room_id);
+      const inviter = profiles?.find(p => p.id === invite.inviter_id);
+      return {
+        ...invite,
+        room_code: room?.room_code || '',
+        game_type: room?.game_type || 'tic_tac_toe',
+        inviter_display_name: inviter?.display_name || inviter?.username || 'Friend',
+        inviter_username: inviter?.username || '',
+        inviter_avatar_url: inviter?.avatar_url || null
+      };
+    });
+    
+    return { invites: enrichedInvites, error: null };
   } catch (err) {
     console.warn('Error getting game invites:', err);
     return { invites: [], error: err instanceof Error ? err.message : 'Unknown error' };
@@ -410,25 +506,167 @@ export async function getMyGameInvites(userId: string): Promise<{ invites: GameI
 }
 
 // Respond to a game invite
-export async function respondToGameInvite(inviteId: string, status: 'accepted' | 'rejected'): Promise<{ error: string | null }> {
+export async function respondToGameInvite(inviteId: string, status: 'accepted' | 'rejected'): Promise<{ room: GameRoom | null; error: string | null }> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    const { error } = await supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { room: null, error: 'Not authenticated' };
+    }
+    
+    // Get invite details
+    const { data: invite, error: inviteError } = await supabase
+      .from('game_invites')
+      .select('*')
+      .eq('id', inviteId)
+      .maybeSingle();
+    
+    if (inviteError || !invite) {
+      return { room: null, error: 'Invite not found' };
+    }
+    
+    if (invite.invitee_id !== user.id) {
+      return { room: null, error: 'You can only respond to invites sent to you' };
+    }
+    
+    if (invite.status !== 'pending') {
+      return { room: null, error: 'Invite no longer available' };
+    }
+    
+    // Get room details
+    const { data: room, error: roomError } = await supabase
+      .from('game_rooms')
+      .select('*')
+      .eq('id', invite.room_id)
+      .maybeSingle();
+    
+    if (roomError || !room) {
+      return { room: null, error: 'Room not found' };
+    }
+    
+    if (room.status === 'finished' || room.status === 'cancelled') {
+      return { room: null, error: 'Game already finished' };
+    }
+    
+    // Update invite status
+    const { error: updateError } = await supabase
       .from('game_invites')
       .update({ status })
       .eq('id', inviteId);
     
-    if (error) {
-      console.warn('Failed to respond to invite:', error.message);
-      return { error: error.message };
+    if (updateError) {
+      console.warn('Failed to respond to invite:', updateError.message);
+      return { room: null, error: updateError.message };
+    }
+    
+    if (status === 'rejected') {
+      return { room: null, error: null };
+    }
+    
+    // If accepted, join the room
+    const { room: joinedRoom, error: joinError } = await joinGameRoom(room.room_code, user.id);
+    
+    if (joinError) {
+      return { room: null, error: joinError };
+    }
+    
+    return { room: joinedRoom, error: null };
+  } catch (err) {
+    console.warn('Error responding to invite:', err);
+    return { room: null, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+// Cancel a game invite
+export async function cancelGameInvite(inviteId: string): Promise<{ error: string | null }> {
+  try {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { error: 'Not authenticated' };
+    }
+    
+    // Get invite to verify ownership
+    const { data: invite, error: inviteError } = await supabase
+      .from('game_invites')
+      .select('*')
+      .eq('id', inviteId)
+      .maybeSingle();
+    
+    if (inviteError || !invite) {
+      return { error: 'Invite not found' };
+    }
+    
+    if (invite.inviter_id !== user.id) {
+      return { error: 'You can only cancel your own invites' };
+    }
+    
+    if (invite.status !== 'pending') {
+      return { error: 'Invite can only be cancelled when pending' };
+    }
+    
+    // Update invite status
+    const { error: updateError } = await supabase
+      .from('game_invites')
+      .update({ status: 'cancelled' })
+      .eq('id', inviteId);
+    
+    if (updateError) {
+      console.warn('Failed to cancel invite:', updateError.message);
+      return { error: updateError.message };
     }
     
     return { error: null };
   } catch (err) {
-    console.warn('Error responding to invite:', err);
+    console.warn('Error cancelling invite:', err);
     return { error: err instanceof Error ? err.message : 'Unknown error' };
   }
+}
+
+// Get pending game invite count for a user
+export async function getPendingGameInviteCount(userId: string): Promise<{ count: number; error: string | null }> {
+  try {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data, error } = await supabase
+      .from('game_invites')
+      .select('id', { count: 'exact' })
+      .eq('invitee_id', userId)
+      .eq('status', 'pending');
+    
+    if (error) {
+      console.warn('Failed to get pending invite count:', error.message);
+      return { count: 0, error: error.message };
+    }
+    
+    return { count: data?.length || 0, error: null };
+  } catch (err) {
+    console.warn('Error getting pending invite count:', err);
+    return { count: 0, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+// Subscribe to game invites for a user
+export function subscribeToGameInvites(userId: string, callback: (payload: any) => void) {
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  
+  const channel = supabase
+    .channel(`game-invites-${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'game_invites',
+        filter: `invitee_id=eq.${userId}`
+      },
+      callback
+    )
+    .subscribe();
+  
+  return channel;
 }
 
 // Make a Tic Tac Toe move

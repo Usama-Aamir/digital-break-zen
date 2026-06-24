@@ -14,6 +14,8 @@ import {
   respondToGameInvite, 
   makeTicTacToeMove, 
   resetOrCancelRoom,
+  getPendingGameInviteCount,
+  subscribeToGameInvites,
   type GameRoom,
   type GameRoomPlayer,
   type GameInvite,
@@ -40,7 +42,8 @@ function MultiplayerGamesPage() {
   const [selectedRoom, setSelectedRoom] = useState<GameRoom | null>(null);
   const [roomPlayers, setRoomPlayers] = useState<GameRoomPlayer[]>([]);
   const [friends, setFriends] = useState<UserProfile[]>([]);
-  const [invites, setInvites] = useState<GameInvite[]>([]);
+  const [invites, setInvites] = useState<any[]>([]);
+  const [pendingInviteCount, setPendingInviteCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [roomCodeInput, setRoomCodeInput] = useState("");
@@ -48,6 +51,7 @@ function MultiplayerGamesPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const channelRef = useRef<any>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const invitesChannelRef = useRef<any>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -57,15 +61,17 @@ function MultiplayerGamesPage() {
       }
 
       try {
-        const [roomsData, friendsData, invitesData] = await Promise.all([
+        const [roomsData, friendsData, invitesData, inviteCountData] = await Promise.all([
           getMyGameRooms(user.id),
           getFriends(user.id),
           getMyGameInvites(user.id),
+          getPendingGameInviteCount(user.id),
         ]);
 
         if (roomsData.rooms) setMyRooms(roomsData.rooms);
         if (friendsData.friends) setFriends(friendsData.friends);
         if (invitesData.invites) setInvites(invitesData.invites);
+        if (inviteCountData.count !== undefined) setPendingInviteCount(inviteCountData.count);
       } catch (err) {
         console.error("Failed to load games data:", err);
         setError("Could not load games data. Please refresh.");
@@ -76,6 +82,38 @@ function MultiplayerGamesPage() {
 
     loadData();
   }, [user?.id, isConfigured]);
+
+  // Subscribe to game invites
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const setupInvitesSubscription = () => {
+      try {
+        const channel = subscribeToGameInvites(user.id, async (payload: any) => {
+          // Refresh invites when changes occur
+          const [invitesData, inviteCountData] = await Promise.all([
+            getMyGameInvites(user.id),
+            getPendingGameInviteCount(user.id),
+          ]);
+          if (invitesData.invites) setInvites(invitesData.invites);
+          if (inviteCountData.count !== undefined) setPendingInviteCount(inviteCountData.count);
+        });
+
+        invitesChannelRef.current = channel;
+      } catch (err) {
+        console.warn("Failed to setup invites realtime, will poll:", err);
+      }
+    };
+
+    setupInvitesSubscription();
+
+    return () => {
+      if (invitesChannelRef.current) {
+        invitesChannelRef.current.unsubscribe();
+        invitesChannelRef.current = null;
+      }
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!selectedRoom) return;
@@ -331,13 +369,20 @@ function MultiplayerGamesPage() {
     <AppShell>
       <div className="max-w-4xl mx-auto p-6">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-              {t("multiplayerGames")}
-            </h1>
-            <p className="text-muted-foreground">
-              {t("multiplayerGamesSubtitle")}
-            </p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-3xl font-display font-bold text-foreground mb-2">
+                {t("multiplayerGames")}
+                {pendingInviteCount > 0 && (
+                  <span className="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+                    {pendingInviteCount}
+                  </span>
+                )}
+              </h1>
+              <p className="text-muted-foreground">
+                {t("multiplayerGamesSubtitle")}
+              </p>
+            </div>
           </div>
           <button
             onClick={handleRefresh}
@@ -352,6 +397,69 @@ function MultiplayerGamesPage() {
         {error && (
           <div className="mb-4 p-3 bg-red-100/50 border border-red-200/50 rounded-xl text-sm text-red-700">
             {error}
+          </div>
+        )}
+
+        {/* Incoming Game Invites */}
+        {invites.length > 0 && !selectedRoom && (
+          <div className="glass-card rounded-3xl p-6 mb-6">
+            <h2 className="text-xl font-display font-bold text-foreground mb-4">
+              {t("gameInvites")} ({invites.length})
+            </h2>
+            <div className="space-y-3">
+              {invites.map((invite) => (
+                <div key={invite.id} className="flex items-center justify-between p-4 bg-white/50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-xl">
+                      {invite.inviter_avatar_url ? (
+                        <img src={invite.inviter_avatar_url} alt="" className="w-10 h-10 rounded-full" />
+                      ) : (
+                        "👤"
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">
+                        {invite.inviter_display_name} {t("invitedYouToPlay")}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {t("roomCode")}: {invite.room_code}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        const { room, error } = await respondToGameInvite(invite.id, 'accepted');
+                        if (error) {
+                          setError(error);
+                        } else if (room) {
+                          setSelectedRoom(room);
+                          setInvites(invites.filter(i => i.id !== invite.id));
+                          setPendingInviteCount(prev => Math.max(0, prev - 1));
+                        }
+                      }}
+                      className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:opacity-90"
+                    >
+                      {t("accept")}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const { error } = await respondToGameInvite(invite.id, 'rejected');
+                        if (error) {
+                          setError(error);
+                        } else {
+                          setInvites(invites.filter(i => i.id !== invite.id));
+                          setPendingInviteCount(prev => Math.max(0, prev - 1));
+                        }
+                      }}
+                      className="px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:opacity-90"
+                    >
+                      {t("reject")}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -406,10 +514,9 @@ function MultiplayerGamesPage() {
               ) : (
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {friends.map((friend) => (
-                    <button
+                    <div
                       key={friend.id}
-                      onClick={() => handleInviteFriend(friend.id)}
-                      className="w-full p-3 bg-white/30 rounded-xl text-left hover:bg-white/40 transition-colors"
+                      className="w-full p-3 bg-white/30 rounded-xl flex items-center justify-between hover:bg-white/40 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
@@ -424,41 +531,17 @@ function MultiplayerGamesPage() {
                           </p>
                         </div>
                       </div>
-                    </button>
+                      <button
+                        onClick={() => handleInviteFriend(friend.id)}
+                        className="px-3 py-1 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-lg text-sm hover:opacity-90"
+                      >
+                        {t("invite")}
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
             </div>
-
-            {/* Incoming Game Invites */}
-            {invites.length > 0 && (
-              <div className="glass-card rounded-3xl p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-4">
-                  {t("incomingGameInvites")}
-                </h2>
-                <div className="space-y-2">
-                  {invites.map((invite) => (
-                    <div key={invite.id} className="p-3 bg-white/30 rounded-xl flex items-center justify-between">
-                      <span className="text-foreground">Game invite</span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleRespondToInvite(invite.id, 'accepted')}
-                          className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:opacity-90"
-                        >
-                          {t("acceptInvite")}
-                        </button>
-                        <button
-                          onClick={() => handleRespondToInvite(invite.id, 'rejected')}
-                          className="px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:opacity-90"
-                        >
-                          {t("rejectInvite")}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* My Rooms */}
             {myRooms.length > 0 && (
@@ -567,6 +650,9 @@ function MultiplayerGamesPage() {
               <div className="text-center mb-6">
                 <p className="text-foreground font-medium">
                   {t("waitingForPlayer")}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t("waitingInviteOrShare")}
                 </p>
               </div>
             )}

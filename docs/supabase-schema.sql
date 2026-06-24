@@ -859,7 +859,7 @@ CREATE POLICY "Users can view own game invites"
   TO authenticated
   USING (auth.uid() = inviter_id OR auth.uid() = invitee_id);
 
--- Users can create invites for their own room
+-- Users can create invites for rooms they are host or player in
 CREATE POLICY "Users can create game invites for their room"
   ON public.game_invites FOR INSERT
   TO authenticated
@@ -867,7 +867,13 @@ CREATE POLICY "Users can create game invites for their room"
     auth.uid() = inviter_id AND
     EXISTS (
       SELECT 1 FROM public.game_rooms
-      WHERE id = game_invites.room_id AND host_id = auth.uid()
+      WHERE id = game_invites.room_id AND (
+        host_id = auth.uid() OR
+        EXISTS (
+          SELECT 1 FROM public.game_room_players
+          WHERE room_id = game_invites.room_id AND user_id = auth.uid() AND status = 'joined'
+        )
+      )
     )
   );
 
@@ -897,10 +903,17 @@ CREATE POLICY "Inviter can cancel game invites"
     status = 'cancelled'
   );
 
+-- Unique constraint to prevent duplicate invites
+CREATE UNIQUE INDEX IF NOT EXISTS idx_game_invites_unique_room_invitee 
+  ON public.game_invites(room_id, invitee_id) 
+  WHERE status = 'pending';
+
 -- Indexes for game_invites
 CREATE INDEX IF NOT EXISTS idx_game_invites_room_id ON public.game_invites(room_id);
 CREATE INDEX IF NOT EXISTS idx_game_invites_inviter_id ON public.game_invites(inviter_id);
 CREATE INDEX IF NOT EXISTS idx_game_invites_invitee_id ON public.game_invites(invitee_id);
+CREATE INDEX IF NOT EXISTS idx_game_invites_invitee_status ON public.game_invites(invitee_id, status);
+CREATE INDEX IF NOT EXISTS idx_game_invites_inviter_status ON public.game_invites(inviter_id, status);
 CREATE INDEX IF NOT EXISTS idx_game_invites_status ON public.game_invites(status);
 
 -- Trigger to update updated_at
