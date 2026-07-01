@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { useLanguage } from "@/lib/language";
+import { useAuth } from "@/lib/auth";
+import { awardXP } from "@/lib/gamification";
 
 const MOODS = [
   { emoji: "😩", quote: "Tough mornings build legendary afternoons. One small win at a time." },
@@ -11,17 +13,46 @@ const MOODS = [
 ];
 
 const KEY = "breakroom_mood";
+const LAST_MOOD_CHECK_KEY = "breakroom_last_mood_check";
 
 export function MoodCheckIn() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [val, setVal] = useState(2);
+  const [hasAwardedToday, setHasAwardedToday] = useState(false);
+  
   useEffect(() => {
     const s = localStorage.getItem(KEY);
     if (s) setVal(parseInt(s, 10));
+    
+    // Check if already awarded XP today
+    const lastCheck = localStorage.getItem(LAST_MOOD_CHECK_KEY);
+    const today = new Date().toISOString().split('T')[0];
+    if (lastCheck === today) {
+      setHasAwardedToday(true);
+    }
   }, []);
+  
   useEffect(() => {
     localStorage.setItem(KEY, String(val));
   }, [val]);
+  
+  const handleMoodChange = (newValue: number) => {
+    setVal(newValue);
+    
+    // Award XP for mood check-in (once per day)
+    if (user && !hasAwardedToday) {
+      const today = new Date().toISOString().split('T')[0];
+      localStorage.setItem(LAST_MOOD_CHECK_KEY, today);
+      setHasAwardedToday(true);
+      
+      // Award XP asynchronously (don't block UI)
+      awardXP(user.id, 'mood_check_in').catch(err => {
+        console.warn('Failed to award mood check-in XP:', err);
+      });
+    }
+  };
+  
   const mood = MOODS[val];
   return (
     <div className="glass-card rounded-3xl p-6 flex flex-col gap-4">
@@ -35,7 +66,7 @@ export function MoodCheckIn() {
       </div>
       <Slider
         value={[val]}
-        onValueChange={(v) => setVal(v[0])}
+        onValueChange={(v) => handleMoodChange(v[0])}
         min={0}
         max={4}
         step={1}

@@ -955,3 +955,184 @@ CREATE INDEX IF NOT EXISTS idx_game_results_room_id ON public.game_results(room_
 CREATE INDEX IF NOT EXISTS idx_game_results_player_one_id ON public.game_results(player_one_id);
 CREATE INDEX IF NOT EXISTS idx_game_results_player_two_id ON public.game_results(player_two_id);
 CREATE INDEX IF NOT EXISTS idx_game_results_created_at ON public.game_results(created_at DESC);
+
+-- ============================================================================
+-- GAMIFICATION TABLES
+-- ============================================================================
+
+-- User XP table
+CREATE TABLE IF NOT EXISTS public.user_xp (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  total_xp integer NOT NULL DEFAULT 0,
+  level integer NOT NULL DEFAULT 1,
+  current_streak integer NOT NULL DEFAULT 0,
+  longest_streak integer NOT NULL DEFAULT 0,
+  last_activity_date date,
+  weekly_xp integer NOT NULL DEFAULT 0,
+  weekly_reset_at timestamptz DEFAULT now(),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- XP Events table
+CREATE TABLE IF NOT EXISTS public.xp_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  event_type text NOT NULL,
+  xp_amount integer NOT NULL,
+  source_id uuid,
+  source_table text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Badges table
+CREATE TABLE IF NOT EXISTS public.badges (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  badge_key text UNIQUE NOT NULL,
+  name text NOT NULL,
+  description text NOT NULL,
+  icon text NOT NULL,
+  category text NOT NULL,
+  xp_reward integer DEFAULT 0,
+  created_at timestamptz DEFAULT now()
+);
+
+-- User Badges table
+CREATE TABLE IF NOT EXISTS public.user_badges (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  badge_id uuid NOT NULL REFERENCES public.badges(id) ON DELETE CASCADE,
+  earned_at timestamptz DEFAULT now(),
+  source_event_id uuid REFERENCES public.xp_events(id) ON DELETE SET NULL,
+  UNIQUE(user_id, badge_id)
+);
+
+-- Leaderboard Snapshots table
+CREATE TABLE IF NOT EXISTS public.leaderboard_snapshots (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  total_xp integer DEFAULT 0,
+  weekly_xp integer DEFAULT 0,
+  level integer DEFAULT 1,
+  rank_type text NOT NULL DEFAULT 'weekly',
+  snapshot_date date DEFAULT current_date,
+  created_at timestamptz DEFAULT now()
+);
+
+-- ============================================================================
+-- GAMIFICATION RLS POLICIES
+-- ============================================================================
+
+-- RLS for user_xp
+ALTER TABLE public.user_xp ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own XP
+CREATE POLICY "Users can view own XP"
+  ON public.user_xp FOR SELECT
+  TO authenticated
+  USING (user_id = auth.uid());
+
+-- Users can insert their own XP
+CREATE POLICY "Users can insert own XP"
+  ON public.user_xp FOR INSERT
+  TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
+-- Users can update their own XP
+CREATE POLICY "Users can update own XP"
+  ON public.user_xp FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+-- RLS for xp_events
+ALTER TABLE public.xp_events ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own XP events
+CREATE POLICY "Users can view own XP events"
+  ON public.xp_events FOR SELECT
+  TO authenticated
+  USING (user_id = auth.uid());
+
+-- Users can insert their own XP events
+CREATE POLICY "Users can insert own XP events"
+  ON public.xp_events FOR INSERT
+  TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
+-- RLS for badges
+ALTER TABLE public.badges ENABLE ROW LEVEL SECURITY;
+
+-- All authenticated users can view badge definitions
+CREATE POLICY "Authenticated users can view badges"
+  ON public.badges FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- RLS for user_badges
+ALTER TABLE public.user_badges ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own badges
+CREATE POLICY "Users can view own badges"
+  ON public.user_badges FOR SELECT
+  TO authenticated
+  USING (user_id = auth.uid());
+
+-- Users can insert their own badges
+CREATE POLICY "Users can insert own badges"
+  ON public.user_badges FOR INSERT
+  TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
+-- RLS for leaderboard_snapshots
+ALTER TABLE public.leaderboard_snapshots ENABLE ROW LEVEL SECURITY;
+
+-- All authenticated users can view leaderboard
+CREATE POLICY "Authenticated users can view leaderboard"
+  ON public.leaderboard_snapshots FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- ============================================================================
+-- GAMIFICATION INDEXES
+-- ============================================================================
+
+CREATE INDEX IF NOT EXISTS idx_user_xp_user_id ON public.user_xp(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_xp_total_xp ON public.user_xp(total_xp DESC);
+CREATE INDEX IF NOT EXISTS idx_user_xp_weekly_xp ON public.user_xp(weekly_xp DESC);
+CREATE INDEX IF NOT EXISTS idx_user_xp_level ON public.user_xp(level DESC);
+
+CREATE INDEX IF NOT EXISTS idx_xp_events_user_id ON public.xp_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_xp_events_event_type ON public.xp_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_xp_events_created_at ON public.xp_events(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_badges_badge_key ON public.badges(badge_key);
+CREATE INDEX IF NOT EXISTS idx_badges_category ON public.badges(category);
+
+CREATE INDEX IF NOT EXISTS idx_user_badges_user_id ON public.user_badges(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_badges_badge_id ON public.user_badges(badge_id);
+
+CREATE INDEX IF NOT EXISTS idx_leaderboard_snapshots_user_id ON public.leaderboard_snapshots(user_id);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_snapshots_rank_type ON public.leaderboard_snapshots(rank_type);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_snapshots_snapshot_date ON public.leaderboard_snapshots(snapshot_date);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_snapshots_weekly_xp ON public.leaderboard_snapshots(weekly_xp DESC);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_snapshots_total_xp ON public.leaderboard_snapshots(total_xp DESC);
+
+-- ============================================================================
+-- SEED DEFAULT BADGES
+-- ============================================================================
+
+INSERT INTO public.badges (badge_key, name, description, icon, category, xp_reward) VALUES
+  ('first_break', 'First Break', 'Completed your first break.', '🌱', 'starter', 10),
+  ('streak_3', '3-Day Streak', 'Maintained a 3-day streak.', '🔥', 'streak', 15),
+  ('streak_7', '7-Day Streak', 'Maintained a 7-day streak.', '⚡', 'streak', 30),
+  ('social_starter', 'Social Starter', 'Made your first social connection.', '💬', 'social', 20),
+  ('first_game', 'First Game', 'Played your first game.', '🎮', 'games', 15),
+  ('first_win', 'First Win', 'Won your first game.', '🏆', 'games', 30),
+  ('story_sharer', 'Story Sharer', 'Shared your first story.', '📖', 'stories', 20),
+  ('watercooler_voice', 'Watercooler Voice', 'Posted on the Watercooler.', '☕', 'watercooler', 15),
+  ('level_5', 'Level 5', 'Reached level 5.', '⭐', 'level', 50),
+  ('level_10', 'Level 10', 'Reached level 10.', '🌟', 'level', 100)
+ON CONFLICT (badge_key) DO NOTHING;

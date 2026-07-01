@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { awardXP } from "./gamification";
 
 export interface WatercoolerPost {
   id: string;
@@ -95,6 +96,13 @@ export async function createWatercoolerPost(
     if (error) {
       console.error("[watercooler] create post failed:", error);
       return { post: null, error: error.message };
+    }
+
+    // Award XP for watercooler post
+    if (data && data.id) {
+      awardXP(userId, 'watercooler_post', data.id, 'watercooler_posts').catch(err => {
+        console.warn('Failed to award watercooler post XP:', err);
+      });
     }
 
     return { post: data, error: null };
@@ -418,6 +426,13 @@ export async function createWatercoolerComment(
     if (error) {
       console.error("[watercooler] create comment failed:", error);
       return { comment: null, error: error.message };
+    }
+
+    // Award XP for watercooler comment
+    if (data && data.id) {
+      awardXP(userId, 'watercooler_comment', data.id, 'watercooler_post_comments').catch(err => {
+        console.warn('Failed to award watercooler comment XP:', err);
+      });
     }
 
     return { comment: data, error: null };

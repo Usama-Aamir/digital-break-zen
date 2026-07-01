@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { awardXP } from './gamification';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -789,7 +790,7 @@ export async function makeTicTacToeMove(roomId: string, userId: string, cellInde
         result = 'draw';
       }
       
-      await supabase
+      const { data: gameResult } = await supabase
         .from('game_results')
         .insert({
           room_id: roomId,
@@ -798,7 +799,43 @@ export async function makeTicTacToeMove(roomId: string, userId: string, cellInde
           player_two_id: playerTwo?.user_id || null,
           winner_user_id: winnerUserId,
           result
-        });
+        })
+        .select('id')
+        .maybeSingle();
+      
+      // Award XP for game completion
+      if (gameResult && gameResult.id) {
+        // Award game_played XP to both players
+        if (playerOne?.user_id) {
+          awardXP(playerOne.user_id, 'game_played', gameResult.id, 'game_results').catch(err => {
+            console.warn('Failed to award game_played XP to player one:', err);
+          });
+        }
+        if (playerTwo?.user_id) {
+          awardXP(playerTwo.user_id, 'game_played', gameResult.id, 'game_results').catch(err => {
+            console.warn('Failed to award game_played XP to player two:', err);
+          });
+        }
+        
+        // Award additional XP based on result
+        if (winner && winnerUserId) {
+          awardXP(winnerUserId, 'game_won', gameResult.id, 'game_results').catch(err => {
+            console.warn('Failed to award game_won XP:', err);
+          });
+        } else if (isDraw) {
+          // Award draw XP to both players
+          if (playerOne?.user_id) {
+            awardXP(playerOne.user_id, 'game_draw', gameResult.id, 'game_results').catch(err => {
+              console.warn('Failed to award game_draw XP to player one:', err);
+            });
+          }
+          if (playerTwo?.user_id) {
+            awardXP(playerTwo.user_id, 'game_draw', gameResult.id, 'game_results').catch(err => {
+              console.warn('Failed to award game_draw XP to player two:', err);
+            });
+          }
+        }
+      }
     }
     
     return { room: updatedRoom, error: null };

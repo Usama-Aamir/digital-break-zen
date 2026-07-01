@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { awardXP } from "./gamification";
 
 export interface StorySubmission {
   id: string;
@@ -59,6 +60,13 @@ export async function submitCommunityStory(
     if (error) {
       console.error("Error submitting story:", error);
       return { submission: null, error: error.message };
+    }
+
+    // Award XP for story submission
+    if (data && data.id) {
+      awardXP(userId, 'story_submitted', data.id, 'story_submissions').catch(err => {
+        console.warn('Failed to award story submission XP:', err);
+      });
     }
 
     return { submission: data as StorySubmission, error: null };

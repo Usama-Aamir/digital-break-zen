@@ -17,7 +17,8 @@ import {
   Shield,
   Coffee,
   Users,
-  MessageCircle
+  MessageCircle,
+  Trophy
 } from "lucide-react";
 
 interface NavItem {
@@ -68,6 +69,7 @@ export function SidebarNav() {
       title: t("personal"),
       items: [
         { label: t("myBreakroom"), to: "/my-breakroom", icon: Coffee },
+        { label: t("rewards"), to: "/rewards", icon: Trophy },
         { label: t("friends"), to: "/friends", icon: Users },
         { label: t("messages"), to: "/messages", icon: MessageCircle },
         { label: t("cloudDraftsTitle"), to: "/story-drafts", icon: FileText },

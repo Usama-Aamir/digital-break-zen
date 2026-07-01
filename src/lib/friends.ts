@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { awardXP } from './gamification';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -162,6 +163,14 @@ export async function acceptFriendRequest(requestId: string, requesterId: string
       console.warn('Failed to create friendships:', insertError.message);
       return { error: insertError.message };
     }
+    
+    // Award XP for both users when friendship is formed
+    awardXP(requesterId, 'friend_added', requestId, 'friend_requests').catch(err => {
+      console.warn('Failed to award friend_added XP to requester:', err);
+    });
+    awardXP(receiverId, 'friend_added', requestId, 'friend_requests').catch(err => {
+      console.warn('Failed to award friend_added XP to receiver:', err);
+    });
     
     return { error: null };
   } catch (err) {

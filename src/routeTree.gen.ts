@@ -16,6 +16,7 @@ import { Route as StoryDraftsRouteImport } from './routes/story-drafts'
 import { Route as SnakeRouteImport } from './routes/snake'
 import { Route as SmasherRouteImport } from './routes/smasher'
 import { Route as ShredderRouteImport } from './routes/shredder'
+import { Route as RewardsRouteImport } from './routes/rewards'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MySubmissionsRouteImport } from './routes/my-submissions'
 import { Route as MyBreakroomRouteImport } from './routes/my-breakroom'
@@ -69,6 +70,11 @@ const SmasherRoute = SmasherRouteImport.update({
 const ShredderRoute = ShredderRouteImport.update({
   id: '/shredder',
   path: '/shredder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RewardsRoute = RewardsRouteImport.update({
+  id: '/rewards',
+  path: '/rewards',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/my-breakroom': typeof MyBreakroomRoute
   '/my-submissions': typeof MySubmissionsRoute
   '/onboarding': typeof OnboardingRoute
+  '/rewards': typeof RewardsRoute
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
@@ -214,6 +221,7 @@ export interface FileRoutesByTo {
   '/my-breakroom': typeof MyBreakroomRoute
   '/my-submissions': typeof MySubmissionsRoute
   '/onboarding': typeof OnboardingRoute
+  '/rewards': typeof RewardsRoute
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
@@ -243,6 +251,7 @@ export interface FileRoutesById {
   '/my-breakroom': typeof MyBreakroomRoute
   '/my-submissions': typeof MySubmissionsRoute
   '/onboarding': typeof OnboardingRoute
+  '/rewards': typeof RewardsRoute
   '/shredder': typeof ShredderRoute
   '/smasher': typeof SmasherRoute
   '/snake': typeof SnakeRoute
@@ -273,6 +282,7 @@ export interface FileRouteTypes {
     | '/my-breakroom'
     | '/my-submissions'
     | '/onboarding'
+    | '/rewards'
     | '/shredder'
     | '/smasher'
     | '/snake'
@@ -301,6 +311,7 @@ export interface FileRouteTypes {
     | '/my-breakroom'
     | '/my-submissions'
     | '/onboarding'
+    | '/rewards'
     | '/shredder'
     | '/smasher'
     | '/snake'
@@ -329,6 +340,7 @@ export interface FileRouteTypes {
     | '/my-breakroom'
     | '/my-submissions'
     | '/onboarding'
+    | '/rewards'
     | '/shredder'
     | '/smasher'
     | '/snake'
@@ -358,6 +370,7 @@ export interface RootRouteChildren {
   MyBreakroomRoute: typeof MyBreakroomRoute
   MySubmissionsRoute: typeof MySubmissionsRoute
   OnboardingRoute: typeof OnboardingRoute
+  RewardsRoute: typeof RewardsRoute
   ShredderRoute: typeof ShredderRoute
   SmasherRoute: typeof SmasherRoute
   SnakeRoute: typeof SnakeRoute
@@ -416,6 +429,13 @@ declare module '@tanstack/react-router' {
       path: '/shredder'
       fullPath: '/shredder'
       preLoaderRoute: typeof ShredderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rewards': {
+      id: '/rewards'
+      path: '/rewards'
+      fullPath: '/rewards'
+      preLoaderRoute: typeof RewardsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -583,6 +603,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyBreakroomRoute: MyBreakroomRoute,
   MySubmissionsRoute: MySubmissionsRoute,
   OnboardingRoute: OnboardingRoute,
+  RewardsRoute: RewardsRoute,
   ShredderRoute: ShredderRoute,
   SmasherRoute: SmasherRoute,
   SnakeRoute: SnakeRoute,

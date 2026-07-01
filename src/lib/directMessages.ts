@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { awardXP } from './gamification';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -248,6 +249,13 @@ export async function sendDirectMessage(conversationId: string, body: string): P
     if (error) {
       console.warn('Failed to send message:', error.message);
       return { message: null, error: error.message };
+    }
+    
+    // Award XP for message sent (with daily cap handled in awardXP function)
+    if (data && data.id) {
+      awardXP(user.id, 'message_sent', data.id, 'direct_messages').catch(err => {
+        console.warn('Failed to award message_sent XP:', err);
+      });
     }
     
     return { message: data, error: null };

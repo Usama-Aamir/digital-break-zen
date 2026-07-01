@@ -5,7 +5,8 @@ import { useAuth } from "@/lib/auth";
 import { useState, useEffect } from "react";
 import { getUserActivitySummary, getRecentUserActivity, getWeeklyMoodSummary, getUserContributionSummary, type ActivitySummary, type MoodSummary, type ContributionSummary, type UserActivity } from "@/lib/userActivity";
 import { getCurrentUserProfile } from "@/lib/profiles";
-import { Flame, MessageSquare, Heart, FileText, TrendingUp, Calendar, Coffee, Smile, Target, Zap, ArrowRight } from "lucide-react";
+import { awardXP, getUserXP } from "@/lib/gamification";
+import { Flame, MessageSquare, Heart, FileText, TrendingUp, Calendar, Coffee, Smile, Target, Zap, ArrowRight, CheckCircle, Star, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/my-breakroom")({
   head: () => ({
@@ -26,6 +27,8 @@ function MyBreakroomPage() {
   const [contributionSummary, setContributionSummary] = useState<ContributionSummary | null>(null);
   const [recentActivity, setRecentActivity] = useState<UserActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasCompletedBreakToday, setHasCompletedBreakToday] = useState(false);
+  const [userXP, setUserXP] = useState<any>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -38,17 +41,25 @@ function MyBreakroomPage() {
         const profile = await getCurrentUserProfile(user.id);
         setDisplayName(profile?.display_name || profile?.username || "");
 
-        const [summaryData, moodData, contributionData, activityData] = await Promise.all([
+        const [summaryData, moodData, contributionData, activityData, xpData] = await Promise.all([
           getUserActivitySummary(user.id),
           getWeeklyMoodSummary(user.id),
           getUserContributionSummary(user.id),
           getRecentUserActivity(user.id, 10),
+          getUserXP(user.id),
         ]);
 
         if (summaryData.summary) setActivitySummary(summaryData.summary);
         if (moodData.summary) setMoodSummary(moodData.summary);
         if (contributionData.summary) setContributionSummary(contributionData.summary);
         if (activityData.activities) setRecentActivity(activityData.activities);
+        if (xpData.userXP) setUserXP(xpData.userXP);
+        
+        // Check if break already completed today
+        const lastBreakKey = `breakroom_last_break_${user.id}`;
+        const lastBreak = localStorage.getItem(lastBreakKey);
+        const today = new Date().toISOString().split('T')[0];
+        setHasCompletedBreakToday(lastBreak === today);
       } catch (err) {
         console.warn("Failed to load breakroom data:", err);
       } finally {
@@ -58,6 +69,20 @@ function MyBreakroomPage() {
 
     loadData();
   }, [user, isConfigured]);
+
+  const handleCompleteBreak = () => {
+    if (!user || hasCompletedBreakToday) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const lastBreakKey = `breakroom_last_break_${user.id}`;
+    localStorage.setItem(lastBreakKey, today);
+    setHasCompletedBreakToday(true);
+    
+    // Award XP for break completion
+    awardXP(user.id, 'break_completed').catch(err => {
+      console.warn('Failed to award break_completed XP:', err);
+    });
+  };
 
   // Show sign-in CTA for logged-out users
   if (!user) {
@@ -220,6 +245,67 @@ function MyBreakroomPage() {
           <div className="flex items-center gap-4">
             {encouragement.icon}
             <p className="text-foreground font-medium">{encouragement.text}</p>
+          </div>
+        </div>
+
+        {/* Complete Break Card */}
+        <div className="mb-8">
+          <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-orange-100/30 to-yellow-100/30 border-orange-200/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${hasCompletedBreakToday ? 'bg-green-500' : 'bg-orange-500'}`}>
+                  {hasCompletedBreakToday ? <CheckCircle className="w-6 h-6 text-white" /> : <Zap className="w-6 h-6 text-white" />}
+                </div>
+                <div>
+                  <h3 className="text-lg font-display font-bold text-foreground mb-1">
+                    {hasCompletedBreakToday ? t("breakCompletedToday") : t("completeBreak")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {hasCompletedBreakToday ? t("comeBackTomorrow") : t("earnXpForBreak")}
+                  </p>
+                </div>
+              </div>
+              {!hasCompletedBreakToday && (
+                <button
+                  onClick={handleCompleteBreak}
+                  className="px-6 py-3 bg-gradient-to-r from-orange-400 to-yellow-400 text-white rounded-full font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] flex items-center gap-2"
+                >
+                  <Zap className="w-4 h-4" />
+                  {t("completeBreak")}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* XP Summary Card */}
+        <div className="mb-8">
+          <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-purple-100/30 to-pink-100/30 border-purple-200/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                  <Trophy className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-display font-bold text-foreground mb-1">
+                    {t("yourProgress")}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    <span className="text-sm font-medium text-foreground">
+                      {t("level")} {userXP?.level || 1} • {userXP?.total_xp || 0} {t("xp")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <Link
+                to="/rewards"
+                className="px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] flex items-center gap-2"
+              >
+                {t("viewRewards")}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </div>
 
