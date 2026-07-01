@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createNotification } from './notifications';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -423,6 +424,20 @@ export async function checkAndAwardBadges(userId: string): Promise<{ awardedBadg
         
         if (!insertError) {
           awardedBadges.push(badge);
+          
+          // Create notification for badge unlock
+          createNotification({
+            user_id: userId,
+            type: 'badge_unlocked',
+            title: 'Badge unlocked',
+            body: `You unlocked the ${badge.name} badge`,
+            link_path: '/rewards',
+            source_table: 'badges',
+            source_id: badge.id,
+            metadata: { badge_key: badge.badge_key, badge_name: badge.name },
+          }).catch(err => {
+            console.warn('Failed to create badge unlock notification:', err);
+          });
         }
       }
     }

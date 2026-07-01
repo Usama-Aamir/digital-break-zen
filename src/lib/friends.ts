@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { awardXP } from './gamification';
+import { createNotification } from './notifications';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -78,6 +79,27 @@ export async function sendFriendRequest(receiverId: string): Promise<{ error: st
       console.warn('Failed to send friend request:', error.message);
       return { error: error.message };
     }
+    
+    // Fetch requester profile for notification body
+    const { data: requesterProfile } = await supabase
+      .from('profiles')
+      .select('display_name, username')
+      .eq('id', user.id)
+      .maybeSingle();
+    
+    const actorName = requesterProfile?.display_name || requesterProfile?.username || 'Someone';
+    
+    createNotification({
+      user_id: receiverId,
+      actor_id: user.id,
+      type: 'friend_request',
+      title: 'New friend request',
+      body: `${actorName} sent you a friend request`,
+      link_path: '/friends',
+      source_table: 'friend_requests',
+    }).catch(err => {
+      console.warn('Failed to create friend request notification:', err);
+    });
     
     return { error: null };
   } catch (err) {
@@ -170,6 +192,28 @@ export async function acceptFriendRequest(requestId: string, requesterId: string
     });
     awardXP(receiverId, 'friend_added', requestId, 'friend_requests').catch(err => {
       console.warn('Failed to award friend_added XP to receiver:', err);
+    });
+    
+    // Fetch receiver profile for notification body
+    const { data: receiverProfile } = await supabase
+      .from('profiles')
+      .select('display_name, username')
+      .eq('id', receiverId)
+      .maybeSingle();
+    
+    const actorName = receiverProfile?.display_name || receiverProfile?.username || 'Someone';
+    
+    createNotification({
+      user_id: requesterId,
+      actor_id: receiverId,
+      type: 'friend_accepted',
+      title: 'Friend request accepted',
+      body: `${actorName} accepted your friend request`,
+      link_path: '/friends',
+      source_table: 'friend_requests',
+      source_id: requestId,
+    }).catch(err => {
+      console.warn('Failed to create friend accepted notification:', err);
     });
     
     return { error: null };

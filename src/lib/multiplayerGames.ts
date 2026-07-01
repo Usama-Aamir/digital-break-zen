@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { awardXP } from './gamification';
+import { createNotification } from './notifications';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -442,6 +443,30 @@ export async function inviteFriendToGame(roomId: string, friendId: string): Prom
       return { invite: null, error: error.message };
     }
     
+    // Create notification for invitee
+    if (data) {
+      const { data: inviterProfile } = await supabase
+        .from('profiles')
+        .select('display_name, username')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      const actorName = inviterProfile?.display_name || inviterProfile?.username || 'Someone';
+      
+      createNotification({
+        user_id: friendId,
+        actor_id: user.id,
+        type: 'game_invite',
+        title: 'Game invite',
+        body: `${actorName} invited you to play Tic Tac Toe`,
+        link_path: '/games-multiplayer',
+        source_table: 'game_invites',
+        source_id: data.id,
+      }).catch(err => {
+        console.warn('Failed to create game invite notification:', err);
+      });
+    }
+    
     return { invite: data, error: null };
   } catch (err) {
     console.warn('Error inviting friend:', err);
@@ -560,6 +585,33 @@ export async function respondToGameInvite(inviteId: string, status: 'accepted' |
       console.warn('Failed to respond to invite:', updateError.message);
       return { room: null, error: updateError.message };
     }
+    
+    // Notify inviter of response
+    const { data: inviteeProfile } = await supabase
+      .from('profiles')
+      .select('display_name, username')
+      .eq('id', user.id)
+      .maybeSingle();
+    
+    const actorName = inviteeProfile?.display_name || inviteeProfile?.username || 'Someone';
+    const responseType = status === 'accepted' ? 'game_invite_accepted' : 'game_invite_rejected';
+    const title = status === 'accepted' ? 'Game invite accepted' : 'Game invite rejected';
+    const body = status === 'accepted'
+      ? `${actorName} accepted your game invite`
+      : `${actorName} rejected your game invite`;
+    
+    createNotification({
+      user_id: invite.inviter_id,
+      actor_id: user.id,
+      type: responseType,
+      title,
+      body,
+      link_path: '/games-multiplayer',
+      source_table: 'game_invites',
+      source_id: inviteId,
+    }).catch(err => {
+      console.warn('Failed to create game invite response notification:', err);
+    });
     
     if (status === 'rejected') {
       return { room: null, error: null };

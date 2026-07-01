@@ -6,7 +6,8 @@ import { useState, useEffect } from "react";
 import { getUserActivitySummary, getRecentUserActivity, getWeeklyMoodSummary, getUserContributionSummary, type ActivitySummary, type MoodSummary, type ContributionSummary, type UserActivity } from "@/lib/userActivity";
 import { getCurrentUserProfile } from "@/lib/profiles";
 import { awardXP, getUserXP } from "@/lib/gamification";
-import { Flame, MessageSquare, Heart, FileText, TrendingUp, Calendar, Coffee, Smile, Target, Zap, ArrowRight, CheckCircle, Star, Trophy } from "lucide-react";
+import { getUnreadNotificationCount } from "@/lib/notifications";
+import { Flame, MessageSquare, Heart, FileText, TrendingUp, Calendar, Coffee, Smile, Target, Zap, ArrowRight, CheckCircle, Star, Trophy, Bell } from "lucide-react";
 
 export const Route = createFileRoute("/my-breakroom")({
   head: () => ({
@@ -29,6 +30,7 @@ function MyBreakroomPage() {
   const [loading, setLoading] = useState(true);
   const [hasCompletedBreakToday, setHasCompletedBreakToday] = useState(false);
   const [userXP, setUserXP] = useState<any>(null);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
   useEffect(() => {
     async function loadData() {
@@ -54,6 +56,11 @@ function MyBreakroomPage() {
         if (contributionData.summary) setContributionSummary(contributionData.summary);
         if (activityData.activities) setRecentActivity(activityData.activities);
         if (xpData.userXP) setUserXP(xpData.userXP);
+        
+        const notificationCountData = await getUnreadNotificationCount(user.id);
+        if (notificationCountData.count !== undefined) {
+          setUnreadNotificationCount(notificationCountData.count);
+        }
         
         // Check if break already completed today
         const lastBreakKey = `breakroom_last_break_${user.id}`;
@@ -303,6 +310,36 @@ function MyBreakroomPage() {
                 className="px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] flex items-center gap-2"
               >
                 {t("viewRewards")}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Notifications Card */}
+        <div className="mb-8">
+          <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-blue-100/30 to-indigo-100/30 border-blue-200/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-indigo-400 flex items-center justify-center">
+                  <Bell className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-display font-bold text-foreground mb-1">
+                    {t("notifications")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {unreadNotificationCount > 0
+                      ? `${unreadNotificationCount} ${t("unread")}`
+                      : t("allCaughtUp")}
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/notifications"
+                className="px-4 py-2 bg-gradient-to-r from-blue-400 to-indigo-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] flex items-center gap-2"
+              >
+                {t("viewNotifications")}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

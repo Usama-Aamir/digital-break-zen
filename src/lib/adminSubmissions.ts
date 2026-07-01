@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { createNotification } from "./notifications";
 
 export const ADMIN_EMAIL = "aamirusama8@gmail.com";
 
@@ -71,6 +72,17 @@ export async function updateStorySubmissionStatus(
   }
 
   try {
+    const { data: submission, error: fetchError } = await supabase
+      .from("story_submissions")
+      .select("id, user_id, title")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (fetchError || !submission) {
+      console.error("Error fetching submission:", fetchError);
+      return { error: fetchError?.message || "Submission not found" };
+    }
+
     const { error } = await supabase
       .from("story_submissions")
       .update({
@@ -82,6 +94,21 @@ export async function updateStorySubmissionStatus(
     if (error) {
       console.error("Error updating submission status:", error);
       return { error: error.message };
+    }
+
+    // Notify submitter of approval/rejection
+    if (status === 'approved' || status === 'rejected') {
+      createNotification({
+        user_id: submission.user_id,
+        type: status === 'approved' ? 'story_approved' : 'story_rejected',
+        title: status === 'approved' ? 'Story approved' : 'Story rejected',
+        body: `Your story "${submission.title || 'Untitled'}" was ${status}`,
+        link_path: status === 'approved' ? '/community-stories' : '/my-submissions',
+        source_table: 'story_submissions',
+        source_id: submission.id,
+      }).catch(err => {
+        console.warn('Failed to create story status notification:', err);
+      });
     }
 
     return { error: null };

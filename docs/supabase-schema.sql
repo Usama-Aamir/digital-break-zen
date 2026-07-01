@@ -1136,3 +1136,61 @@ INSERT INTO public.badges (badge_key, name, description, icon, category, xp_rewa
   ('level_5', 'Level 5', 'Reached level 5.', '⭐', 'level', 50),
   ('level_10', 'Level 10', 'Reached level 10.', '🌟', 'level', 100)
 ON CONFLICT (badge_key) DO NOTHING;
+
+-- ============================================================================
+-- NOTIFICATIONS TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  actor_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT,
+  link_path TEXT,
+  source_table TEXT,
+  source_id UUID,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  is_read BOOLEAN DEFAULT false NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+-- Users can view only their own notifications
+CREATE POLICY "Users can view own notifications"
+  ON public.notifications FOR SELECT
+  TO authenticated
+  USING (user_id = auth.uid());
+
+-- Authenticated users can insert notifications; validation done in application code
+CREATE POLICY "Authenticated users can insert notifications"
+  ON public.notifications FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+-- Users can update only their own notifications, only is_read field
+CREATE POLICY "Users can update own notifications"
+  ON public.notifications FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+-- Users can delete only their own notifications
+CREATE POLICY "Users can delete own notifications"
+  ON public.notifications FOR DELETE
+  TO authenticated
+  USING (user_id = auth.uid());
+
+-- ============================================================================
+-- NOTIFICATIONS INDEXES
+-- ============================================================================
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read_created
+  ON public.notifications(user_id, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_type
+  ON public.notifications(type);
+CREATE INDEX IF NOT EXISTS idx_notifications_source
+  ON public.notifications(source_table, source_id);

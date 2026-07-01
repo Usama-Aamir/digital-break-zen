@@ -3,6 +3,7 @@ import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
 import { getPendingGameInviteCount } from "@/lib/multiplayerGames";
+import { getUnreadNotificationCount } from "@/lib/notifications";
 import { useState, useEffect } from "react";
 import { 
   Home, 
@@ -18,7 +19,8 @@ import {
   Coffee,
   Users,
   MessageCircle,
-  Trophy
+  Trophy,
+  Bell
 } from "lucide-react";
 
 interface NavItem {
@@ -38,6 +40,7 @@ export function SidebarNav() {
   const location = useLocation();
   const [profile, setProfile] = useState<any>(null);
   const [pendingInviteCount, setPendingInviteCount] = useState(0);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const isAdmin = user?.email === "aamirusama8@gmail.com";
 
   useEffect(() => {
@@ -49,6 +52,11 @@ export function SidebarNav() {
         const inviteCountData = await getPendingGameInviteCount(user.id);
         if (inviteCountData.count !== undefined) {
           setPendingInviteCount(inviteCountData.count);
+        }
+        
+        const notificationCountData = await getUnreadNotificationCount(user.id);
+        if (notificationCountData.count !== undefined) {
+          setUnreadNotificationCount(notificationCountData.count);
         }
       }
     }
@@ -69,6 +77,7 @@ export function SidebarNav() {
       title: t("personal"),
       items: [
         { label: t("myBreakroom"), to: "/my-breakroom", icon: Coffee },
+        { label: t("notifications"), to: "/notifications", icon: Bell },
         { label: t("rewards"), to: "/rewards", icon: Trophy },
         { label: t("friends"), to: "/friends", icon: Users },
         { label: t("messages"), to: "/messages", icon: MessageCircle },
@@ -123,7 +132,8 @@ export function SidebarNav() {
             <ul className="space-y-1">
               {section.items.map((item) => {
                 const Icon = item.icon;
-                const showBadge = item.to === "/games-multiplayer" && pendingInviteCount > 0;
+                const showGameBadge = item.to === "/games-multiplayer" && pendingInviteCount > 0;
+                const showNotificationBadge = item.to === "/notifications" && unreadNotificationCount > 0;
                 return (
                   <li key={item.to}>
                     <Link
@@ -136,9 +146,14 @@ export function SidebarNav() {
                     >
                       <Icon className="h-5 w-5" />
                       <span className="text-sm">{item.label}</span>
-                      {showBadge && (
+                      {showGameBadge && (
                         <span className="ml-auto px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
                           {pendingInviteCount}
+                        </span>
+                      )}
+                      {showNotificationBadge && (
+                        <span className="ml-auto px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                          {unreadNotificationCount}
                         </span>
                       )}
                     </Link>

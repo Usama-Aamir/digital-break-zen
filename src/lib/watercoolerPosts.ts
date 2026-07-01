@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import { awardXP } from "./gamification";
+import { createNotification } from "./notifications";
 
 export interface WatercoolerPost {
   id: string;
@@ -299,6 +300,36 @@ export async function likeWatercoolerPost(
       return { error: error.message };
     }
 
+    // Notify post owner of new like (if not the liker)
+    const { data: post } = await supabase
+      .from('watercooler_posts')
+      .select('user_id, body')
+      .eq('id', postId)
+      .maybeSingle();
+    
+    if (post?.user_id && post.user_id !== userId) {
+      const { data: likerProfile } = await supabase
+        .from('profiles')
+        .select('display_name, username')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      const actorName = likerProfile?.display_name || likerProfile?.username || 'Someone';
+      
+      createNotification({
+        user_id: post.user_id,
+        actor_id: userId,
+        type: 'watercooler_like',
+        title: 'Watercooler like',
+        body: `${actorName} liked your post`,
+        link_path: '/watercooler',
+        source_table: 'watercooler_post_likes',
+        metadata: { post_id: postId },
+      }).catch(err => {
+        console.warn('Failed to create watercooler like notification:', err);
+      });
+    }
+
     return { error: null };
   } catch (error) {
     console.error("[watercooler] like failed with exception:", error);
@@ -433,6 +464,40 @@ export async function createWatercoolerComment(
       awardXP(userId, 'watercooler_comment', data.id, 'watercooler_post_comments').catch(err => {
         console.warn('Failed to award watercooler comment XP:', err);
       });
+    }
+
+    // Notify post owner of new comment (if not the commenter)
+    if (data && data.id) {
+      const { data: post } = await supabase
+        .from('watercooler_posts')
+        .select('user_id, body')
+        .eq('id', postId)
+        .maybeSingle();
+      
+      if (post?.user_id && post.user_id !== userId) {
+        const { data: commenterProfile } = await supabase
+          .from('profiles')
+          .select('display_name, username')
+          .eq('id', userId)
+          .maybeSingle();
+        
+        const actorName = commenterProfile?.display_name || commenterProfile?.username || nickname || 'Someone';
+        const preview = body.length > 40 ? `${body.slice(0, 40)}...` : body;
+        
+        createNotification({
+          user_id: post.user_id,
+          actor_id: userId,
+          type: 'watercooler_reply',
+          title: 'Watercooler reply',
+          body: `${actorName} commented: "${preview}"`,
+          link_path: '/watercooler',
+          source_table: 'watercooler_post_comments',
+          source_id: data.id,
+          metadata: { post_id: postId },
+        }).catch(err => {
+          console.warn('Failed to create watercooler reply notification:', err);
+        });
+      }
     }
 
     return { comment: data, error: null };

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { awardXP } from './gamification';
+import { createNotification } from './notifications';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -256,6 +257,41 @@ export async function sendDirectMessage(conversationId: string, body: string): P
       awardXP(user.id, 'message_sent', data.id, 'direct_messages').catch(err => {
         console.warn('Failed to award message_sent XP:', err);
       });
+    }
+    
+    // Create notification for recipient
+    if (data && data.id) {
+      const { data: otherMembers } = await supabase
+        .from('direct_conversation_members')
+        .select('user_id')
+        .eq('conversation_id', conversationId)
+        .neq('user_id', user.id);
+      
+      const recipientId = otherMembers?.[0]?.user_id;
+      
+      if (recipientId) {
+        const { data: senderProfile } = await supabase
+          .from('profiles')
+          .select('display_name, username')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        const actorName = senderProfile?.display_name || senderProfile?.username || 'Someone';
+        const preview = body.trim().length > 50 ? `${body.trim().slice(0, 50)}...` : body.trim();
+        
+        createNotification({
+          user_id: recipientId,
+          actor_id: user.id,
+          type: 'direct_message',
+          title: 'New message',
+          body: `${actorName}: ${preview}`,
+          link_path: '/messages',
+          source_table: 'direct_messages',
+          source_id: data.id,
+        }).catch(err => {
+          console.warn('Failed to create direct message notification:', err);
+        });
+      }
     }
     
     return { message: data, error: null };
