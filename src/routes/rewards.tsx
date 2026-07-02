@@ -3,6 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { useState, useEffect } from "react";
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingState } from "@/components/LoadingState";
 import { 
   getUserXP, 
   getUserBadges, 
@@ -126,10 +128,11 @@ function RewardsPage() {
     return (
       <AppShell>
         <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="text-center">
-            <div className="w-12 h-12 mx-auto border-4 border-foreground/20 border-t-foreground rounded-full animate-spin mb-4"></div>
-            <p className="text-muted-foreground">Loading rewards...</p>
+          <div className="mb-8">
+            <h1 className="text-4xl font-display font-bold text-foreground mb-2">{t("rewards")}</h1>
+            <p className="text-muted-foreground">{t("rewardsSubtitle")}</p>
           </div>
+          <LoadingState rows={4} />
         </div>
       </AppShell>
     );
@@ -199,12 +202,12 @@ function RewardsPage() {
 
         {/* XP Summary Card */}
         <div className="glass-card rounded-2xl p-6 mb-8 bg-gradient-to-br from-purple-100/30 to-pink-100/30 border-purple-200/30">
-          <div className="flex items-center gap-6 mb-6">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-3xl">
+          <div className="flex items-center gap-4 sm:gap-6 mb-6">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-2xl sm:text-3xl">
               {profile?.avatar_url || '👤'}
             </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-display font-bold text-foreground mb-1">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl sm:text-2xl font-display font-bold text-foreground mb-1 truncate">
                 {getDisplayName(profile, user.email)}
               </h2>
               <div className="flex items-center gap-2">
@@ -216,7 +219,7 @@ function RewardsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
             <div className="text-center p-4 bg-white/30 rounded-xl">
               <p className="text-3xl font-bold text-foreground">{userXP?.total_xp || 0}</p>
               <p className="text-sm text-muted-foreground">{t("totalXp")}</p>
@@ -262,17 +265,14 @@ function RewardsPage() {
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-foreground mb-3">{t("earnedBadges")}</h3>
             {earnedBadges.length === 0 ? (
-              <div className="glass-card rounded-xl p-6 text-center">
-                <Award className="w-12 h-12 mx-auto text-foreground/30 mb-3" />
-                <p className="text-muted-foreground">{t("noBadgesYet")}</p>
-              </div>
+              <EmptyState icon={Award} title={t("noBadgesYet")} subtitle={t("earnXpForBadges")} />
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
                 {earnedBadges.map(badge => (
-                  <div key={badge.id} className="glass-card rounded-xl p-4 text-center bg-gradient-to-br from-yellow-100/30 to-orange-100/30 border-yellow-200/30">
-                    <div className="text-4xl mb-2">{badge.icon}</div>
-                    <p className="font-semibold text-foreground text-sm">{badge.name}</p>
-                    <p className="text-xs text-muted-foreground">{badge.description}</p>
+                  <div key={badge.id} className="glass-card rounded-xl p-3 sm:p-4 text-center bg-gradient-to-br from-yellow-100/30 to-orange-100/30 border-yellow-200/30">
+                    <div className="text-3xl sm:text-4xl mb-2">{badge.icon}</div>
+                    <p className="font-semibold text-foreground text-sm truncate">{badge.name}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{badge.description}</p>
                   </div>
                 ))}
               </div>
@@ -285,12 +285,12 @@ function RewardsPage() {
             {lockedBadges.length === 0 ? (
               <p className="text-muted-foreground">{t("allBadgesUnlocked")}</p>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
                 {lockedBadges.map(badge => (
-                  <div key={badge.id} className="glass-card rounded-xl p-4 text-center bg-white/20 border-white/30 opacity-60">
-                    <div className="text-4xl mb-2 grayscale">{badge.icon}</div>
-                    <p className="font-semibold text-foreground text-sm">{badge.name}</p>
-                    <p className="text-xs text-muted-foreground">{badge.description}</p>
+                  <div key={badge.id} className="glass-card rounded-xl p-3 sm:p-4 text-center bg-white/20 border-white/30 opacity-60">
+                    <div className="text-3xl sm:text-4xl mb-2 grayscale">{badge.icon}</div>
+                    <p className="font-semibold text-foreground text-sm truncate">{badge.name}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{badge.description}</p>
                     <Lock className="w-4 h-4 mx-auto mt-2 text-muted-foreground" />
                   </div>
                 ))}
@@ -306,7 +306,7 @@ function RewardsPage() {
           </h2>
           <div className="glass-card rounded-xl p-6">
             {recentXPEvents.length === 0 ? (
-              <p className="text-muted-foreground text-center">{t("noXpActivityYet")}</p>
+              <EmptyState icon={Zap} title={t("noXpActivityYet")} subtitle={t("earnXpForBreaks")} />
             ) : (
               <div className="space-y-3">
                 {recentXPEvents.map(event => (
@@ -333,42 +333,29 @@ function RewardsPage() {
           </h2>
           
           {/* Tabs */}
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setLeaderboardType('weekly')}
-              className={`px-4 py-2 rounded-full font-medium transition-all ${
-                leaderboardType === 'weekly'
-                  ? 'bg-gradient-to-r from-purple-400 to-pink-400 text-white'
-                  : 'bg-white/30 text-muted-foreground hover:bg-white/40'
-              }`}
-            >
-              {t("weekly")}
-            </button>
-            <button
-              onClick={() => setLeaderboardType('all_time')}
-              className={`px-4 py-2 rounded-full font-medium transition-all ${
-                leaderboardType === 'all_time'
-                  ? 'bg-gradient-to-r from-purple-400 to-pink-400 text-white'
-                  : 'bg-white/30 text-muted-foreground hover:bg-white/40'
-              }`}
-            >
-              {t("allTime")}
-            </button>
-            <button
-              onClick={() => setLeaderboardType('friends')}
-              className={`px-4 py-2 rounded-full font-medium transition-all ${
-                leaderboardType === 'friends'
-                  ? 'bg-gradient-to-r from-purple-400 to-pink-400 text-white'
-                  : 'bg-white/30 text-muted-foreground hover:bg-white/40'
-              }`}
-            >
-              {t("friends")}
-            </button>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[
+              { key: 'weekly', label: t("weekly") },
+              { key: 'all_time', label: t("allTime") },
+              { key: 'friends', label: t("friends") },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setLeaderboardType(tab.key as typeof leaderboardType)}
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-medium text-xs sm:text-sm transition-all ${
+                  leaderboardType === tab.key
+                    ? 'bg-gradient-to-r from-purple-400 to-pink-400 text-white'
+                    : 'bg-white/30 text-muted-foreground hover:bg-white/40'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           <div className="glass-card rounded-xl p-6">
             {leaderboard.length === 0 ? (
-              <p className="text-muted-foreground text-center">{t("noLeaderboardData")}</p>
+              <EmptyState icon={Trophy} title={t("noLeaderboardData")} subtitle={t("startPlaying")} />
             ) : (
               <div className="space-y-2">
                 {leaderboard.map((entry, index) => {
@@ -403,57 +390,57 @@ function RewardsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Link
             to="/watercooler"
-            className="glass-card rounded-xl p-6 bg-gradient-to-br from-blue-100/30 to-cyan-100/30 border-blue-200/30 hover:opacity-95 transition-opacity"
+            className="glass-card rounded-xl p-4 sm:p-6 bg-gradient-to-br from-blue-100/30 to-cyan-100/30 border-blue-200/30 hover:opacity-95 transition-opacity"
           >
-            <div className="flex items-center gap-4">
-              <MessageSquare className="w-8 h-8 text-blue-500" />
-              <div>
-                <h3 className="font-bold text-foreground">{t("postOnWatercooler")}</h3>
-                <p className="text-sm text-muted-foreground">{t("earnXpForPosts")}</p>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <MessageSquare className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 text-blue-500" />
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-foreground text-sm sm:text-base truncate">{t("postOnWatercooler")}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{t("earnXpForPosts")}</p>
               </div>
-              <ArrowRight className="w-5 h-5 text-foreground ml-auto" />
+              <ArrowRight className="w-5 h-5 shrink-0 text-foreground ml-auto" />
             </div>
           </Link>
 
           <Link
             to="/games-multiplayer"
-            className="glass-card rounded-xl p-6 bg-gradient-to-br from-orange-100/30 to-yellow-100/30 border-orange-200/30 hover:opacity-95 transition-opacity"
+            className="glass-card rounded-xl p-4 sm:p-6 bg-gradient-to-br from-orange-100/30 to-yellow-100/30 border-orange-200/30 hover:opacity-95 transition-opacity"
           >
-            <div className="flex items-center gap-4">
-              <Gamepad2 className="w-8 h-8 text-orange-500" />
-              <div>
-                <h3 className="font-bold text-foreground">{t("playMultiplayer")}</h3>
-                <p className="text-sm text-muted-foreground">{t("earnXpForGames")}</p>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Gamepad2 className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 text-orange-500" />
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-foreground text-sm sm:text-base truncate">{t("playMultiplayer")}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{t("earnXpForGames")}</p>
               </div>
-              <ArrowRight className="w-5 h-5 text-foreground ml-auto" />
+              <ArrowRight className="w-5 h-5 shrink-0 text-foreground ml-auto" />
             </div>
           </Link>
 
           <Link
             to="/submit-story"
-            className="glass-card rounded-xl p-6 bg-gradient-to-br from-green-100/30 to-teal-100/30 border-green-200/30 hover:opacity-95 transition-opacity"
+            className="glass-card rounded-xl p-4 sm:p-6 bg-gradient-to-br from-green-100/30 to-teal-100/30 border-green-200/30 hover:opacity-95 transition-opacity"
           >
-            <div className="flex items-center gap-4">
-              <FileText className="w-8 h-8 text-green-500" />
-              <div>
-                <h3 className="font-bold text-foreground">{t("submitStory")}</h3>
-                <p className="text-sm text-muted-foreground">{t("earnXpForStories")}</p>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <FileText className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 text-green-500" />
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-foreground text-sm sm:text-base truncate">{t("submitStory")}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{t("earnXpForStories")}</p>
               </div>
-              <ArrowRight className="w-5 h-5 text-foreground ml-auto" />
+              <ArrowRight className="w-5 h-5 shrink-0 text-foreground ml-auto" />
             </div>
           </Link>
 
           <Link
             to="/my-breakroom"
-            className="glass-card rounded-xl p-6 bg-gradient-to-br from-purple-100/30 to-pink-100/30 border-purple-200/30 hover:opacity-95 transition-opacity"
+            className="glass-card rounded-xl p-4 sm:p-6 bg-gradient-to-br from-purple-100/30 to-pink-100/30 border-purple-200/30 hover:opacity-95 transition-opacity"
           >
-            <div className="flex items-center gap-4">
-              <Coffee className="w-8 h-8 text-purple-500" />
-              <div>
-                <h3 className="font-bold text-foreground">{t("checkInMood")}</h3>
-                <p className="text-sm text-muted-foreground">{t("earnXpForBreaks")}</p>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Coffee className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 text-purple-500" />
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-foreground text-sm sm:text-base truncate">{t("checkInMood")}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{t("earnXpForBreaks")}</p>
               </div>
-              <ArrowRight className="w-5 h-5 text-foreground ml-auto" />
+              <ArrowRight className="w-5 h-5 shrink-0 text-foreground ml-auto" />
             </div>
           </Link>
         </div>

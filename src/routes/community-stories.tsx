@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingState } from "@/components/LoadingState";
 import { getApprovedCommunityStories, getPublicAuthorName } from "@/lib/publicStories";
 import { useState, useEffect } from "react";
+import { BookOpen, FileText } from "lucide-react";
 
 export const Route = createFileRoute("/community-stories")({
   head: () => ({
@@ -64,12 +67,7 @@ function CommunityStoriesPage() {
         </div>
 
         {/* Loading State */}
-        {isLoading && (
-          <div className="glass-card rounded-2xl p-8 text-center mb-6">
-            <div className="animate-spin w-8 h-8 mx-auto mb-4 border-4 border-[var(--gradient-mint)] border-t-transparent rounded-full"></div>
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
-        )}
+        {isLoading && <LoadingState rows={3} className="mb-6" />}
 
         {/* Error State */}
         {loadError && (
@@ -82,27 +80,20 @@ function CommunityStoriesPage() {
 
         {/* Empty State */}
         {!isLoading && !loadError && stories.length === 0 && (
-          <div className="glass-card rounded-2xl p-8 text-center">
-            <div className="mb-6">
-              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-            </div>
-            <h2 className="text-xl font-display font-bold text-foreground mb-2">
-              {t("noCommunityStoriesYet")}
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              {t("noCommunityStoriesText")}
-            </p>
-            <Link
-              to="/submit-story"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
-            >
-              {t("submitStoryTitle")}
-            </Link>
-          </div>
+          <EmptyState
+            icon={BookOpen}
+            title={t("noCommunityStoriesYet")}
+            subtitle={t("noCommunityStoriesText")}
+            action={
+              <Link
+                to="/submit-story"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+              >
+                <FileText className="h-4 w-4" />
+                {t("submitStoryTitle")}
+              </Link>
+            }
+          />
         )}
 
         {/* Stories List */}
@@ -116,20 +107,20 @@ function CommunityStoriesPage() {
               return (
                 <div
                   key={story.id}
-                  className="glass-card rounded-2xl p-6 bg-white/40 border border-white/30 backdrop-blur-md hover:scale-[1.01] transition-transform"
+                  className="glass-card rounded-2xl p-4 sm:p-6 bg-white/40 border border-white/30 backdrop-blur-md hover:scale-[1.01] transition-transform"
                 >
                   {/* Header: Title and Category */}
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-lg font-display font-bold text-foreground">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-2">
+                    <h3 className="text-lg font-display font-bold text-foreground flex-1 min-w-0">
                       {story.title}
                     </h3>
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-100/80 to-pink-100/80 text-purple-700">
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-100/80 to-pink-100/80 text-purple-700 shrink-0 self-start">
                       {story.category}
                     </span>
                   </div>
 
                   {/* Meta Information */}
-                  <div className="flex flex-wrap gap-4 mb-4 text-sm">
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">{t("sharedBy")}: </span>
                       <span className="text-foreground font-medium">{authorName}</span>

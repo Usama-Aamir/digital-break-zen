@@ -3,6 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { useState, useEffect } from "react";
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingState } from "@/components/LoadingState";
 import {
   getNotifications,
   getUnreadNotificationCount,
@@ -275,14 +277,14 @@ function NotificationsPage() {
               <button
                 key={tab.key}
                 onClick={() => setFilter(tab.key)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
                   filter === tab.key
                     ? "bg-gradient-to-r from-blue-400 to-purple-400 text-white"
                     : "bg-white/30 text-muted-foreground hover:bg-white/50"
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                {tab.label}
+                <span className="line-clamp-1">{tab.label}</span>
               </button>
             );
           })}
@@ -291,22 +293,13 @@ function NotificationsPage() {
         {/* Notifications List */}
         <div className="space-y-3">
           {loading ? (
-            <div className="text-center py-12">
-              <div className="w-12 h-12 mx-auto border-4 border-foreground/20 border-t-foreground rounded-full animate-spin mb-4"></div>
-              <p className="text-muted-foreground">{t("loading")}</p>
-            </div>
+            <LoadingState rows={3} />
           ) : filteredNotifications.length === 0 ? (
-            <div className="glass-card rounded-2xl p-12 text-center">
-              <Bell className="w-16 h-16 mx-auto text-foreground/30 mb-4" />
-              <h3 className="text-xl font-display font-bold text-foreground mb-2">
-                {filter === "unread" ? t("allCaughtUp") : t("noNotifications")}
-              </h3>
-              <p className="text-muted-foreground">
-                {filter === "unread"
-                  ? t("allCaughtUp")
-                  : t("notificationsSubtitle")}
-              </p>
-            </div>
+            <EmptyState
+              icon={Bell}
+              title={filter === "unread" ? t("allCaughtUp") : t("noNotifications")}
+              subtitle={filter === "unread" ? t("allCaughtUp") : t("notificationsSubtitle")}
+            />
           ) : (
             filteredNotifications.map((notification) => {
               const Icon = getNotificationIcon(notification.type);
@@ -352,6 +345,7 @@ function NotificationsPage() {
                             <button
                               onClick={(e) => handleMarkRead(e, notification.id)}
                               className="p-2 hover:bg-white/50 rounded-lg transition-colors text-blue-500"
+                              aria-label={t("markAllRead")}
                               title={t("markAllRead")}
                             >
                               <CheckCircle className="w-4 h-4" />
@@ -360,6 +354,7 @@ function NotificationsPage() {
                           <button
                             onClick={(e) => handleDelete(e, notification.id)}
                             className="p-2 hover:bg-white/50 rounded-lg transition-colors text-red-500"
+                            aria-label={t("delete")}
                             title={t("delete")}
                           >
                             <Trash2 className="w-4 h-4" />

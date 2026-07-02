@@ -3,6 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { useState, useEffect, useRef } from "react";
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingStateCompact } from "@/components/LoadingState";
 import { 
   getDirectConversations, 
   getDirectMessages, 
@@ -355,21 +357,22 @@ function MessagesPage() {
               </div>
 
               {loading ? (
-                <div className="text-center py-8 text-sm text-muted-foreground">
-                  Loading...
-                </div>
+                <LoadingStateCompact count={3} />
               ) : conversations.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-foreground font-medium mb-2">
-                    {t("noMessagesYet")}
-                  </p>
-                  <button
-                    onClick={() => setShowFriendPicker(true)}
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    {t("startConversation")}
-                  </button>
-                </div>
+                <EmptyState
+                  icon={MessageCircle}
+                  title={t("noMessagesYet")}
+                  subtitle={t("startChatting")}
+                  action={
+                    <button
+                      onClick={() => setShowFriendPicker(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full text-sm font-semibold hover:opacity-95 transition-opacity"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      {t("startConversation")}
+                    </button>
+                  }
+                />
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {conversations.map((conv) => (
@@ -409,20 +412,20 @@ function MessagesPage() {
 
           {/* Chat Panel */}
           <div className="md:col-span-2">
-            <div className="glass-card rounded-3xl p-4 h-[500px] flex flex-col">
+            <div className="glass-card rounded-3xl p-4 h-[60vh] sm:h-[500px] flex flex-col">
               {selectedConversation ? (
                 <>
                   {/* Chat Header */}
-                  <div className="flex items-center justify-between pb-4 border-b border-white/20 mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
+                  <div className="flex items-center justify-between pb-4 border-b border-white/20 mb-4 gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
                         {selectedConversation.friend_avatar_url || selectedConversation.friend_display_name?.[0] || selectedConversation.friend_username?.[0] || "💬"}
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">
+                      <div className="min-w-0">
+                        <p className="font-medium text-foreground truncate">
                           {selectedConversation.friend_display_name || selectedConversation.friend_username || "Breakroom friend"}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground truncate">
                           @{selectedConversation.friend_username || ""}
                         </p>
                       </div>
@@ -431,6 +434,7 @@ function MessagesPage() {
                       onClick={handleRefresh}
                       disabled={isRefreshing}
                       className="p-2 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50"
+                      aria-label="Refresh messages"
                       title="Refresh messages"
                     >
                       <RefreshCw className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -440,8 +444,12 @@ function MessagesPage() {
                   {/* Messages */}
                   <div className="flex-1 overflow-y-auto space-y-3 mb-4">
                     {messages.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        {t("startChatting")}
+                      <div className="flex-1 flex items-center justify-center text-center h-full">
+                        <EmptyState
+                          icon={MessageCircle}
+                          title={t("startChatting")}
+                          subtitle="Send a message to get the conversation going."
+                        />
                       </div>
                     ) : (
                       <>
@@ -483,6 +491,7 @@ function MessagesPage() {
                       onClick={handleSendMessage}
                       disabled={sending || !messageText.trim()}
                       className="px-4 py-3 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-xl font-semibold hover:opacity-95 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label={t("sendMessage")}
                     >
                       <Send className="h-5 w-5" />
                     </button>
@@ -511,32 +520,35 @@ function MessagesPage() {
         {/* Friend Picker Modal */}
         {showFriendPicker && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="glass-card rounded-3xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="glass-card rounded-3xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="friend-picker-title">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                <h3 id="friend-picker-title" className="text-xl font-semibold text-foreground flex items-center gap-2">
                   <Users className="h-5 w-5" />
                   {t("selectFriend")}
                 </h3>
                 <button
                   onClick={() => setShowFriendPicker(false)}
                   className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  aria-label="Close friend picker"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </button>
               </div>
 
               {friends.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-2">
-                    {t("noFriendsYet")}
-                  </p>
-                  <Link
-                    to="/friends"
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    {t("findFriends")}
-                  </Link>
-                </div>
+                <EmptyState
+                  icon={Users}
+                  title={t("noFriendsYet")}
+                  subtitle={t("startConnecting")}
+                  action={
+                    <Link
+                      to="/friends"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-full text-sm font-semibold hover:opacity-95 transition-opacity"
+                    >
+                      {t("findFriends")}
+                    </Link>
+                  }
+                />
               ) : (
                 <div className="space-y-2">
                   {friends.map((friend) => (

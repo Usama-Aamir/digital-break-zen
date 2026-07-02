@@ -3,6 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { useState, useEffect, useMemo } from "react";
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingState } from "@/components/LoadingState";
 import {
   isAdminUser,
   getAdminOverviewMetrics,
@@ -167,10 +169,11 @@ function AdminAnalyticsPage() {
     return (
       <AppShell>
         <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="glass-card rounded-2xl p-8 text-center">
-            <div className="animate-spin w-8 h-8 mx-auto mb-4 border-4 border-[var(--gradient-mint)] border-t-transparent rounded-full"></div>
-            <p className="text-muted-foreground">Loading...</p>
+          <div className="mb-8">
+            <h1 className="text-4xl font-display font-bold text-foreground mb-2">{t("adminAnalytics")}</h1>
+            <p className="text-lg text-muted-foreground">{t("adminAnalyticsSubtitle")}</p>
           </div>
+          <LoadingState rows={4} />
         </div>
       </AppShell>
     );
@@ -233,12 +236,7 @@ function AdminAnalyticsPage() {
         )}
 
         {/* Loading overlay */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-4 mb-6">
-            <div className="animate-spin w-6 h-6 border-4 border-[var(--gradient-mint)] border-t-transparent rounded-full mr-3"></div>
-            <span className="text-muted-foreground">{t("loading")}</span>
-          </div>
-        )}
+        {isLoading && <LoadingState rows={2} className="mb-6" />}
 
         {/* Overview KPI Grid */}
         <section className="mb-10">
@@ -403,7 +401,7 @@ function AdminAnalyticsPage() {
           </h2>
           <div className="glass-card rounded-2xl overflow-hidden">
             {topUsers.length === 0 ? (
-              <p className="p-6 text-center text-muted-foreground">No user data available.</p>
+              <EmptyState icon={Trophy} title="No user data available" subtitle="Users will appear here once they earn XP." />
             ) : (
               <div className="divide-y divide-border/30">
                 {topUsers.map((u, index) => (
@@ -439,15 +437,15 @@ function AdminAnalyticsPage() {
           </h2>
           <div className="glass-card rounded-2xl overflow-hidden">
             {topPosts.length === 0 ? (
-              <p className="p-6 text-center text-muted-foreground">No watercooler posts available.</p>
+              <EmptyState icon={MessageSquare} title="No watercooler posts available" subtitle="Posts will appear here once the community starts sharing." />
             ) : (
               <div className="divide-y divide-border/30">
                 {topPosts.map((p) => (
                   <div key={p.id} className="p-4 hover:bg-white/5 transition-colors">
                     <p className="text-foreground mb-2 line-clamp-2">{p.body}</p>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{p.nickname || "Anonymous"}</span>
-                      <span className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-muted-foreground gap-1">
+                      <span className="truncate">{p.nickname || "Anonymous"}</span>
+                      <span className="flex items-center gap-3 flex-wrap">
                         <span className="flex items-center gap-1">{formatNumber(p.likes_count)} likes</span>
                         <span className="flex items-center gap-1">{formatNumber(p.comments_count)} comments</span>
                         <span>{formatDate(p.created_at)}</span>
@@ -468,7 +466,7 @@ function AdminAnalyticsPage() {
           </h2>
           <div className="glass-card rounded-2xl overflow-hidden">
             {recentActivity.length === 0 ? (
-              <p className="p-6 text-center text-muted-foreground">No recent activity.</p>
+              <EmptyState icon={Clock} title="No recent activity" subtitle="Activity will appear here as users interact with the app." />
             ) : (
               <div className="divide-y divide-border/30">
                 {recentActivity.map((a) => (
@@ -548,13 +546,13 @@ function KpiCard({
   color: string;
 }) {
   return (
-    <div className={`glass-card rounded-2xl p-5 bg-gradient-to-br ${color} border-white/20`}>
-      <div className="flex items-center gap-2 mb-3 text-muted-foreground">
+    <div className={`glass-card rounded-2xl p-4 sm:p-5 bg-gradient-to-br ${color} border-white/20`}>
+      <div className="flex items-center gap-2 mb-2 sm:mb-3 text-muted-foreground">
         {icon}
-        <span className="text-sm font-medium">{label}</span>
+        <span className="text-xs sm:text-sm font-medium line-clamp-1">{label}</span>
       </div>
-      <div className="text-3xl font-display font-bold text-foreground mb-1">{value}</div>
-      {sub && <div className="text-sm text-muted-foreground">{sub}</div>}
+      <div className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-1">{value}</div>
+      {sub && <div className="text-xs sm:text-sm text-muted-foreground line-clamp-1">{sub}</div>}
     </div>
   );
 }
@@ -562,8 +560,8 @@ function KpiCard({
 function MetricItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-white/5 p-3">
-      <div className="text-2xl font-display font-bold text-foreground mb-1">{value}</div>
-      <div className="text-sm text-muted-foreground">{label}</div>
+      <div className="text-xl sm:text-2xl font-display font-bold text-foreground mb-1">{value}</div>
+      <div className="text-xs sm:text-sm text-muted-foreground line-clamp-1">{label}</div>
     </div>
   );
 }

@@ -3,6 +3,9 @@ import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { useState, useEffect } from "react";
+import { getProfileById } from "@/lib/profiles";
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingState, LoadingStateCompact } from "@/components/LoadingState";
 import { 
   searchUsers, 
   sendFriendRequest, 
@@ -318,7 +321,6 @@ function FriendsPage() {
                   type="incoming"
                   onAccept={handleAcceptRequest}
                   onReject={handleRejectRequest}
-                  currentUserId={user.id}
                   t={t}
                 />
               ))}
@@ -341,7 +343,6 @@ function FriendsPage() {
                   request={request}
                   type="outgoing"
                   onCancel={handleCancelRequest}
-                  currentUserId={user.id}
                   t={t}
                 />
               ))}
@@ -357,14 +358,11 @@ function FriendsPage() {
           </h2>
           
           {friends.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-foreground font-medium mb-2">
-                {t("noFriendsYet")}
-              </p>
-              <p className="text-muted-foreground text-sm">
-                {t("startConnecting")}
-              </p>
-            </div>
+            <EmptyState
+              icon={Users}
+              title={t("noFriendsYet")}
+              subtitle={t("startConnecting")}
+            />
           ) : (
             <div className="space-y-3">
               {friends.map((friend) => (
@@ -405,57 +403,58 @@ function FriendSearchResult({ profile, onSendRequest, currentUserId, t }: { prof
   }, [profile.id, currentUserId]);
 
   if (loading) {
-    return <div className="p-4 bg-white/30 rounded-xl text-sm text-muted-foreground">Loading...</div>;
+    return <LoadingStateCompact count={1} />;
   }
 
   if (status.isFriend) {
     return (
-      <div className="p-4 bg-white/30 rounded-xl flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
+      <div className="p-4 bg-white/30 rounded-xl flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
             {profile.avatar_url || profile.display_name?.[0] || "?"}
           </div>
-          <div>
-            <p className="font-medium text-foreground">{profile.display_name || profile.username}</p>
-            <p className="text-sm text-muted-foreground">@{profile.username}</p>
+          <div className="min-w-0">
+            <p className="font-medium text-foreground truncate">{profile.display_name || profile.username}</p>
+            <p className="text-sm text-muted-foreground truncate">@{profile.username}</p>
           </div>
         </div>
-        <span className="text-sm text-green-600 font-medium">{t("friends")}</span>
+        <span className="text-sm text-green-600 font-medium shrink-0">{t("friends")}</span>
       </div>
     );
   }
 
   if (status.requestStatus === "pending") {
     return (
-      <div className="p-4 bg-white/30 rounded-xl flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
+      <div className="p-4 bg-white/30 rounded-xl flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
             {profile.avatar_url || profile.display_name?.[0] || "?"}
           </div>
-          <div>
-            <p className="font-medium text-foreground">{profile.display_name || profile.username}</p>
-            <p className="text-sm text-muted-foreground">@{profile.username}</p>
+          <div className="min-w-0">
+            <p className="font-medium text-foreground truncate">{profile.display_name || profile.username}</p>
+            <p className="text-sm text-muted-foreground truncate">@{profile.username}</p>
           </div>
         </div>
-        <span className="text-sm text-muted-foreground">{t("requestSent")}</span>
+        <span className="text-sm text-muted-foreground shrink-0">{t("requestSent")}</span>
       </div>
     );
   }
 
   return (
-    <div className="p-4 bg-white/30 rounded-xl flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
+    <div className="p-4 bg-white/30 rounded-xl flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
           {profile.avatar_url || profile.display_name?.[0] || "?"}
         </div>
-        <div>
-          <p className="font-medium text-foreground">{profile.display_name || profile.username}</p>
-          <p className="text-sm text-muted-foreground">@{profile.username}</p>
+        <div className="min-w-0">
+          <p className="font-medium text-foreground truncate">{profile.display_name || profile.username}</p>
+          <p className="text-sm text-muted-foreground truncate">@{profile.username}</p>
         </div>
       </div>
       <button
         onClick={() => onSendRequest(profile.id)}
-        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-lg text-sm font-semibold hover:opacity-95 transition-opacity"
+        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[var(--gradient-mint)] to-[var(--gradient-lav)] text-foreground rounded-lg text-sm font-semibold hover:opacity-95 transition-opacity shrink-0"
+        aria-label={t("addFriend")}
       >
         <UserPlus className="h-4 w-4" />
         {t("addFriend")}
@@ -464,56 +463,46 @@ function FriendSearchResult({ profile, onSendRequest, currentUserId, t }: { prof
   );
 }
 
-function FriendRequestCard({ request, type, onAccept, onReject, onCancel, currentUserId, t }: { 
+function FriendRequestCard({ request, type, onAccept, onReject, onCancel, t }: { 
   request: FriendRequest; 
   type: "incoming" | "outgoing"; 
   onAccept?: (id: string, requesterId: string) => void; 
   onReject?: (id: string) => void; 
   onCancel?: (id: string) => void;
-  currentUserId: string;
   t: (key: string) => string;
 }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
-      const supabase = await import("@supabase/supabase-js").then(m => m.createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY
-      ));
-      
       const otherUserId = type === "incoming" ? request.requester_id : request.receiver_id;
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, display_name, username, avatar_url, role_label")
-        .eq("id", otherUserId)
-        .single();
-      
-      setProfile(data);
+      const data = await getProfileById(otherUserId);
+      if (data) setProfile(data as UserProfile);
     }
 
     loadProfile();
-  }, [request.id, type]);
+  }, [request.id, type, request.requester_id, request.receiver_id]);
 
   if (!profile) return null;
 
   return (
-    <div className="p-4 bg-white/30 rounded-xl flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
+    <div className="p-4 bg-white/30 rounded-xl flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
           {profile.avatar_url || profile.display_name?.[0] || "?"}
         </div>
-        <div>
-          <p className="font-medium text-foreground">{profile.display_name || profile.username}</p>
-          <p className="text-sm text-muted-foreground">@{profile.username}</p>
+        <div className="min-w-0">
+          <p className="font-medium text-foreground truncate">{profile.display_name || profile.username}</p>
+          <p className="text-sm text-muted-foreground truncate">@{profile.username}</p>
         </div>
       </div>
       
       {type === "incoming" ? (
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <button
             onClick={() => onAccept?.(request.id, request.requester_id)}
             className="flex items-center gap-1 px-3 py-1.5 bg-green-500/20 text-green-600 rounded-lg text-sm font-medium hover:bg-green-500/30 transition-colors"
+            aria-label={t("accept")}
           >
             <Check className="h-4 w-4" />
             {t("accept")}
@@ -521,6 +510,7 @@ function FriendRequestCard({ request, type, onAccept, onReject, onCancel, curren
           <button
             onClick={() => onReject?.(request.id)}
             className="flex items-center gap-1 px-3 py-1.5 bg-red-500/20 text-red-600 rounded-lg text-sm font-medium hover:bg-red-500/30 transition-colors"
+            aria-label={t("reject")}
           >
             <X className="h-4 w-4" />
             {t("reject")}
@@ -530,6 +520,7 @@ function FriendRequestCard({ request, type, onAccept, onReject, onCancel, curren
         <button
           onClick={() => onCancel?.(request.id)}
           className="flex items-center gap-1 px-3 py-1.5 bg-gray-500/20 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-500/30 transition-colors"
+          aria-label={t("cancelRequest")}
         >
           <X className="h-4 w-4" />
           {t("cancelRequest")}
@@ -541,18 +532,18 @@ function FriendRequestCard({ request, type, onAccept, onReject, onCancel, curren
 
 function FriendCard({ friend, onRemove, t }: { friend: UserProfile; onRemove: (id: string) => void; t: (key: string) => string }) {
   return (
-    <div className="p-4 bg-white/30 rounded-xl flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
+    <div className="p-4 bg-white/30 rounded-xl flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-[var(--gradient-mint)] to-[var(--gradient-lav)] flex items-center justify-center text-lg">
           {friend.avatar_url || friend.display_name?.[0] || "?"}
         </div>
-        <div>
-          <p className="font-medium text-foreground">{friend.display_name || friend.username}</p>
-          <p className="text-sm text-muted-foreground">@{friend.username}</p>
+        <div className="min-w-0">
+          <p className="font-medium text-foreground truncate">{friend.display_name || friend.username}</p>
+          <p className="text-sm text-muted-foreground truncate">@{friend.username}</p>
         </div>
       </div>
       
-      <div className="flex gap-2">
+      <div className="flex gap-2 shrink-0">
         <Link
           to="/messages"
           className="flex items-center gap-1 px-3 py-1.5 bg-blue-500/20 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-500/30 transition-colors"

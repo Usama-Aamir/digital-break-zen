@@ -78,6 +78,28 @@ export function isProfileComplete(profile: Profile | null): boolean {
   return profile.onboarding_completed === true && !!profile.display_name;
 }
 
+export async function getProfileById(userId: string): Promise<Partial<Profile> | null> {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, display_name, username, avatar_url, role_label")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) {
+      if (error.code !== 'PGRST116') {
+        console.error("[profiles] Error fetching profile by id:", error);
+      }
+      return null;
+    }
+
+    return data;
+  } catch (e) {
+    console.error("[profiles] Error fetching profile by id:", e);
+    return null;
+  }
+}
+
 export function getDisplayName(
   profile: Profile | null,
   userEmail: string | null

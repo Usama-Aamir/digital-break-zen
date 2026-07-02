@@ -198,3 +198,14 @@
 @utility animate-float-soft { animation: float-soft 4s ease-in-out infinite; }
 @utility animate-pop-out { animation: pop-out 0.4s ease-out forwards; }
 @utility animate-ripple { animation: ripple 0.6s ease-out forwards; }
+
+@utility safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
