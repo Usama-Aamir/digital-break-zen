@@ -588,7 +588,7 @@ export async function getTopUsersByXP(limit = 10): Promise<{ users: AdminTopUser
       .limit(limit);
 
     if (xpError || !xpRows || xpRows.length === 0) {
-      return { users, error: xpError?.message || null };
+      return { users, error: xpError ? 'Could not load top users right now.' : null };
     }
 
     const userIds = xpRows.map((row) => row.user_id);
@@ -640,7 +640,7 @@ export async function getTopWatercoolerPosts(limit = 10): Promise<{ posts: Admin
       .limit(limit);
 
     if (postError || !postRows || postRows.length === 0) {
-      return { posts, error: postError?.message || null };
+      return { posts, error: postError ? 'Could not load top posts right now.' : null };
     }
 
     const postIds = postRows.map((p) => p.id);

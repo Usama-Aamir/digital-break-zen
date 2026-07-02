@@ -75,13 +75,13 @@ export async function createNotification(
 
     if (error) {
       console.warn('Failed to create notification:', error.message);
-      return { notification: null, error: error.message };
+      return { notification: null, error: 'Could not create notification. Please try again.' };
     }
 
     return { notification: data as Notification, error: null };
   } catch (err) {
     console.warn('Error creating notification:', err);
-    return { notification: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { notification: null, error: 'Could not create notification. Please try again.' };
   }
 }
 
@@ -101,7 +101,7 @@ export async function getNotifications(
 
     if (error) {
       console.warn('Failed to get notifications:', error.message);
-      return { notifications: [], error: error.message };
+      return { notifications: [], error: 'Could not load notifications. Please try again.' };
     }
 
     const notifications = (data || []) as Notification[];
@@ -128,7 +128,7 @@ export async function getNotifications(
     return { notifications, error: null };
   } catch (err) {
     console.warn('Error getting notifications:', err);
-    return { notifications: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { notifications: [], error: 'Could not load notifications. Please try again.' };
   }
 }
 
@@ -146,13 +146,13 @@ export async function getUnreadNotificationCount(
 
     if (error) {
       console.warn('Failed to get unread notification count:', error.message);
-      return { count: 0, error: error.message };
+      return { count: 0, error: 'Could not load notification count. Please try again.' };
     }
 
     return { count: count || 0, error: null };
   } catch (err) {
     console.warn('Error getting unread notification count:', err);
-    return { count: 0, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { count: 0, error: 'Could not load notification count. Please try again.' };
   }
 }
 
@@ -169,13 +169,13 @@ export async function markNotificationRead(
 
     if (error) {
       console.warn('Failed to mark notification read:', error.message);
-      return { success: false, error: error.message };
+      return { success: false, error: 'Could not update notification. Please try again.' };
     }
 
     return { success: true, error: null };
   } catch (err) {
     console.warn('Error marking notification read:', err);
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { success: false, error: 'Could not update notification. Please try again.' };
   }
 }
 
@@ -193,13 +193,13 @@ export async function markAllNotificationsRead(
 
     if (error) {
       console.warn('Failed to mark all notifications read:', error.message);
-      return { success: false, error: error.message };
+      return { success: false, error: 'Could not update notifications. Please try again.' };
     }
 
     return { success: true, error: null };
   } catch (err) {
     console.warn('Error marking all notifications read:', err);
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { success: false, error: 'Could not update notifications. Please try again.' };
   }
 }
 
@@ -216,13 +216,13 @@ export async function deleteNotification(
 
     if (error) {
       console.warn('Failed to delete notification:', error.message);
-      return { success: false, error: error.message };
+      return { success: false, error: 'Could not delete notification. Please try again.' };
     }
 
     return { success: true, error: null };
   } catch (err) {
     console.warn('Error deleting notification:', err);
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { success: false, error: 'Could not delete notification. Please try again.' };
   }
 }
 

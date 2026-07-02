@@ -58,13 +58,13 @@ export async function trackUserActivity(input: UserActivityInput): Promise<{ err
     
     if (error) {
       console.warn('Failed to track user activity:', error.message);
-      return { error: error.message };
+      return { error: 'Could not save activity. Please try again.' };
     }
     
     return { error: null };
   } catch (err) {
     console.warn('Error tracking user activity:', err);
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+    return { error: 'Could not save activity. Please try again.' };
   }
 }
 
@@ -84,7 +84,7 @@ export async function getUserActivitySummary(userId: string): Promise<{ summary:
     
     if (error) {
       console.warn('Failed to get user activity summary:', error.message);
-      return { summary: null, error: error.message };
+      return { summary: null, error: 'Could not load activity summary. Please try again.' };
     }
     
     if (!activities || activities.length === 0) {
@@ -111,7 +111,7 @@ export async function getUserActivitySummary(userId: string): Promise<{ summary:
     };
   } catch (err) {
     console.warn('Error getting user activity summary:', err);
-    return { summary: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { summary: null, error: 'Could not load activity summary. Please try again.' };
   }
 }
 
@@ -128,13 +128,13 @@ export async function getRecentUserActivity(userId: string, limit: number = 10):
     
     if (error) {
       console.warn('Failed to get recent user activity:', error.message);
-      return { activities: [], error: error.message };
+      return { activities: [], error: 'Could not load recent activity. Please try again.' };
     }
     
     return { activities: data || [], error: null };
   } catch (err) {
     console.warn('Error getting recent user activity:', err);
-    return { activities: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { activities: [], error: 'Could not load recent activity. Please try again.' };
   }
 }
 
@@ -154,7 +154,7 @@ export async function getWeeklyMoodSummary(userId: string): Promise<{ summary: M
     
     if (error) {
       console.warn('Failed to get weekly mood summary:', error.message);
-      return { summary: null, error: error.message };
+      return { summary: null, error: 'Could not load mood summary. Please try again.' };
     }
     
     if (!activities || activities.length === 0) {
@@ -181,7 +181,7 @@ export async function getWeeklyMoodSummary(userId: string): Promise<{ summary: M
     return { summary, error: null };
   } catch (err) {
     console.warn('Error getting weekly mood summary:', err);
-    return { summary: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { summary: null, error: 'Could not load mood summary. Please try again.' };
   }
 }
 
@@ -327,6 +327,6 @@ export async function getUserContributionSummary(userId: string): Promise<{ summ
     };
   } catch (err) {
     console.warn('Error getting user contribution summary:', err);
-    return { summary: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { summary: null, error: 'Could not load contribution summary. Please try again.' };
   }
 }

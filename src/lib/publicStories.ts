@@ -31,7 +31,7 @@ export async function getApprovedCommunityStories(): Promise<{ stories: PublicSt
 
     if (error) {
       console.error("Error loading approved stories:", error);
-      return { stories: [], error: error.message };
+      return { stories: [], error: 'Could not load community stories. Please try again.' };
     }
 
     return { stories: data || [], error: null };

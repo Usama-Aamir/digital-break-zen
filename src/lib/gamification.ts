@@ -83,22 +83,22 @@ export interface LeaderboardEntry {
 export async function getUserXP(userId: string): Promise<{ userXP: UserXP | null; error: string | null }> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
+
     const { data, error } = await supabase
       .from('user_xp')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
-    
+
     if (error) {
       console.warn('Failed to get user XP:', error.message);
-      return { userXP: null, error: error.message };
+      return { userXP: null, error: 'Could not load rewards right now.' };
     }
-    
+
     return { userXP: data, error: null };
   } catch (err) {
     console.warn('Error getting user XP:', err);
-    return { userXP: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { userXP: null, error: 'Could not load rewards right now.' };
   }
 }
 
@@ -106,18 +106,18 @@ export async function getUserXP(userId: string): Promise<{ userXP: UserXP | null
 export async function ensureUserXP(userId: string): Promise<{ userXP: UserXP | null; error: string | null }> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
+
     // First try to get existing record
     const { data: existing, error: getError } = await supabase
       .from('user_xp')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
-    
+
     if (existing) {
       return { userXP: existing, error: null };
     }
-    
+
     // Create new record
     const { data, error } = await supabase
       .from('user_xp')
@@ -131,16 +131,16 @@ export async function ensureUserXP(userId: string): Promise<{ userXP: UserXP | n
       })
       .select()
       .maybeSingle();
-    
+
     if (error) {
       console.warn('Failed to create user XP:', error.message);
-      return { userXP: null, error: error.message };
+      return { userXP: null, error: 'Could not update XP right now.' };
     }
-    
+
     return { userXP: data, error: null };
   } catch (err) {
     console.warn('Error ensuring user XP:', err);
-    return { userXP: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { userXP: null, error: 'Could not update XP right now.' };
   }
 }
 
@@ -155,10 +155,10 @@ export function updateStreak(existingUserXP: UserXP, today: Date = new Date()): 
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split('T')[0];
-  
+
   let currentStreak = existingUserXP.current_streak;
   let longestStreak = existingUserXP.longest_streak;
-  
+
   if (existingUserXP.last_activity_date === yesterdayStr) {
     // Activity yesterday, continue streak
     currentStreak += 1;
@@ -169,11 +169,11 @@ export function updateStreak(existingUserXP: UserXP, today: Date = new Date()): 
     // Streak broken or first activity
     currentStreak = 1;
   }
-  
+
   if (currentStreak > longestStreak) {
     longestStreak = currentStreak;
   }
-  
+
   return {
     current_streak: currentStreak,
     longest_streak: longestStreak,
@@ -191,13 +191,13 @@ export async function awardXP(
 ): Promise<{ userXP: UserXP | null; error: string | null }> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
+
     // Get XP amount
     const xpAmount = XP_AMOUNTS[eventType] || 0;
     if (xpAmount === 0) {
       return { userXP: null, error: 'Invalid event type or no XP for this event' };
     }
-    
+
     // Check daily cap for messages
     if (eventType === 'message_sent') {
       const today = new Date().toISOString().split('T')[0];
@@ -207,40 +207,40 @@ export async function awardXP(
         .eq('user_id', userId)
         .eq('event_type', 'message_sent')
         .gte('created_at', `${today}T00:00:00.000Z`);
-      
+
       const todayMessageXP = todayEvents?.reduce((sum, e) => sum + e.xp_amount, 0) || 0;
       if (todayMessageXP >= MESSAGE_XP_DAILY_CAP) {
         return { userXP: null, error: null }; // Cap reached, no error but no XP
       }
     }
-    
+
     // Ensure user XP record exists
     const { userXP: existingUserXP, error: ensureError } = await ensureUserXP(userId);
     if (ensureError || !existingUserXP) {
-      return { userXP: null, error: ensureError || 'Failed to ensure user XP' };
+      return { userXP: null, error: ensureError || 'Could not update XP right now.' };
     }
-    
+
     // Check weekly reset
     const now = new Date();
     const weeklyResetAt = new Date(existingUserXP.weekly_reset_at);
     const daysSinceReset = (now.getTime() - weeklyResetAt.getTime()) / (1000 * 60 * 60 * 24);
-    
+
     let weeklyXp = existingUserXP.weekly_xp;
     let weeklyResetAtValue = existingUserXP.weekly_reset_at;
-    
+
     if (daysSinceReset >= 7) {
       weeklyXp = 0;
       weeklyResetAtValue = now.toISOString();
     }
-    
+
     // Update streak
     const streakUpdate = updateStreak(existingUserXP);
-    
+
     // Calculate new totals
     const newTotalXp = existingUserXP.total_xp + xpAmount;
     const newWeeklyXp = weeklyXp + xpAmount;
     const newLevel = calculateLevel(newTotalXp);
-    
+
     // Update user XP
     const { data: updatedUserXP, error: updateError } = await supabase
       .from('user_xp')
@@ -257,12 +257,12 @@ export async function awardXP(
       .eq('user_id', userId)
       .select()
       .maybeSingle();
-    
+
     if (updateError) {
       console.warn('Failed to update user XP:', updateError.message);
-      return { userXP: null, error: updateError.message };
+      return { userXP: null, error: 'Could not update XP right now.' };
     }
-    
+
     // Create XP event
     const { error: eventError } = await supabase
       .from('xp_events')
@@ -274,19 +274,19 @@ export async function awardXP(
         source_table: sourceTable || null,
         metadata: metadata || {},
       });
-    
+
     if (eventError) {
       console.warn('Failed to create XP event:', eventError.message);
       // Continue anyway, XP was awarded
     }
-    
+
     // Check and award badges
     await checkAndAwardBadges(userId);
-    
+
     return { userXP: updatedUserXP, error: null };
   } catch (err) {
     console.warn('Error awarding XP:', err);
-    return { userXP: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { userXP: null, error: 'Could not update XP right now.' };
   }
 }
 
@@ -294,21 +294,21 @@ export async function awardXP(
 export async function getBadgeDefinitions(): Promise<{ badges: Badge[]; error: string | null }> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
+
     const { data, error } = await supabase
       .from('badges')
       .select('*')
       .order('category');
-    
+
     if (error) {
       console.warn('Failed to get badge definitions:', error.message);
-      return { badges: [], error: error.message };
+      return { badges: [], error: 'Could not load badges right now.' };
     }
-    
+
     return { badges: data || [], error: null };
   } catch (err) {
     console.warn('Error getting badge definitions:', err);
-    return { badges: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { badges: [], error: 'Could not load badges right now.' };
   }
 }
 
@@ -316,27 +316,27 @@ export async function getBadgeDefinitions(): Promise<{ badges: Badge[]; error: s
 export async function getUserBadges(userId: string): Promise<{ userBadges: UserBadge[]; error: string | null }> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
+
     const { data, error } = await supabase
       .from('user_badges')
       .select('*, badges(*)')
       .eq('user_id', userId)
       .order('earned_at', { ascending: false });
-    
+
     if (error) {
       console.warn('Failed to get user badges:', error.message);
-      return { userBadges: [], error: error.message };
+      return { userBadges: [], error: 'Could not load badges right now.' };
     }
-    
+
     const userBadges = data?.map(ub => ({
       ...ub,
       badge: ub.badges,
     })) || [];
-    
+
     return { userBadges, error: null };
   } catch (err) {
     console.warn('Error getting user badges:', err);
-    return { userBadges: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { userBadges: [], error: 'Could not load badges right now.' };
   }
 }
 
@@ -344,42 +344,42 @@ export async function getUserBadges(userId: string): Promise<{ userBadges: UserB
 export async function checkAndAwardBadges(userId: string): Promise<{ awardedBadges: Badge[]; error: string | null }> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
+
     // Get user XP
     const { userXP, error: xpError } = await getUserXP(userId);
     if (xpError || !userXP) {
-      return { awardedBadges: [], error: xpError || 'Failed to get user XP' };
+      return { awardedBadges: [], error: xpError || 'Could not load rewards right now.' };
     }
-    
+
     // Get user's existing badges
     const { userBadges, error: badgesError } = await getUserBadges(userId);
     if (badgesError) {
       return { awardedBadges: [], error: badgesError };
     }
-    
+
     const earnedBadgeKeys = new Set(userBadges.map(ub => ub.badge.badge_key));
     const awardedBadges: Badge[] = [];
-    
+
     // Get all badge definitions
     const { badges } = await getBadgeDefinitions();
-    
+
     // Get user's XP events for counting
     const { data: xpEvents } = await supabase
       .from('xp_events')
       .select('event_type')
       .eq('user_id', userId);
-    
+
     const eventCounts = xpEvents?.reduce((acc, e) => {
       acc[e.event_type] = (acc[e.event_type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>) || {};
-    
+
     // Check each badge
     for (const badge of badges) {
       if (earnedBadgeKeys.has(badge.badge_key)) continue;
-      
+
       let shouldAward = false;
-      
+
       switch (badge.badge_key) {
         case 'first_break':
           shouldAward = eventCounts['break_completed'] > 0 || eventCounts['mood_check_in'] > 0;
@@ -412,7 +412,7 @@ export async function checkAndAwardBadges(userId: string): Promise<{ awardedBadg
           shouldAward = userXP.level >= 10;
           break;
       }
-      
+
       if (shouldAward) {
         // Award badge
         const { error: insertError } = await supabase
@@ -421,10 +421,10 @@ export async function checkAndAwardBadges(userId: string): Promise<{ awardedBadg
             user_id: userId,
             badge_id: badge.id,
           });
-        
+
         if (!insertError) {
           awardedBadges.push(badge);
-          
+
           // Create notification for badge unlock
           createNotification({
             user_id: userId,
@@ -441,18 +441,18 @@ export async function checkAndAwardBadges(userId: string): Promise<{ awardedBadg
         }
       }
     }
-    
+
     // Award badge XP rewards
     for (const badge of awardedBadges) {
       if (badge.xp_reward > 0) {
         await awardXP(userId, 'badge_awarded', badge.id, 'badges', { badge_key: badge.badge_key });
       }
     }
-    
+
     return { awardedBadges, error: null };
   } catch (err) {
     console.warn('Error checking and awarding badges:', err);
-    return { awardedBadges: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { awardedBadges: [], error: 'This action could not be completed.' };
   }
 }
 
@@ -460,23 +460,23 @@ export async function checkAndAwardBadges(userId: string): Promise<{ awardedBadg
 export async function getRecentXPEvents(userId: string, limit: number = 20): Promise<{ events: XPEvent[]; error: string | null }> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
+
     const { data, error } = await supabase
       .from('xp_events')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);
-    
+
     if (error) {
       console.warn('Failed to get recent XP events:', error.message);
-      return { events: [], error: error.message };
+      return { events: [], error: 'Could not load rewards right now.' };
     }
-    
+
     return { events: data || [], error: null };
   } catch (err) {
     console.warn('Error getting recent XP events:', err);
-    return { events: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { events: [], error: 'Could not load rewards right now.' };
   }
 }
 
@@ -484,32 +484,32 @@ export async function getRecentXPEvents(userId: string, limit: number = 20): Pro
 export async function getLeaderboard(type: 'weekly' | 'all_time' = 'weekly', limit: number = 20): Promise<{ leaderboard: LeaderboardEntry[]; error: string | null }> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
+
     // Get user XP records
     const { data: userXPData, error: xpError } = await supabase
       .from('user_xp')
       .select('user_id, total_xp, weekly_xp, level')
       .order(type === 'weekly' ? 'weekly_xp' : 'total_xp', { ascending: false })
       .limit(limit);
-    
+
     if (xpError) {
       console.warn('Failed to get leaderboard:', xpError.message);
-      return { leaderboard: [], error: xpError.message };
+      return { leaderboard: [], error: 'Could not load leaderboard right now.' };
     }
-    
+
     if (!userXPData || userXPData.length === 0) {
       return { leaderboard: [], error: null };
     }
-    
+
     // Get profiles for leaderboard entries (two-step query)
     const userIds = userXPData.map(u => u.user_id);
     const { data: profiles } = await supabase
       .from('profiles')
       .select('id, display_name, username, avatar_url')
       .in('id', userIds);
-    
+
     const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-    
+
     const leaderboard: LeaderboardEntry[] = userXPData.map(u => ({
       user_id: u.user_id,
       total_xp: u.total_xp,
@@ -519,11 +519,11 @@ export async function getLeaderboard(type: 'weekly' | 'all_time' = 'weekly', lim
       username: profileMap.get(u.user_id)?.username || null,
       avatar_url: profileMap.get(u.user_id)?.avatar_url || null,
     }));
-    
+
     return { leaderboard, error: null };
   } catch (err) {
     console.warn('Error getting leaderboard:', err);
-    return { leaderboard: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { leaderboard: [], error: 'Could not load leaderboard right now.' };
   }
 }
 
@@ -531,17 +531,17 @@ export async function getLeaderboard(type: 'weekly' | 'all_time' = 'weekly', lim
 export async function getFriendLeaderboard(userId: string, type: 'weekly' | 'all_time' = 'weekly', limit: number = 20): Promise<{ leaderboard: LeaderboardEntry[]; error: string | null }> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
+
     // Get user's friends
     const { data: friendships } = await supabase
       .from('friendships')
       .select('friend_id')
       .eq('user_id', userId)
       .eq('status', 'accepted');
-    
+
     const friendIds = friendships?.map(f => f.friend_id) || [];
     friendIds.push(userId); // Include user themselves
-    
+
     // Get user XP records for friends
     const { data: userXPData, error: xpError } = await supabase
       .from('user_xp')
@@ -549,25 +549,25 @@ export async function getFriendLeaderboard(userId: string, type: 'weekly' | 'all
       .in('user_id', friendIds)
       .order(type === 'weekly' ? 'weekly_xp' : 'total_xp', { ascending: false })
       .limit(limit);
-    
+
     if (xpError) {
       console.warn('Failed to get friend leaderboard:', xpError.message);
-      return { leaderboard: [], error: xpError.message };
+      return { leaderboard: [], error: 'Could not load leaderboard right now.' };
     }
-    
+
     if (!userXPData || userXPData.length === 0) {
       return { leaderboard: [], error: null };
     }
-    
+
     // Get profiles for leaderboard entries
     const userIds = userXPData.map(u => u.user_id);
     const { data: profiles } = await supabase
       .from('profiles')
       .select('id, display_name, username, avatar_url')
       .in('id', userIds);
-    
+
     const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-    
+
     const leaderboard: LeaderboardEntry[] = userXPData.map(u => ({
       user_id: u.user_id,
       total_xp: u.total_xp,
@@ -577,10 +577,10 @@ export async function getFriendLeaderboard(userId: string, type: 'weekly' | 'all
       username: profileMap.get(u.user_id)?.username || null,
       avatar_url: profileMap.get(u.user_id)?.avatar_url || null,
     }));
-    
+
     return { leaderboard, error: null };
   } catch (err) {
     console.warn('Error getting friend leaderboard:', err);
-    return { leaderboard: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { leaderboard: [], error: 'Could not load leaderboard right now.' };
   }
 }
