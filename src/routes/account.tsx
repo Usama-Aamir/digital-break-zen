@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useIsAdmin } from "@/lib/useIsAdmin";
 import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
 import { getPendingGameInviteCount } from "@/lib/multiplayerGames";
+import { InstallAppPrompt } from "@/components/InstallAppPrompt";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/account")({
@@ -424,6 +425,22 @@ function AccountPage() {
           >
             {t("openWatercooler")} →
           </Link>
+        </div>
+
+        {/* Mobile App Card */}
+        <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-sky-100/30 to-indigo-100/30 border-sky-200/30 mb-6">
+          <h3 className="text-lg font-display font-bold text-foreground mb-2">
+            Mobile App
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            Install The Digital Breakroom on your phone for quick access.
+          </p>
+          <InstallAppPrompt />
+          <div className="text-sm text-muted-foreground space-y-2">
+            <p className="font-medium text-foreground">How to install:</p>
+            <p><span className="font-medium">Android:</span> Tap "Install app" above or use your browser menu → Add to Home Screen.</p>
+            <p><span className="font-medium">iPhone:</span> Tap the Share button, then "Add to Home Screen".</p>
+          </div>
         </div>
 
         {/* Privacy & Safety Card */}

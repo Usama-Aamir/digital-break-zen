@@ -16,6 +16,7 @@ import { WelcomeGate } from "../components/WelcomeGate";
 import { LanguageProvider } from "../lib/language";
 import { LanguageGate } from "../components/LanguageGate";
 import { AuthProvider } from "../lib/auth";
+import { registerServiceWorker } from "../lib/registerServiceWorker";
 
 function NotFoundComponent() {
   return (
@@ -81,9 +82,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "The Digital Breakroom — A cozy mini-game hub for work breaks" },
       { name: "description", content: "A calming hub of micro-games, breathing exercises, and mood check-ins for short corporate breaks." },
+      { name: "theme-color", content: "#7dd3fc" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "Breakroom" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { property: "og:title", content: "The Digital Breakroom — A cozy mini-game hub for work breaks" },
       { property: "og:description", content: "A calming hub of micro-games, breathing exercises, and mood check-ins for short corporate breaks." },
       { property: "og:type", content: "website" },
@@ -105,6 +111,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap",
       },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icons/icon.svg" },
     ],
   }),
   shellComponent: RootShell,
@@ -129,6 +137,10 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

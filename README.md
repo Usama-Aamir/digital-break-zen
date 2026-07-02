@@ -62,8 +62,13 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 src/
   components/    Reusable UI components
-  lib/           Supabase utilities, auth, i18n, gamification, etc.
+  lib/           Supabase utilities, auth, i18n, gamification, SW registration, etc.
   routes/        Page-level route components (TanStack Router)
+public/
+  manifest.webmanifest  PWA manifest
+  sw.js                 Service worker
+  offline.html          Offline fallback page
+  icons/                App icons (SVG)
 docs/            Demo and launch documentation
 tests/e2e/       Playwright E2E tests
 ```
@@ -83,3 +88,14 @@ tests/e2e/       Playwright E2E tests
 - 7-language support (English, Urdu, Arabic, Spanish, French, German, Hindi)
 - Mobile-responsive
 - Privacy-hardened (email masking, char limits, cooldowns, confirmation dialogs)
+- PWA installable (Add to Home Screen on Android/iOS, offline fallback)
+
+## PWA / Mobile App
+
+The app is a Progressive Web App (PWA) — installable on Android, iOS, and desktop browsers.
+
+- **Install:** Visit the app in Chrome/Edge → tap "Install" or use browser menu → Install app
+- **iOS:** Safari → Share button → Add to Home Screen
+- **Offline:** Service worker caches static assets and shows an offline page when the network is unavailable
+- **Safe areas:** Notch and home indicator padding active in standalone mode
+- **Future Android:** Ready for Capacitor wrapper (see `docs/TECHNICAL_NOTES.md` for steps)

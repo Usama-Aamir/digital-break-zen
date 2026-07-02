@@ -113,3 +113,46 @@ npx tsc --noEmit
 cd "C:\Users\Ghulam Muhammad\Downloads\digital-break-zen-git"
 npx vite preview
 ```
+
+## PWA (Progressive Web App)
+
+The app is installable as a PWA on Android, iOS, and desktop browsers.
+
+### PWA Files
+- `public/manifest.webmanifest` — App manifest with name, icons, display mode
+- `public/sw.js` — Service worker (caches static assets, offline fallback)
+- `public/offline.html` — Offline fallback page
+- `public/icons/` — App icons (SVG format: icon.svg, icon-192.svg, maskable-512.svg)
+- `src/lib/registerServiceWorker.ts` — SW registration (browser-only, silent failure)
+- `src/components/InstallAppPrompt.tsx` — Install prompt component (beforeinstallprompt)
+
+### Service Worker Behavior
+- Caches static assets and offline page only
+- Network-first for navigation requests
+- Never caches Supabase API calls, auth, or realtime (ws/wss)
+- Silent registration failure — SW is a progressive enhancement
+
+### PWA Meta Tags
+Set in `src/routes/__root.tsx` head():
+- `manifest` link
+- `theme-color` (#7dd3fc)
+- `apple-mobile-web-app-capable` / `apple-mobile-web-app-title`
+- `mobile-web-app-capable`
+- `viewport-fit=cover` for safe areas
+
+### Safe Area Support
+CSS in `src/styles.css` includes `@media (display-mode: standalone)` for safe-area insets (notch, home indicator).
+
+### Install Prompt
+- `InstallAppPrompt` component shows on account page when `beforeinstallprompt` fires
+- Dismissal stored in localStorage (`digital-breakroom-install-dismissed`)
+- iOS instructions shown (Share → Add to Home Screen)
+
+### Future Capacitor Android Path
+1. Install `@capacitor/core` and `@capacitor/cli`
+2. `npx cap init "The Digital Breakroom" "com.breakroom.app"`
+3. Set `webDir` to `.output/public` in `capacitor.config.ts`
+4. `npx cap add android`
+5. `npm run build && npx cap copy android`
+6. Open in Android Studio: `npx cap open android`
+7. The PWA manifest and service worker will work inside the Capacitor WebView

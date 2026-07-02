@@ -92,3 +92,20 @@
 - [ ] Error messages are user-friendly and workplace-safe
 - [ ] Language switching works
 - [ ] No placeholder text visible in production
+
+## PWA / Mobile App
+- [ ] `manifest.webmanifest` is accessible at `/manifest.webmanifest`
+- [ ] Manifest has name, short_name, start_url, display: standalone
+- [ ] App icons exist in `public/icons/` (SVG format)
+- [ ] `theme-color` meta tag is set in HTML head
+- [ ] `apple-mobile-web-app-capable` meta tag is set
+- [ ] Service worker (`/sw.js`) is accessible and registers without errors
+- [ ] Offline page (`/offline.html`) loads when network is unavailable
+- [ ] Service worker does not cache Supabase API calls or auth
+- [ ] Install prompt component exists on account page
+- [ ] Account page shows Mobile App card with install instructions
+- [ ] Safe-area CSS active in standalone mode (notch, home indicator)
+- [ ] All key routes load at 390x844 viewport without horizontal scroll
+- [ ] App is installable on Chrome/Edge (Add to Home Screen works)
+- [ ] App works on iOS Safari (Share → Add to Home Screen)
+- [ ] Future Capacitor Android path documented in TECHNICAL_NOTES.md
