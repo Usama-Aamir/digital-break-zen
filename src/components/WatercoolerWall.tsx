@@ -126,6 +126,7 @@ export function WatercoolerWall() {
   const [commentText, setCommentText] = useState<Record<string, string>>({});
   const [isPostingComment, setIsPostingComment] = useState(false);
   const [trendingPosts, setTrendingPosts] = useState<Post[]>([]);
+  const [postCooldown, setPostCooldown] = useState(false);
 
   // Load posts from Supabase or localStorage on mount
   useEffect(() => {
@@ -262,6 +263,11 @@ export function WatercoolerWall() {
   const handlePost = async () => {
     if (!text.trim() && !mediaFile) return;
 
+    if (postCooldown) {
+      setError("Please wait a few seconds before posting again.");
+      return;
+    }
+
     // If not logged in, show sign-in CTA and don't clear text
     if (!user) {
       setError(t("signInToPost"));
@@ -345,6 +351,10 @@ export function WatercoolerWall() {
         setText("");
         setCategory("Random Vibes");
         removeMedia();
+
+        // Start cooldown to prevent spam
+        setPostCooldown(true);
+        setTimeout(() => setPostCooldown(false), 10000);
       } catch (e) {
         console.error("[watercooler] post failed with exception", e);
         setError("Could not publish your post. Your typed text is still safe.");
@@ -370,6 +380,10 @@ export function WatercoolerWall() {
       setText("");
       setCategory("Random Vibes");
       removeMedia();
+
+      // Start cooldown for local posts too
+      setPostCooldown(true);
+      setTimeout(() => setPostCooldown(false), 10000);
     }
   };
 
@@ -593,7 +607,7 @@ export function WatercoolerWall() {
     return new Date(timestamp).toLocaleDateString();
   };
 
-  const isPostDisabled = !text.trim() && !mediaFile;
+  const isPostDisabled = (!text.trim() && !mediaFile) || postCooldown;
 
   return (
     <div className="glass-card rounded-3xl p-6">
@@ -683,7 +697,7 @@ export function WatercoolerWall() {
                 {mediaType === "image" ? (
                   <img
                     src={mediaPreview}
-                    alt="Preview"
+                    alt="Media preview for watercooler post"
                     className="w-full max-h-[200px] object-contain"
                   />
                 ) : (
@@ -754,7 +768,7 @@ export function WatercoolerWall() {
                 disabled={isPostDisabled || isPosting}
                 className="px-5 py-2 bg-gradient-to-r from-pink-300 to-cyan-300 text-slate-700 rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
-                {isPosting ? "Posting..." : t("postToWatercooler")}
+                {isPosting ? "Posting..." : postCooldown ? "Cooling down..." : t("postToWatercooler")}
               </button>
             </div>
 
@@ -830,7 +844,7 @@ export function WatercoolerWall() {
                   {post.mediaType === "image" ? (
                     <img
                       src={post.mediaUrl}
-                      alt="Post media"
+                      alt={`Image from ${post.category || "watercooler"} post`}
                       className="w-full max-h-[300px] object-contain"
                     />
                   ) : (
@@ -942,15 +956,19 @@ export function WatercoolerWall() {
                   )}
 
                   {/* Comment Input */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
                     <input
                       type="text"
                       value={commentText[post.id] || ""}
                       onChange={(e) => setCommentText(prev => ({ ...prev, [post.id]: e.target.value }))}
                       placeholder={t("writeReply")}
+                      maxLength={200}
                       className="flex-1 px-3 py-2 bg-white/50 rounded-lg border border-white/30 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-400/50"
                       onKeyPress={(e) => e.key === "Enter" && handlePostComment(post.id)}
                     />
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                      {(commentText[post.id] || "").length}/200
+                    </span>
                     <button
                       onClick={() => handlePostComment(post.id)}
                       disabled={!commentText[post.id]?.trim() || isPostingComment}

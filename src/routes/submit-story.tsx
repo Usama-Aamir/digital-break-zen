@@ -271,9 +271,11 @@ function SubmitStoryPage() {
                 id="nickname"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
+                maxLength={50}
                 className="w-full px-4 py-3 rounded-xl bg-white/40 border border-white/30 backdrop-blur-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--gradient-mint)] transition-all"
                 placeholder="Your nickname"
               />
+              <span className="text-xs text-muted-foreground mt-1 block">{nickname.length}/50</span>
             </div>
 
             {/* Email */}
@@ -321,9 +323,11 @@ function SubmitStoryPage() {
                 value={storyIdea}
                 onChange={(e) => setStoryIdea(e.target.value)}
                 rows={6}
+                maxLength={2000}
                 className="w-full px-4 py-3 rounded-xl bg-white/40 border border-white/30 backdrop-blur-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--gradient-mint)] transition-all resize-none"
                 placeholder="Share your story idea..."
               />
+              <span className="text-xs text-muted-foreground mt-1 block">{storyIdea.length}/2000</span>
             </div>
 
             {/* Consent Checkbox */}
@@ -419,9 +423,11 @@ function SubmitStoryPage() {
                   id="draftTitle"
                   value={draftTitle}
                   onChange={(e) => setDraftTitle(e.target.value)}
+                  maxLength={100}
                   className="w-full px-4 py-3 rounded-xl bg-white/40 border border-white/30 backdrop-blur-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--gradient-mint)] transition-all"
                   placeholder="Your draft title"
                 />
+                <span className="text-xs text-muted-foreground mt-1 block">{draftTitle.length}/100</span>
               </div>
 
               {/* Draft Category */}
@@ -476,9 +482,11 @@ function SubmitStoryPage() {
                   value={draftBody}
                   onChange={(e) => setDraftBody(e.target.value)}
                   rows={12}
+                  maxLength={5000}
                   className="w-full px-4 py-3 rounded-xl bg-white/40 border border-white/30 backdrop-blur-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--gradient-mint)] transition-all resize-none"
                   placeholder="Write your full story here..."
                 />
+                <span className="text-xs text-muted-foreground mt-1 block">{draftBody.length}/5000</span>
               </div>
 
               {/* Anonymous Toggle */}

@@ -98,7 +98,7 @@ export async function createGameRoom(userId: string, gameType: string = 'tic_tac
     
     if (error) {
       console.warn('Failed to create game room:', error.message);
-      return { room: null, error: error.message };
+      return { room: null, error: 'Could not create game room. Please try again.' };
     }
     
     // Add host as first player with symbol X
@@ -113,13 +113,13 @@ export async function createGameRoom(userId: string, gameType: string = 'tic_tac
     
     if (playerError) {
       console.warn('Failed to add host as player:', playerError.message);
-      return { room: null, error: playerError.message };
+      return { room: null, error: 'Could not create game room. Please try again.' };
     }
     
     return { room: data, error: null };
   } catch (err) {
     console.warn('Error creating game room:', err);
-    return { room: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { room: null, error: 'Could not create game room. Please try again.' };
   }
 }
 
@@ -140,7 +140,7 @@ export async function joinGameRoom(roomCode: string, userId: string): Promise<{ 
     
     if (roomError) {
       console.warn('Failed to get game room:', roomError.message);
-      return { room: null, error: roomError.message };
+      return { room: null, error: 'Could not find game room. Please try again.' };
     }
     
     if (!room) {
@@ -162,7 +162,7 @@ export async function joinGameRoom(roomCode: string, userId: string): Promise<{ 
     
     if (existingPlayerError) {
       console.warn('Failed to check existing player:', existingPlayerError.message);
-      return { room: null, error: existingPlayerError.message };
+      return { room: null, error: 'Could not join game room. Please try again.' };
     }
     
     if (existingPlayer) {
@@ -179,7 +179,7 @@ export async function joinGameRoom(roomCode: string, userId: string): Promise<{ 
     
     if (playersError) {
       console.warn('Failed to get players:', playersError.message);
-      return { room: null, error: playersError.message };
+      return { room: null, error: 'Could not join game room. Please try again.' };
     }
     
     const joinedPlayers = players || [];
@@ -203,7 +203,7 @@ export async function joinGameRoom(roomCode: string, userId: string): Promise<{ 
     
     if (addPlayerError) {
       console.warn('Failed to add player:', addPlayerError.message);
-      return { room: null, error: addPlayerError.message };
+      return { room: null, error: 'Could not join game room. Please try again.' };
     }
     
     // If this makes 2 players, update room status to active
@@ -219,7 +219,7 @@ export async function joinGameRoom(roomCode: string, userId: string): Promise<{ 
       
       if (updateError) {
         console.warn('Failed to update room status:', updateError.message);
-        return { room: null, error: updateError.message };
+        return { room: null, error: 'Could not join game room. Please try again.' };
       }
       
       return { room: { ...room, status: 'active', current_turn_user_id: xPlayer?.user_id || userId }, error: null };
@@ -228,7 +228,7 @@ export async function joinGameRoom(roomCode: string, userId: string): Promise<{ 
     return { room, error: null };
   } catch (err) {
     console.warn('Error joining game room:', err);
-    return { room: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { room: null, error: 'Could not join game room. Please try again.' };
   }
 }
 
@@ -247,13 +247,13 @@ export async function getGameRoom(roomCode: string): Promise<{ room: GameRoom | 
     
     if (error) {
       console.warn('Failed to get game room:', error.message);
-      return { room: null, error: error.message };
+      return { room: null, error: 'Could not find game room. Please try again.' };
     }
     
     return { room: data, error: null };
   } catch (err) {
     console.warn('Error getting game room:', err);
-    return { room: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { room: null, error: 'Could not find game room. Please try again.' };
   }
 }
 
@@ -271,7 +271,7 @@ export async function getMyGameRooms(userId: string): Promise<{ rooms: GameRoom[
     
     if (hostedError) {
       console.warn('Failed to get hosted rooms:', hostedError.message);
-      return { rooms: [], error: hostedError.message };
+      return { rooms: [], error: 'Could not load game rooms. Please try again.' };
     }
     
     // Step B: Get player rows to find rooms user is in
@@ -283,7 +283,7 @@ export async function getMyGameRooms(userId: string): Promise<{ rooms: GameRoom[
     
     if (playerError) {
       console.warn('Failed to get player rows:', playerError.message);
-      return { rooms: [], error: playerError.message };
+      return { rooms: [], error: 'Could not load game rooms. Please try again.' };
     }
     
     // Step C: Fetch rooms by ids from player rows
@@ -299,7 +299,7 @@ export async function getMyGameRooms(userId: string): Promise<{ rooms: GameRoom[
       
       if (roomsError) {
         console.warn('Failed to get player rooms:', roomsError.message);
-        return { rooms: [], error: roomsError.message };
+        return { rooms: [], error: 'Could not load game rooms. Please try again.' };
       }
       
       playerRooms = roomsData || [];
@@ -328,7 +328,7 @@ export async function getMyGameRooms(userId: string): Promise<{ rooms: GameRoom[
     return { rooms: allRooms, error: null };
   } catch (err) {
     console.warn('Error getting game rooms:', err);
-    return { rooms: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { rooms: [], error: 'Could not load game rooms. Please try again.' };
   }
 }
 
@@ -345,13 +345,13 @@ export async function getRoomPlayers(roomId: string): Promise<{ players: GameRoo
     
     if (error) {
       console.warn('Failed to get room players:', error.message);
-      return { players: [], error: error.message };
+      return { players: [], error: 'Could not load players. Please try again.' };
     }
     
     return { players: data || [], error: null };
   } catch (err) {
     console.warn('Error getting room players:', err);
-    return { players: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { players: [], error: 'Could not load players. Please try again.' };
   }
 }
 
@@ -420,7 +420,7 @@ export async function inviteFriendToGame(roomId: string, friendId: string): Prom
       
       if (error) {
         console.warn('Failed to update invite:', error.message);
-        return { invite: null, error: error.message };
+        return { invite: null, error: 'Could not send game invite. Please try again.' };
       }
       
       return { invite: data, error: null };
@@ -440,7 +440,7 @@ export async function inviteFriendToGame(roomId: string, friendId: string): Prom
     
     if (error) {
       console.warn('Failed to invite friend:', error.message);
-      return { invite: null, error: error.message };
+      return { invite: null, error: 'Could not send game invite. Please try again.' };
     }
     
     // Create notification for invitee
@@ -470,7 +470,7 @@ export async function inviteFriendToGame(roomId: string, friendId: string): Prom
     return { invite: data, error: null };
   } catch (err) {
     console.warn('Error inviting friend:', err);
-    return { invite: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { invite: null, error: 'Could not send game invite. Please try again.' };
   }
 }
 
@@ -489,7 +489,7 @@ export async function getMyGameInvites(userId: string): Promise<{ invites: any[]
     
     if (invitesError) {
       console.warn('Failed to get game invites:', invitesError.message);
-      return { invites: [], error: invitesError.message };
+      return { invites: [], error: 'Could not load game invites. Please try again.' };
     }
     
     if (!invites || invites.length === 0) {
@@ -527,7 +527,7 @@ export async function getMyGameInvites(userId: string): Promise<{ invites: any[]
     return { invites: enrichedInvites, error: null };
   } catch (err) {
     console.warn('Error getting game invites:', err);
-    return { invites: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { invites: [], error: 'Could not load game invites. Please try again.' };
   }
 }
 
@@ -583,7 +583,7 @@ export async function respondToGameInvite(inviteId: string, status: 'accepted' |
     
     if (updateError) {
       console.warn('Failed to respond to invite:', updateError.message);
-      return { room: null, error: updateError.message };
+      return { room: null, error: 'Could not respond to invite. Please try again.' };
     }
     
     // Notify inviter of response
@@ -627,7 +627,7 @@ export async function respondToGameInvite(inviteId: string, status: 'accepted' |
     return { room: joinedRoom, error: null };
   } catch (err) {
     console.warn('Error responding to invite:', err);
-    return { room: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { room: null, error: 'Could not respond to invite. Please try again.' };
   }
 }
 
@@ -668,13 +668,13 @@ export async function cancelGameInvite(inviteId: string): Promise<{ error: strin
     
     if (updateError) {
       console.warn('Failed to cancel invite:', updateError.message);
-      return { error: updateError.message };
+      return { error: 'Could not cancel invite. Please try again.' };
     }
     
     return { error: null };
   } catch (err) {
     console.warn('Error cancelling invite:', err);
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+    return { error: 'Could not cancel invite. Please try again.' };
   }
 }
 
@@ -691,13 +691,13 @@ export async function getPendingGameInviteCount(userId: string): Promise<{ count
     
     if (error) {
       console.warn('Failed to get pending invite count:', error.message);
-      return { count: 0, error: error.message };
+      return { count: 0, error: null };
     }
     
     return { count: data?.length || 0, error: null };
   } catch (err) {
     console.warn('Error getting pending invite count:', err);
-    return { count: 0, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { count: 0, error: null };
   }
 }
 
@@ -736,7 +736,7 @@ export async function makeTicTacToeMove(roomId: string, userId: string, cellInde
     
     if (roomError) {
       console.warn('Failed to get room:', roomError.message);
-      return { room: null, error: roomError.message };
+      return { room: null, error: 'Could not make move. Please try again.' };
     }
     
     // Check if it's the user's turn
@@ -826,7 +826,7 @@ export async function makeTicTacToeMove(roomId: string, userId: string, cellInde
     
     if (updateError) {
       console.warn('Failed to update room:', updateError.message);
-      return { room: null, error: updateError.message };
+      return { room: null, error: 'Could not make move. Please try again.' };
     }
     
     // If game finished, save result
@@ -893,7 +893,7 @@ export async function makeTicTacToeMove(roomId: string, userId: string, cellInde
     return { room: updatedRoom, error: null };
   } catch (err) {
     console.warn('Error making move:', err);
-    return { room: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { room: null, error: 'Could not make move. Please try again.' };
   }
 }
 
@@ -929,7 +929,7 @@ export async function resetOrCancelRoom(roomId: string, userId: string): Promise
     
     if (roomError) {
       console.warn('Failed to get room:', roomError.message);
-      return { error: roomError.message };
+      return { error: 'Could not cancel room. Please try again.' };
     }
     
     if (!room) {
@@ -949,13 +949,13 @@ export async function resetOrCancelRoom(roomId: string, userId: string): Promise
     
     if (updateError) {
       console.warn('Failed to cancel room:', updateError.message);
-      return { error: updateError.message };
+      return { error: 'Could not cancel room. Please try again.' };
     }
     
     return { error: null };
   } catch (err) {
     console.warn('Error cancelling room:', err);
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+    return { error: 'Could not cancel room. Please try again.' };
   }
 }
 

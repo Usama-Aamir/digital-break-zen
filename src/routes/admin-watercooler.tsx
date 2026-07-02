@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
-import { isAdminEmail } from "@/lib/adminSubmissions";
+import { useIsAdmin } from "@/lib/useIsAdmin";
 import { getAllWatercoolerPostsForAdmin, updateWatercoolerPostStatus } from "@/lib/watercoolerPosts";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
@@ -19,7 +19,8 @@ export const Route = createFileRoute("/admin-watercooler")({
 
 function AdminWatercooler() {
   const { t } = useLanguage();
-  const { user, loading, isConfigured } = useAuth();
+  const { loading, isConfigured } = useAuth();
+  const { isAdmin, user } = useIsAdmin();
   const [posts, setPosts] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -27,8 +28,7 @@ function AdminWatercooler() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-
-  const isAdmin = user && isAdminEmail(user.email);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAdmin) {
@@ -333,12 +333,32 @@ function AdminWatercooler() {
                         {t("hidePost")}
                       </button>
                       <button
-                        onClick={() => handleUpdateStatus(post.id, "deleted")}
+                        onClick={() => setConfirmDelete(post.id)}
                         disabled={isUpdating}
                         className="px-4 py-2 bg-gradient-to-r from-red-400 to-pink-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] disabled:opacity-50"
                       >
                         {t("markDeleted")}
                       </button>
+                      {confirmDelete === post.id && (
+                        <span className="inline-flex items-center gap-2 text-sm">
+                          <span className="text-red-600 font-medium">Confirm?</span>
+                          <button
+                            onClick={() => {
+                              setConfirmDelete(null);
+                              handleUpdateStatus(post.id, "deleted");
+                            }}
+                            className="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-semibold hover:bg-red-600"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={() => setConfirmDelete(null)}
+                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-semibold hover:bg-gray-300"
+                          >
+                            No
+                          </button>
+                        </span>
+                      )}
                     </>
                   )}
                   {post.status === "hidden" && (
@@ -351,12 +371,32 @@ function AdminWatercooler() {
                         {t("unhidePost")}
                       </button>
                       <button
-                        onClick={() => handleUpdateStatus(post.id, "deleted")}
+                        onClick={() => setConfirmDelete(post.id)}
                         disabled={isUpdating}
                         className="px-4 py-2 bg-gradient-to-r from-red-400 to-pink-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] disabled:opacity-50"
                       >
                         {t("markDeleted")}
                       </button>
+                      {confirmDelete === post.id && (
+                        <span className="inline-flex items-center gap-2 text-sm">
+                          <span className="text-red-600 font-medium">Confirm?</span>
+                          <button
+                            onClick={() => {
+                              setConfirmDelete(null);
+                              handleUpdateStatus(post.id, "deleted");
+                            }}
+                            className="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-semibold hover:bg-red-600"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={() => setConfirmDelete(null)}
+                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-semibold hover:bg-gray-300"
+                          >
+                            No
+                          </button>
+                        </span>
+                      )}
                     </>
                   )}
                   {post.status === "deleted" && (

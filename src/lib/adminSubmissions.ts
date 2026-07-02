@@ -50,7 +50,7 @@ export async function getAllStorySubmissions(
 
     if (error) {
       console.error("Error loading submissions:", error);
-      return { submissions: [], error: error.message };
+      return { submissions: [], error: "Could not load moderation items. Please try again." };
     }
 
     return { submissions: data || [], error: null };
@@ -80,7 +80,7 @@ export async function updateStorySubmissionStatus(
 
     if (fetchError || !submission) {
       console.error("Error fetching submission:", fetchError);
-      return { error: fetchError?.message || "Submission not found" };
+      return { error: "Could not find this submission. It may have been removed." };
     }
 
     const { error } = await supabase
@@ -93,7 +93,7 @@ export async function updateStorySubmissionStatus(
 
     if (error) {
       console.error("Error updating submission status:", error);
-      return { error: error.message };
+      return { error: "Could not update story status. Please try again." };
     }
 
     // Notify submitter of approval/rejection

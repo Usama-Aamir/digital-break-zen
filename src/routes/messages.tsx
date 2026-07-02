@@ -485,6 +485,7 @@ function MessagesPage() {
                       onChange={(e) => setMessageText(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
                       placeholder={t("writeMessage")}
+                      maxLength={500}
                       className="flex-1 bg-white/50 border border-white/30 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-white/30"
                     />
                     <button

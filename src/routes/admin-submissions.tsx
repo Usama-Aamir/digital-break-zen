@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
-import { isAdminEmail, getAllStorySubmissions, updateStorySubmissionStatus, getSubmissionStatusLabel } from "@/lib/adminSubmissions";
+import { useIsAdmin } from "@/lib/useIsAdmin";
+import { getAllStorySubmissions, updateStorySubmissionStatus, getSubmissionStatusLabel } from "@/lib/adminSubmissions";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/admin-submissions")({
@@ -17,7 +18,8 @@ export const Route = createFileRoute("/admin-submissions")({
 
 function AdminSubmissionsPage() {
   const { t } = useLanguage();
-  const { user, loading, isConfigured } = useAuth();
+  const { loading, isConfigured } = useAuth();
+  const { isAdmin, user } = useIsAdmin();
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -25,8 +27,7 @@ function AdminSubmissionsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-
-  const isAdmin = user && isAdminEmail(user.email);
+  const [confirmReject, setConfirmReject] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAdmin) {
@@ -300,7 +301,9 @@ function AdminSubmissionsPage() {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Email: </span>
-                    <span className="text-foreground font-medium">{submission.email}</span>
+                    <span className="text-foreground font-medium">
+                      {submission.email ? `${submission.email.slice(0, 2)}•••@${submission.email.split("@")[1] || "—"}` : "—"}
+                    </span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Type: </span>
@@ -335,12 +338,32 @@ function AdminSubmissionsPage() {
                         {t("approveStory")}
                       </button>
                       <button
-                        onClick={() => handleUpdateStatus(submission.id, "rejected")}
+                        onClick={() => setConfirmReject(submission.id)}
                         disabled={isUpdating}
                         className="px-4 py-2 bg-gradient-to-r from-red-400 to-pink-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)] disabled:opacity-50"
                       >
                         {t("rejectStory")}
                       </button>
+                      {confirmReject === submission.id && (
+                        <span className="inline-flex items-center gap-2 text-sm">
+                          <span className="text-red-600 font-medium">Confirm?</span>
+                          <button
+                            onClick={() => {
+                              setConfirmReject(null);
+                              handleUpdateStatus(submission.id, "rejected");
+                            }}
+                            className="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-semibold hover:bg-red-600"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={() => setConfirmReject(null)}
+                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-semibold hover:bg-gray-300"
+                          >
+                            No
+                          </button>
+                        </span>
+                      )}
                     </>
                   )}
                   {submission.status !== "pending" && (

@@ -105,10 +105,10 @@ export function getDisplayName(
   userEmail: string | null
 ): string {
   if (!profile) {
-    return userEmail ? "Friend" : "Friend";
+    return "Breakroom friend";
   }
 
-  // Priority: display_name > username > "Friend"
+  // Priority: display_name > username > "Breakroom friend"
   if (profile.display_name) {
     return profile.display_name;
   }
@@ -117,5 +117,5 @@ export function getDisplayName(
     return profile.username;
   }
 
-  return "Friend";
+  return "Breakroom friend";
 }

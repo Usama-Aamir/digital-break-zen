@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
-import { isAdminEmail } from "@/lib/adminSubmissions";
+import { useIsAdmin } from "@/lib/useIsAdmin";
 import { getCurrentUserProfile, getDisplayName } from "@/lib/profiles";
 import { getPendingGameInviteCount } from "@/lib/multiplayerGames";
 import { useState, useEffect } from "react";
@@ -21,7 +21,7 @@ function AccountPage() {
   const { t } = useLanguage();
   const { user, loading, signOut, isConfigured } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = user && isAdminEmail(user.email);
+  const { isAdmin } = useIsAdmin();
   const [profile, setProfile] = useState<any>(null);
   const [pendingInviteCount, setPendingInviteCount] = useState(0);
 
@@ -424,6 +424,20 @@ function AccountPage() {
           >
             {t("openWatercooler")} →
           </Link>
+        </div>
+
+        {/* Privacy & Safety Card */}
+        <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-emerald-100/30 to-teal-100/30 border-emerald-200/30 mb-6">
+          <h3 className="text-lg font-display font-bold text-foreground mb-2">
+            Privacy & Safety
+          </h3>
+          <ul className="text-sm text-muted-foreground space-y-2 mb-4">
+            <li>• Your email is never shown to other users. Only your display name appears publicly.</li>
+            <li>• You can post anonymously on the Watercooler Wall.</li>
+            <li>• All media uploads are validated for type and size (images: 5MB, videos: 25MB).</li>
+            <li>• Posts and comments have character limits to keep content manageable.</li>
+            <li>• Report any inappropriate content using the flag button on each post.</li>
+          </ul>
         </div>
 
         {/* Coming Soon Notice */}

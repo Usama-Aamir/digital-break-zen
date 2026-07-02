@@ -47,13 +47,13 @@ export async function searchUsers(query: string, currentUserId: string): Promise
     
     if (error) {
       console.warn('Failed to search users:', error.message);
-      return { users: [], error: error.message };
+      return { users: [], error: 'Could not search users. Please try again.' };
     }
     
     return { users: data || [], error: null };
   } catch (err) {
     console.warn('Error searching users:', err);
-    return { users: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { users: [], error: 'Could not search users. Please try again.' };
   }
 }
 
@@ -77,7 +77,7 @@ export async function sendFriendRequest(receiverId: string): Promise<{ error: st
     
     if (error) {
       console.warn('Failed to send friend request:', error.message);
-      return { error: error.message };
+      return { error: 'Could not send friend request. Please try again.' };
     }
     
     // Fetch requester profile for notification body
@@ -104,7 +104,7 @@ export async function sendFriendRequest(receiverId: string): Promise<{ error: st
     return { error: null };
   } catch (err) {
     console.warn('Error sending friend request:', err);
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+    return { error: 'Could not send friend request. Please try again.' };
   }
 }
 
@@ -122,13 +122,13 @@ export async function getIncomingFriendRequests(userId: string): Promise<{ reque
     
     if (error) {
       console.warn('Failed to get incoming friend requests:', error.message);
-      return { requests: [], error: error.message };
+      return { requests: [], error: 'Could not load friend requests. Please try again.' };
     }
     
     return { requests: data || [], error: null };
   } catch (err) {
     console.warn('Error getting incoming friend requests:', err);
-    return { requests: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { requests: [], error: 'Could not load friend requests. Please try again.' };
   }
 }
 
@@ -146,13 +146,13 @@ export async function getOutgoingFriendRequests(userId: string): Promise<{ reque
     
     if (error) {
       console.warn('Failed to get outgoing friend requests:', error.message);
-      return { requests: [], error: error.message };
+      return { requests: [], error: 'Could not load friend requests. Please try again.' };
     }
     
     return { requests: data || [], error: null };
   } catch (err) {
     console.warn('Error getting outgoing friend requests:', err);
-    return { requests: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { requests: [], error: 'Could not load friend requests. Please try again.' };
   }
 }
 
@@ -170,7 +170,7 @@ export async function acceptFriendRequest(requestId: string, requesterId: string
     
     if (updateError) {
       console.warn('Failed to accept friend request:', updateError.message);
-      return { error: updateError.message };
+      return { error: 'Could not accept friend request. Please try again.' };
     }
     
     // Create two friendship rows (bidirectional)
@@ -183,7 +183,7 @@ export async function acceptFriendRequest(requestId: string, requesterId: string
     
     if (insertError) {
       console.warn('Failed to create friendships:', insertError.message);
-      return { error: insertError.message };
+      return { error: 'Could not accept friend request. Please try again.' };
     }
     
     // Award XP for both users when friendship is formed
@@ -219,7 +219,7 @@ export async function acceptFriendRequest(requestId: string, requesterId: string
     return { error: null };
   } catch (err) {
     console.warn('Error accepting friend request:', err);
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+    return { error: 'Could not accept friend request. Please try again.' };
   }
 }
 
@@ -235,13 +235,13 @@ export async function rejectFriendRequest(requestId: string): Promise<{ error: s
     
     if (error) {
       console.warn('Failed to reject friend request:', error.message);
-      return { error: error.message };
+      return { error: 'Could not reject friend request. Please try again.' };
     }
     
     return { error: null };
   } catch (err) {
     console.warn('Error rejecting friend request:', err);
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+    return { error: 'Could not reject friend request. Please try again.' };
   }
 }
 
@@ -257,13 +257,13 @@ export async function cancelFriendRequest(requestId: string): Promise<{ error: s
     
     if (error) {
       console.warn('Failed to cancel friend request:', error.message);
-      return { error: error.message };
+      return { error: 'Could not cancel friend request. Please try again.' };
     }
     
     return { error: null };
   } catch (err) {
     console.warn('Error cancelling friend request:', err);
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+    return { error: 'Could not cancel friend request. Please try again.' };
   }
 }
 
@@ -281,7 +281,7 @@ export async function getFriends(userId: string): Promise<{ friends: UserProfile
     
     if (friendshipsError) {
       console.warn('Failed to get friendships:', friendshipsError.message);
-      return { friends: [], error: friendshipsError.message };
+      return { friends: [], error: 'Could not load friends list. Please try again.' };
     }
     
     if (!friendships || friendships.length === 0) {
@@ -299,13 +299,13 @@ export async function getFriends(userId: string): Promise<{ friends: UserProfile
     
     if (profilesError) {
       console.warn('Failed to get friend profiles:', profilesError.message);
-      return { friends: [], error: profilesError.message };
+      return { friends: [], error: 'Could not load friends list. Please try again.' };
     }
     
     return { friends: profiles || [], error: null };
   } catch (err) {
     console.warn('Error getting friends:', err);
-    return { friends: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { friends: [], error: 'Could not load friends list. Please try again.' };
   }
 }
 
@@ -327,13 +327,13 @@ export async function removeFriend(friendId: string): Promise<{ error: string | 
     
     if (error) {
       console.warn('Failed to remove friend:', error.message);
-      return { error: error.message };
+      return { error: 'Could not remove friend. Please try again.' };
     }
     
     return { error: null };
   } catch (err) {
     console.warn('Error removing friend:', err);
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+    return { error: 'Could not remove friend. Please try again.' };
   }
 }
 
@@ -351,13 +351,13 @@ export async function areFriends(userId: string, friendId: string): Promise<{ is
     
     if (error) {
       console.warn('Failed to check friendship:', error.message);
-      return { isFriend: false, error: error.message };
+      return { isFriend: false, error: 'Could not verify friendship. Please try again.' };
     }
     
     return { isFriend: !!data, error: null };
   } catch (err) {
     console.warn('Error checking friendship:', err);
-    return { isFriend: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { isFriend: false, error: 'Could not verify friendship. Please try again.' };
   }
 }
 
@@ -375,12 +375,12 @@ export async function getFriendRequestStatus(requesterId: string, receiverId: st
     
     if (error) {
       console.warn('Failed to get friend request status:', error.message);
-      return { status: null, error: error.message };
+      return { status: null, error: 'Could not check request status. Please try again.' };
     }
     
     return { status: data?.status || null, error: null };
   } catch (err) {
     console.warn('Error getting friend request status:', err);
-    return { status: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { status: null, error: 'Could not check request status. Please try again.' };
   }
 }

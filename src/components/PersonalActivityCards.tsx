@@ -1,13 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
-import { isAdminEmail } from "@/lib/adminSubmissions";
+import { useIsAdmin } from "@/lib/useIsAdmin";
 import { FileText, Newspaper, Shield, LogIn } from "lucide-react";
 
 export function PersonalActivityCards() {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const isAdmin = user?.email ? isAdminEmail(user.email) : false;
+  const { isAdmin } = useIsAdmin();
 
   // If user is logged out, show sign-in CTA
   if (!user) {

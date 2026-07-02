@@ -99,7 +99,7 @@ export async function uploadWatercoolerMedia(
 
     if (uploadError) {
       console.error('Error uploading media:', uploadError);
-      return { result: null, error: uploadError.message };
+      return { result: null, error: 'Could not upload media. Please try again.' };
     }
 
     // Get public URL

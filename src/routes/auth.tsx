@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { useLanguage } from "@/lib/language";
 import { useAuth } from "@/lib/auth";
 import { getCurrentUserProfile, isProfileComplete } from "@/lib/profiles";
+import { getFriendlyErrorMessage } from "@/lib/errorUtils";
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -62,7 +63,7 @@ function AuthPage() {
     if (isSignUp) {
       const result = await signUp(email, password);
       if (result.error) {
-        setError(result.error);
+        setError(getFriendlyErrorMessage(result.error));
       } else if (result.needsEmailConfirmation) {
         setSuccess(t("checkEmailConfirm"));
         setEmail("");
@@ -100,7 +101,7 @@ function AuthPage() {
     } else {
       const result = await signIn(email, password);
       if (result.error) {
-        setError(result.error);
+        setError(getFriendlyErrorMessage(result.error));
       } else {
         // Sign in successful
         setSuccess(t("redirectingToAccount"));

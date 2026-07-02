@@ -56,7 +56,7 @@ export async function getPublishedWatercoolerPosts(): Promise<{ posts: Watercool
 
     if (error) {
       console.error("Error loading watercooler posts:", error);
-      return { posts: [], error: error.message };
+      return { posts: [], error: "Could not load posts. Please try again." };
     }
 
     return { posts: data || [], error: null };
@@ -96,7 +96,7 @@ export async function createWatercoolerPost(
 
     if (error) {
       console.error("[watercooler] create post failed:", error);
-      return { post: null, error: error.message };
+      return { post: null, error: "Could not publish your post. Please try again." };
     }
 
     // Award XP for watercooler post
@@ -134,7 +134,7 @@ export async function deleteOwnWatercoolerPost(
 
     if (error) {
       console.error("Error deleting watercooler post:", error);
-      return { error: error.message };
+      return { error: "Could not delete this post. Please try again." };
     }
 
     return { error: null };
@@ -180,7 +180,7 @@ export async function reportWatercoolerPost(
 
     if (reportError) {
       console.error("[watercooler] report failed:", reportError);
-      return { error: reportError.message };
+      return { error: "Could not report this post. Please try again." };
     }
 
     // Note: report_count increment would ideally be done via RPC or trigger
@@ -223,7 +223,7 @@ export async function getAllWatercoolerPostsForAdmin(
 
     if (error) {
       console.error("[watercooler] admin posts fetch failed:", error);
-      return { posts: [], error: error.message };
+      return { posts: [], error: "Could not load posts for moderation. Please try again." };
     }
 
     return { posts: data || [], error: null };
@@ -266,7 +266,7 @@ export async function updateWatercoolerPostStatus(
 
     if (error) {
       console.error("[watercooler] status update failed:", error);
-      return { error: error.message };
+      return { error: "Could not update post status. Please try again." };
     }
 
     return { error: null };
@@ -297,7 +297,7 @@ export async function likeWatercoolerPost(
 
     if (error) {
       console.error("[watercooler] like failed:", error);
-      return { error: error.message };
+      return { error: "Could not like this post. Please try again." };
     }
 
     // Notify post owner of new like (if not the liker)
@@ -357,7 +357,7 @@ export async function unlikeWatercoolerPost(
 
     if (error) {
       console.error("[watercooler] unlike failed:", error);
-      return { error: error.message };
+      return { error: "Could not update like. Please try again." };
     }
 
     return { error: null };
@@ -387,7 +387,7 @@ export async function getUserLikedPostIds(
 
     if (error) {
       console.error("[watercooler] get liked post ids failed:", error);
-      return { likedPostIds: [], error: error.message };
+      return { likedPostIds: [], error: null };
     }
 
     const likedPostIds = (data || []).map((like) => like.post_id);
@@ -418,7 +418,7 @@ export async function getCommentsForPost(
 
     if (error) {
       console.error("[watercooler] get comments failed:", error);
-      return { comments: [], error: error.message };
+      return { comments: [], error: "Could not load comments. Please try again." };
     }
 
     return { comments: data || [], error: null };
@@ -456,7 +456,7 @@ export async function createWatercoolerComment(
 
     if (error) {
       console.error("[watercooler] create comment failed:", error);
-      return { comment: null, error: error.message };
+      return { comment: null, error: "Could not post your comment. Please try again." };
     }
 
     // Award XP for watercooler comment
@@ -527,7 +527,7 @@ export async function deleteOwnWatercoolerComment(
 
     if (error) {
       console.error("[watercooler] delete comment failed:", error);
-      return { error: error.message };
+      return { error: "Could not delete this comment. Please try again." };
     }
 
     return { error: null };
@@ -559,7 +559,7 @@ export async function getTrendingWatercoolerPosts(): Promise<{ posts: Watercoole
 
     if (error) {
       console.error("[watercooler] get trending posts failed:", error);
-      return { posts: [], error: error.message };
+      return { posts: [], error: null };
     }
 
     return { posts: data || [], error: null };

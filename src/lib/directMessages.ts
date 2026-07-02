@@ -92,13 +92,13 @@ export async function getOrCreateDirectConversation(friendId: string): Promise<{
     
     if (memberError) {
       console.warn('Failed to add conversation members:', memberError.message);
-      return { conversationId: null, error: memberError.message };
+      return { conversationId: null, error: 'Could not start conversation. Please try again.' };
     }
     
     return { conversationId: newConversation.id, error: null };
   } catch (err) {
     console.warn('Error getting or creating conversation:', err);
-    return { conversationId: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { conversationId: null, error: 'Could not start conversation. Please try again.' };
   }
 }
 
@@ -115,7 +115,7 @@ export async function getDirectConversations(userId: string): Promise<{ conversa
     
     if (memberError) {
       console.warn('Failed to get conversation members:', memberError.message);
-      return { conversations: [], error: memberError.message };
+      return { conversations: [], error: 'Could not load conversations. Please try again.' };
     }
     
     if (!members || members.length === 0) {
@@ -132,7 +132,7 @@ export async function getDirectConversations(userId: string): Promise<{ conversa
     
     if (allMembersError) {
       console.warn('Failed to get all conversation members:', allMembersError.message);
-      return { conversations: [], error: allMembersError.message };
+      return { conversations: [], error: 'Could not load conversations. Please try again.' };
     }
     
     // Extract unique user IDs (excluding current user)
@@ -148,7 +148,7 @@ export async function getDirectConversations(userId: string): Promise<{ conversa
     
     if (profilesError) {
       console.warn('Failed to get profiles:', profilesError.message);
-      return { conversations: [], error: profilesError.message };
+      return { conversations: [], error: 'Could not load conversations. Please try again.' };
     }
     
     // Create a map of user_id to profile
@@ -171,7 +171,7 @@ export async function getDirectConversations(userId: string): Promise<{ conversa
     
     if (convError) {
       console.warn('Failed to get conversations:', convError.message);
-      return { conversations: [], error: convError.message };
+      return { conversations: [], error: 'Could not load conversations. Please try again.' };
     }
     
     // Step 5: Transform data to include friend details and last message
@@ -199,7 +199,7 @@ export async function getDirectConversations(userId: string): Promise<{ conversa
     return { conversations: transformedConversations, error: null };
   } catch (err) {
     console.warn('Error getting conversations:', err);
-    return { conversations: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { conversations: [], error: 'Could not load conversations. Please try again.' };
   }
 }
 
@@ -216,13 +216,13 @@ export async function getDirectMessages(conversationId: string): Promise<{ messa
     
     if (error) {
       console.warn('Failed to get messages:', error.message);
-      return { messages: [], error: error.message };
+      return { messages: [], error: 'Could not load messages. Please try again.' };
     }
     
     return { messages: data || [], error: null };
   } catch (err) {
     console.warn('Error getting messages:', err);
-    return { messages: [], error: err instanceof Error ? err.message : 'Unknown error' };
+    return { messages: [], error: 'Could not load messages. Please try again.' };
   }
 }
 
@@ -249,7 +249,7 @@ export async function sendDirectMessage(conversationId: string, body: string): P
     
     if (error) {
       console.warn('Failed to send message:', error.message);
-      return { message: null, error: error.message };
+      return { message: null, error: 'Could not send message. Please try again.' };
     }
     
     // Award XP for message sent (with daily cap handled in awardXP function)
@@ -297,7 +297,7 @@ export async function sendDirectMessage(conversationId: string, body: string): P
     return { message: data, error: null };
   } catch (err) {
     console.warn('Error sending message:', err);
-    return { message: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { message: null, error: 'Could not send message. Please try again.' };
   }
 }
 
@@ -320,13 +320,13 @@ export async function markConversationRead(conversationId: string): Promise<{ er
     
     if (error) {
       console.warn('Failed to mark conversation as read:', error.message);
-      return { error: error.message };
+      return { error: 'Could not update conversation. Please try again.' };
     }
     
     return { error: null };
   } catch (err) {
     console.warn('Error marking conversation as read:', err);
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+    return { error: 'Could not update conversation. Please try again.' };
   }
 }
 
@@ -357,12 +357,12 @@ export async function getUnreadMessageCount(userId: string): Promise<{ count: nu
     
     if (error) {
       console.warn('Failed to get unread count:', error.message);
-      return { count: 0, error: error.message };
+      return { count: 0, error: null };
     }
     
     return { count: count || 0, error: null };
   } catch (err) {
     console.warn('Error getting unread count:', err);
-    return { count: 0, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { count: 0, error: null };
   }
 }

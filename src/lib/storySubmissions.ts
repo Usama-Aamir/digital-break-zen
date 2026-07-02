@@ -59,7 +59,7 @@ export async function submitCommunityStory(
 
     if (error) {
       console.error("Error submitting story:", error);
-      return { submission: null, error: error.message };
+      return { submission: null, error: "Could not submit your story. Please try again." };
     }
 
     // Award XP for story submission
@@ -95,7 +95,7 @@ export async function getUserStorySubmissions(
 
     if (error) {
       console.error("Error loading submissions:", error);
-      return { submissions: [], error: error.message };
+      return { submissions: [], error: "Could not load submissions. Please try again." };
     }
 
     return { submissions: data || [], error: null };

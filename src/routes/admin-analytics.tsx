@@ -6,7 +6,6 @@ import { useState, useEffect, useMemo } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingState } from "@/components/LoadingState";
 import {
-  isAdminUser,
   getAdminOverviewMetrics,
   getEngagementMetrics,
   getContentMetrics,
@@ -24,6 +23,7 @@ import {
   AdminTopUser,
   AdminTopWatercoolerPost,
 } from "@/lib/adminAnalytics";
+import { useIsAdmin } from "@/lib/useIsAdmin";
 import {
   Users,
   Activity,
@@ -51,8 +51,8 @@ export const Route = createFileRoute("/admin-analytics")({
 
 function AdminAnalyticsPage() {
   const { t } = useLanguage();
-  const { user, loading, isConfigured } = useAuth();
-  const isAdmin = user && isAdminUser(user.email);
+  const { loading, isConfigured } = useAuth();
+  const { isAdmin, user } = useIsAdmin();
 
   const [overview, setOverview] = useState<AdminOverviewMetrics | null>(null);
   const [engagement, setEngagement] = useState<AdminEngagementMetrics | null>(null);

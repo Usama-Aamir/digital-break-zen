@@ -76,7 +76,7 @@ export async function getCloudDrafts(userId: string): Promise<{ drafts: StoryDra
 
     if (error) {
       console.error("Error loading cloud drafts:", error);
-      return { drafts: [], error: error.message };
+      return { drafts: [], error: "Could not load drafts. Please try again." };
     }
 
     return { drafts: data || [], error: null };
@@ -110,7 +110,7 @@ export async function saveCloudDraft(
 
     if (error) {
       console.error("Error saving cloud draft:", error);
-      return { draft: null, error: error.message };
+      return { draft: null, error: "Could not save draft. Please try again." };
     }
 
     return { draft: data as StoryDraft, error: null };
@@ -134,7 +134,7 @@ export async function deleteCloudDraft(id: string, userId: string): Promise<{ er
 
     if (error) {
       console.error("Error deleting cloud draft:", error);
-      return { error: error.message };
+      return { error: "Could not delete draft. Please try again." };
     }
 
     return { error: null };
@@ -167,7 +167,7 @@ export async function syncLocalDraftsToCloud(userId: string): Promise<{ error: s
 
       if (error) {
         console.error("Error syncing draft:", error);
-        return { error };
+        return { error: "Could not sync some drafts. Please try again." };
       }
     }
 
