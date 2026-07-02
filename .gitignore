@@ -33,3 +33,15 @@ dist-ssr
 playwright-report/
 test-results/
 .playwright/
+
+# Android / Capacitor
+android/app/build/
+android/.gradle/
+android/captures/
+android/local.properties
+android/app/release/
+android/app/debug/
+*.keystore
+*.jks
+!debug.keystore
+google-services.json

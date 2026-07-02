@@ -108,4 +108,18 @@
 - [ ] All key routes load at 390x844 viewport without horizontal scroll
 - [ ] App is installable on Chrome/Edge (Add to Home Screen works)
 - [ ] App works on iOS Safari (Share → Add to Home Screen)
-- [ ] Future Capacitor Android path documented in TECHNICAL_NOTES.md
+- [ ] Capacitor Android wrapper documented in TECHNICAL_NOTES.md
+
+## Android (Capacitor)
+- [ ] `capacitor.config.ts` exists with correct appId and appName
+- [ ] `android/` platform directory created
+- [ ] `npm run android:sync` succeeds (build + cap sync)
+- [ ] `npm run android:open` opens Android Studio
+- [ ] Service worker disabled in native WebView (no SW conflicts)
+- [ ] No signing keys or secrets committed to git
+- [ ] `.gitignore` excludes Android build outputs and keystore files
+- [ ] Android Capacitor Guide created (`docs/ANDROID_CAPACITOR_GUIDE.md`)
+- [ ] Debug APK builds successfully (if Android Studio available)
+- [ ] App loads production URL in Android WebView
+- [ ] Supabase auth works inside Android WebView
+- [ ] Android back button navigates correctly

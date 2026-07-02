@@ -98,4 +98,20 @@ The app is a Progressive Web App (PWA) — installable on Android, iOS, and desk
 - **iOS:** Safari → Share button → Add to Home Screen
 - **Offline:** Service worker caches static assets and shows an offline page when the network is unavailable
 - **Safe areas:** Notch and home indicator padding active in standalone mode
-- **Future Android:** Ready for Capacitor wrapper (see `docs/TECHNICAL_NOTES.md` for steps)
+- **Android app:** Capacitor wrapper ready (see below)
+
+## Android (Capacitor)
+
+The app has a Capacitor Android wrapper for building a native APK/AAB.
+
+- **App ID:** `com.digitalbreakroom.app`
+- **Config:** `capacitor.config.ts`
+- **Mode:** Server URL (loads production web app in WebView — app is SSR-based)
+
+### Commands
+```cmd
+npm.cmd run android:sync   :: Build + sync to Android
+npm.cmd run android:open   :: Open in Android Studio
+```
+
+See [Android Capacitor Guide](docs/ANDROID_CAPACITOR_GUIDE.md) for full setup, build, and Play Store instructions.

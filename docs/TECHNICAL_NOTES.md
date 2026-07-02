@@ -148,11 +148,25 @@ CSS in `src/styles.css` includes `@media (display-mode: standalone)` for safe-ar
 - Dismissal stored in localStorage (`digital-breakroom-install-dismissed`)
 - iOS instructions shown (Share → Add to Home Screen)
 
-### Future Capacitor Android Path
-1. Install `@capacitor/core` and `@capacitor/cli`
-2. `npx cap init "The Digital Breakroom" "com.breakroom.app"`
-3. Set `webDir` to `.output/public` in `capacitor.config.ts`
-4. `npx cap add android`
-5. `npm run build && npx cap copy android`
-6. Open in Android Studio: `npx cap open android`
-7. The PWA manifest and service worker will work inside the Capacitor WebView
+### Capacitor Android Wrapper (Implemented)
+
+The app includes a Capacitor Android wrapper for building a native Android APK/AAB.
+
+- **Config:** `capacitor.config.ts`
+- **App ID:** `com.digitalbreakroom.app`
+- **App Name:** The Digital Breakroom
+- **Web Dir:** `.output/public` (static assets from Vite/Nitro build)
+- **Server URL:** `https://digital-break-zen.aamirusama8.workers.dev` (SSR app — loads production URL in WebView)
+- **Service worker:** Disabled in native WebView (detected via `capacitor.isNativePlatform()` and origin check)
+
+#### npm Scripts
+- `npm run android:sync` — Build + sync to Android
+- `npm run android:open` — Open in Android Studio
+- `npm run android:build` — Build + sync + open Android Studio
+
+#### Key Files
+- `capacitor.config.ts` — Capacitor configuration
+- `android/` — Native Android project (safe to commit, excludes build outputs and signing keys)
+- `src/lib/registerServiceWorker.ts` — SW registration with native environment detection
+
+See `docs/ANDROID_CAPACITOR_GUIDE.md` for full setup, build, signing, and Play Store instructions.
