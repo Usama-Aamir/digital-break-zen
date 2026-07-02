@@ -20,7 +20,8 @@ import {
   Users,
   MessageCircle,
   Trophy,
-  Bell
+  Bell,
+  BarChart3
 } from "lucide-react";
 
 interface NavItem {
@@ -100,6 +101,7 @@ export function SidebarNav() {
     navSections.push({
       title: t("admin"),
       items: [
+        { label: t("adminAnalytics"), to: "/admin-analytics", icon: BarChart3 },
         { label: t("adminModeration"), to: "/admin-submissions", icon: Shield },
         { label: t("watercoolerModeration"), to: "/admin-watercooler", icon: Shield },
       ],

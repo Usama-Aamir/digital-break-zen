@@ -33,6 +33,7 @@ import { Route as BingoRouteImport } from './routes/bingo'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminWatercoolerRouteImport } from './routes/admin-watercooler'
 import { Route as AdminSubmissionsRouteImport } from './routes/admin-submissions'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin-analytics'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as R2048RouteImport } from './routes/2048'
 import { Route as IndexRouteImport } from './routes/index'
@@ -158,6 +159,11 @@ const AdminSubmissionsRoute = AdminSubmissionsRouteImport.update({
   path: '/admin-submissions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/admin-analytics',
+  path: '/admin-analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
   '/account': typeof AccountRoute
+  '/admin-analytics': typeof AdminAnalyticsRoute
   '/admin-submissions': typeof AdminSubmissionsRoute
   '/admin-watercooler': typeof AdminWatercoolerRoute
   '/auth': typeof AuthRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
   '/account': typeof AccountRoute
+  '/admin-analytics': typeof AdminAnalyticsRoute
   '/admin-submissions': typeof AdminSubmissionsRoute
   '/admin-watercooler': typeof AdminWatercoolerRoute
   '/auth': typeof AuthRoute
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/2048': typeof R2048Route
   '/account': typeof AccountRoute
+  '/admin-analytics': typeof AdminAnalyticsRoute
   '/admin-submissions': typeof AdminSubmissionsRoute
   '/admin-watercooler': typeof AdminWatercoolerRoute
   '/auth': typeof AuthRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/'
     | '/2048'
     | '/account'
+    | '/admin-analytics'
     | '/admin-submissions'
     | '/admin-watercooler'
     | '/auth'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/'
     | '/2048'
     | '/account'
+    | '/admin-analytics'
     | '/admin-submissions'
     | '/admin-watercooler'
     | '/auth'
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/'
     | '/2048'
     | '/account'
+    | '/admin-analytics'
     | '/admin-submissions'
     | '/admin-watercooler'
     | '/auth'
@@ -367,6 +379,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   R2048Route: typeof R2048Route
   AccountRoute: typeof AccountRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminSubmissionsRoute: typeof AdminSubmissionsRoute
   AdminWatercoolerRoute: typeof AdminWatercoolerRoute
   AuthRoute: typeof AuthRoute
@@ -563,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSubmissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-analytics': {
+      id: '/admin-analytics'
+      path: '/admin-analytics'
+      fullPath: '/admin-analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account': {
       id: '/account'
       path: '/account'
@@ -608,6 +628,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   R2048Route: R2048Route,
   AccountRoute: AccountRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminSubmissionsRoute: AdminSubmissionsRoute,
   AdminWatercoolerRoute: AdminWatercoolerRoute,
   AuthRoute: AuthRoute,

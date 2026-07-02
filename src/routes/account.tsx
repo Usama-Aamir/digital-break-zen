@@ -340,6 +340,24 @@ function AccountPage() {
           </Link>
         </div>
 
+        {/* Admin Analytics Card - Only for admin */}
+        {isAdmin && (
+          <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-emerald-100/30 to-teal-100/30 border-emerald-200/30 mb-6">
+            <h3 className="text-lg font-display font-bold text-foreground mb-2">
+              {t("adminAnalytics")}
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              {t("adminAnalyticsSubtitle")}
+            </p>
+            <Link
+              to="/admin-analytics"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-400 to-teal-400 text-white rounded-full text-sm font-semibold hover:opacity-95 transition-opacity shadow-[var(--shadow-glow)]"
+            >
+              {t("openAnalytics") || "Open Analytics"} →
+            </Link>
+          </div>
+        )}
+
         {/* Admin Moderation Card - Only for admin */}
         {isAdmin && (
           <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-orange-100/30 to-red-100/30 border-orange-200/30 mb-6">

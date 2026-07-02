@@ -1194,3 +1194,119 @@ CREATE INDEX IF NOT EXISTS idx_notifications_type
   ON public.notifications(type);
 CREATE INDEX IF NOT EXISTS idx_notifications_source
   ON public.notifications(source_table, source_id);
+
+-- ============================================================================
+-- ADMIN ANALYTICS SELECT POLICIES
+-- ============================================================================
+-- These policies allow the workspace admin to read aggregate data for the
+-- admin analytics dashboard. They do not grant write access.
+
+CREATE POLICY "Admin can view all profiles"
+  ON public.profiles FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all story submissions"
+  ON public.story_submissions FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all watercooler posts"
+  ON public.watercooler_posts FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all watercooler comments"
+  ON public.watercooler_post_comments FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all watercooler likes"
+  ON public.watercooler_post_likes FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all watercooler reports"
+  ON public.watercooler_post_reports FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all break activity"
+  ON public.user_break_activity FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all friend requests"
+  ON public.friend_requests FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all friendships"
+  ON public.friendships FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all direct conversations"
+  ON public.direct_conversations FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all direct conversation members"
+  ON public.direct_conversation_members FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all direct messages"
+  ON public.direct_messages FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all game rooms"
+  ON public.game_rooms FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all game room players"
+  ON public.game_room_players FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all game invites"
+  ON public.game_invites FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all game results"
+  ON public.game_results FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all user XP"
+  ON public.user_xp FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all XP events"
+  ON public.xp_events FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all badges"
+  ON public.badges FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all user badges"
+  ON public.user_badges FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all leaderboard snapshots"
+  ON public.leaderboard_snapshots FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
+
+CREATE POLICY "Admin can view all notifications"
+  ON public.notifications FOR SELECT
+  TO authenticated
+  USING (auth.jwt()->>'email' = 'aamirusama8@gmail.com');
